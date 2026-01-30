@@ -1,0 +1,279 @@
+/**
+ * Portfolio Dashboard Page
+ *
+ * Provides an overview of all businesses with their current scores,
+ * trends, and anomaly highlighting. Includes both card and heatmap views.
+ */
+
+import { useMemo, useState } from 'react'
+import { useLocation } from 'wouter'
+import { useQuery } from '@tanstack/react-query'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { ArrowLeft, AlertTriangle, GitCompare, Sparkles, Loader2, X } from 'lucide-react'
+import { toast } from 'sonner'
+import { TrendIndicator } from '@/components/trend-indicator'
+import { PortfolioHeatmap } from '@/components/portfolio/portfolio-heatmap'
+import { PortfolioAnalysisCard } from '@/components/portfolio/portfolio-analysis-card'
+import { usePortfolioSummary } from '@/hooks/use-portfolio-summary'
+import { useGeneratePortfolioAnalysis } from '@/hooks/use-portfolio-analysis'
+import type { PortfolioAnalysis } from '@/schemas/portfolio-analysis'
+import { useSectors } from '@/hooks/use-sectors'
+import { supabase } from '@/lib/supabase'
+import type { Scorecard } from '@/types/database.types'
+
+const ragColors: Record<string, string> = {
+  green: 'bg-green-500',
+  amber: 'bg-amber-500',
+  red: 'bg-red-500',
+}
+
+export function PortfolioPage() {
+  const [, navigate] = useLocation()
+  const { data: portfolio, isLoading } = usePortfolioSummary()
+  const { data: sectors } = useSectors()
+  const [analysis, setAnalysis] = useState<PortfolioAnalysis | null>(null)
+  const generateAnalysis = useGeneratePortfolioAnalysis()
+
+  const handleGenerateAnalysis = async () => {
+    if (!portfolio || portfolio.length === 0) {
+      toast.error('No businesses to analyze')
+      return
+    }
+    if (!latestScorecards || latestScorecards.size === 0) {
+      toast.error('No scorecard data available')
+      return
+    }
+
+    try {
+      const result = await generateAnalysis.mutateAsync({
+        portfolioSummary: portfolio,
+        scorecards: latestScorecards,
+      })
+      setAnalysis(result)
+      toast.success('Portfolio analysis generated')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to generate analysis')
+    }
+  }
+
+  // Fetch latest full scorecards for heatmap
+  const { data: latestScorecards, isLoading: isLoadingScorecards } = useQuery({
+    queryKey: ['scorecards', 'latest-full'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('scorecards')
+        .select('*')
+        .order('month', { ascending: false })
+      if (error) throw error
+
+      // Group by business, keep only latest
+      const scorecards = data as Scorecard[]
+      const byBusiness = new Map<string, Scorecard>()
+      for (const sc of scorecards) {
+        if (!byBusiness.has(sc.business_id)) {
+          byBusiness.set(sc.business_id, sc)
+        }
+      }
+      return byBusiness
+    },
+  })
+
+  // Build sector lookup map
+  const sectorMap = useMemo(() => {
+    if (!sectors) return new Map<string, string>()
+    return new Map(sectors.map((s) => [s.id, s.name]))
+  }, [sectors])
+
+  // Extract anomalies (businesses with >10 point score drop)
+  const anomalies = useMemo(() => {
+    return portfolio?.filter((p) => p.isAnomaly) || []
+  }, [portfolio])
+
+  // Build businesses list for heatmap
+  const businesses = useMemo(() => {
+    if (!portfolio) return []
+    return portfolio
+      .map((p) => ({ id: p.businessId, name: p.businessName }))
+      .sort((a, b) => a.name.localeCompare(b.name))
+  }, [portfolio])
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background p-4 md:p-8">
+        <div className="mx-auto max-w-6xl">
+          <p className="text-muted-foreground">Loading portfolio...</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-background p-4 md:p-8">
+      <div className="mx-auto max-w-6xl">
+        {/* Header */}
+        <div className="flex items-center gap-4 mb-6">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate('/')}
+            title="Back to home"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <img
+            src="/ubt-logo.png"
+            alt="Universal Business Team"
+            className="h-10"
+          />
+          <h1 className="text-2xl font-bold">Portfolio Overview</h1>
+          <div className="flex-1" />
+          <Button
+            variant="outline"
+            onClick={() => navigate('/compare')}
+          >
+            <GitCompare className="h-4 w-4 mr-2" />
+            Compare
+          </Button>
+          <Button
+            onClick={handleGenerateAnalysis}
+            disabled={generateAnalysis.isPending || !portfolio?.length}
+          >
+            {generateAnalysis.isPending ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Sparkles className="h-4 w-4 mr-2" />
+            )}
+            Generate AI Analysis
+          </Button>
+        </div>
+
+        {/* 20 Business Limit Warning */}
+        {portfolio && portfolio.length > 20 && (
+          <p className="text-sm text-muted-foreground mb-4">
+            First 20 businesses will be analyzed
+          </p>
+        )}
+
+        {/* AI Analysis Display */}
+        {analysis && (
+          <div className="mb-6">
+            <div className="flex justify-end mb-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setAnalysis(null)}
+              >
+                <X className="h-4 w-4 mr-1" />
+                Clear
+              </Button>
+            </div>
+            <PortfolioAnalysisCard analysis={analysis} />
+          </div>
+        )}
+
+        {/* Anomaly Alert Section */}
+        {anomalies.length > 0 && (
+          <Card className="mb-6 border-red-300 bg-red-50">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-red-700">
+                <AlertTriangle className="h-5 w-5" />
+                Attention Required ({anomalies.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-2">
+                {anomalies.map((anomaly) => (
+                  <Button
+                    key={anomaly.businessId}
+                    variant="outline"
+                    size="sm"
+                    className="border-red-300 hover:bg-red-100"
+                    onClick={() => navigate(`/business/${anomaly.businessId}`)}
+                  >
+                    {anomaly.businessName}
+                    {anomaly.trend && (
+                      <Badge
+                        variant="destructive"
+                        className="ml-2"
+                      >
+                        {anomaly.trend.change}
+                      </Badge>
+                    )}
+                  </Button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Tabs for Card and Heatmap views */}
+        <Tabs defaultValue="cards" className="mt-6">
+          <TabsList>
+            <TabsTrigger value="cards">Cards</TabsTrigger>
+            <TabsTrigger value="heatmap">Heatmap</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="cards">
+            {/* Portfolio Card Grid */}
+            {portfolio && portfolio.length > 0 ? (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mt-4">
+                {portfolio.map((item) => {
+                  const sectorName = item.sectorId
+                    ? sectorMap.get(item.sectorId)
+                    : null
+
+                  return (
+                    <Card
+                      key={item.businessId}
+                      className="cursor-pointer hover:shadow-md transition-shadow"
+                      onClick={() => navigate(`/business/${item.businessId}`)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h3 className="font-medium">{item.businessName}</h3>
+                            <p className="text-sm text-muted-foreground">
+                              {sectorName || 'No sector'}
+                            </p>
+                          </div>
+                          <Badge className={ragColors[item.ragStatus]}>
+                            {item.latestScore}
+                          </Badge>
+                        </div>
+                        <div className="mt-2">
+                          <TrendIndicator trend={item.trend} />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )
+                })}
+              </div>
+            ) : (
+              <p className="text-muted-foreground mt-4">
+                No businesses with scorecards yet.
+              </p>
+            )}
+          </TabsContent>
+
+          <TabsContent value="heatmap">
+            <Card className="mt-4">
+              <CardContent className="pt-4">
+                {isLoadingScorecards ? (
+                  <p className="text-muted-foreground">Loading heatmap data...</p>
+                ) : (
+                  <PortfolioHeatmap
+                    businesses={businesses}
+                    scorecards={latestScorecards ?? new Map()}
+                  />
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  )
+}
