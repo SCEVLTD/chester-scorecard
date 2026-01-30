@@ -50,11 +50,6 @@ export function ChartsPage() {
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to History
             </Button>
-            <img
-              src="/ubt-logo.png"
-              alt="Universal Business Team"
-              className="h-8"
-            />
           </div>
           <p className="text-muted-foreground">Loading charts...</p>
         </div>
@@ -74,11 +69,6 @@ export function ChartsPage() {
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to History
             </Button>
-            <img
-              src="/ubt-logo.png"
-              alt="Universal Business Team"
-              className="h-8"
-            />
           </div>
           <p className="text-muted-foreground">
             No scorecard data available for charts. Create at least one

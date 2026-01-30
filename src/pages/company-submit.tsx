@@ -204,12 +204,8 @@ export default function CompanySubmitPage() {
       <div className="max-w-2xl mx-auto">
         <Card>
           <CardHeader className="text-center">
-            <img
-              src="/ubt-logo.png"
-              alt="Universal Business Team"
-              className="h-12 mx-auto mb-4"
-            />
-            <CardTitle className="text-2xl">Financial Data Submission</CardTitle>
+            <CardTitle className="text-2xl">Chester Business Scorecard</CardTitle>
+            <p className="text-lg text-muted-foreground">Financial Data Submission</p>
             <CardDescription className="text-base">
               <span className="font-medium text-slate-900">{business.name}</span>
               <span className="mx-2">-</span>

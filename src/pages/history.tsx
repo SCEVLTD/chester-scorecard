@@ -44,11 +44,6 @@ export function HistoryPage() {
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back
           </Button>
-          <img
-            src="/ubt-logo.png"
-            alt="Universal Business Team"
-            className="h-8"
-          />
         </div>
 
         <Card>

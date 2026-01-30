@@ -26,11 +26,6 @@ export default function SubmissionSuccessPage() {
       <Card className="max-w-md w-full">
         <CardContent className="pt-6">
           <div className="text-center">
-            <img
-              src="/ubt-logo.png"
-              alt="Universal Business Team"
-              className="h-10 mx-auto mb-4"
-            />
             <CheckCircle className="h-16 w-16 text-green-500 mx-auto" />
             <h2 className="mt-4 text-2xl font-semibold text-slate-900">
               Thank You!

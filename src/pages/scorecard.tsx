@@ -270,11 +270,6 @@ export function ScorecardPage() {
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back
         </Button>
-        <img
-          src="/ubt-logo.png"
-          alt="Universal Business Team"
-          className="h-8"
-        />
       </div>
 
       <h1 className="text-2xl md:text-3xl font-bold mb-2">{business.name}</h1>

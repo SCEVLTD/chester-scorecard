@@ -82,13 +82,8 @@ export function HomePage() {
       <div className="mx-auto max-w-2xl">
         <Card>
           <CardHeader className="text-center">
-            <img
-              src="/ubt-logo.png"
-              alt="Universal Business Team"
-              className="h-12 mx-auto mb-2"
-            />
             <div className="flex items-center justify-center gap-2">
-              <CardTitle>Monthly Business Scorecard</CardTitle>
+              <CardTitle>Chester Business Scorecard</CardTitle>
               <Button
                 variant="outline"
                 size="sm"

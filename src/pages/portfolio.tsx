@@ -123,12 +123,7 @@ export function PortfolioPage() {
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <img
-            src="/ubt-logo.png"
-            alt="Universal Business Team"
-            className="h-10"
-          />
-          <h1 className="text-2xl font-bold">Portfolio Overview</h1>
+          <h1 className="text-2xl font-bold">Chester Portfolio Overview</h1>
           <div className="flex-1" />
           <Button
             variant="outline"
