@@ -15,11 +15,11 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 | 2 | Authentication | Complete | 100% |
 | 3 | Unified Form | Complete | 100% (2/2 plans) |
 | 4 | Data Import | Complete | 100% (2/2 plans) |
-| 5 | Reporting | Pending | 0% |
+| 5 | Reporting | In Progress | 33% (1/3 plans) |
 | 6 | Action Tracking | Pending | 0% |
 | 7 | Reminders | Pending | 0% |
 
-**Overall Progress:** [====================....................] 53% (9/17 plans)
+**Overall Progress:** [=====================...................] 59% (10/17 plans)
 
 ## Milestone
 
@@ -30,6 +30,8 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 
 | Date | Action |
 |------|--------|
+| 2026-02-02 | Completed 05-01-PLAN.md (Business scorecard display) |
+| 2026-02-02 | Started Phase 5: Reporting |
 | 2026-02-02 | Completed Phase 4: Data Import (2 plans) |
 | 2026-02-02 | Completed 04-02-PLAN.md (Import UI Components) |
 | 2026-02-02 | Completed 04-01-PLAN.md (Excel parser core) |
@@ -59,6 +61,8 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 | 04-01 | All financial fields optional in import schema | Historical data may be incomplete (sales from 2021, EBITDA from 2025) |
 | 04-02 | Upsert with onConflict data_request_id | Allows re-running import to update existing months |
 | 04-02 | submitted_by_name = 'Historical Import' | Clear audit trail for imported vs submitted data |
+| 05-01 | Separate view route from edit route | /view/:scorecardId for read-only, /scorecard/:scorecardId for edit |
+| 05-01 | Section scores grid with color-coding | Quick visual health assessment for meetings |
 
 ## Blockers
 
@@ -67,21 +71,20 @@ None currently.
 ## Session Continuity
 
 **Last session:** 2026-02-02
-**Stopped at:** Completed 04-02-PLAN.md
+**Stopped at:** Completed 05-01-PLAN.md
 **Resume file:** None
 
 ## Next Action
 
-Phase 4 (Data Import) is complete. Proceed to Phase 5 (Reporting) when ready.
+Phase 5 (Reporting) in progress - 1 of 3 plans complete.
 
-Key deliverables from Phase 4:
-- Excel parser with SheetJS, 26 column aliases, business name matching
-- Admin import page at /admin/import with route protection
-- Drag-drop file upload with preview and validation
-- Upsert functionality (updates existing, doesn't duplicate)
-- Imported data visible in business history
+Key deliverables from 05-01:
+- BusinessScorecardView component with prominent score display
+- Read-only scorecard view page at /business/:businessId/view/:scorecardId
+- Section scores grid for quick health assessment
+- Integration of AI analysis and PDF export in unified view
 
-Chester admins can now self-service upload Shane's historical Excel data without developer intervention.
+Chester admins can now review individual business scorecards with prominent scoring and AI insights for meeting discussions.
 
 ---
 *State updated: 2026-02-02*
