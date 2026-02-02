@@ -103,6 +103,12 @@ Plans:
 ### Phase 4: Data Import
 **Goal:** Import Shane's historical Excel data so demo shows real trends.
 
+**Plans:** 2 plans
+
+Plans:
+- [ ] 04-01-PLAN.md - Excel parser core: SheetJS integration, column mapping, validation
+- [ ] 04-02-PLAN.md - Import UI + hook: dropzone, preview, bulk upsert, admin page
+
 **Requirements:**
 - DATA-01: Import historical sales (from Jan 2021)
 - DATA-02: Import historical EBITDA (from Jan 2025)
@@ -221,4 +227,4 @@ Can ship after Friday:
 ---
 
 *Roadmap created: 2026-02-02*
-*Last updated: 2026-02-02 — Phase 3 complete (Unified Form)*
+*Last updated: 2026-02-02 — Phase 4 planned (Data Import)*
