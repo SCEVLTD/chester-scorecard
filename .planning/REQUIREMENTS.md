@@ -9,21 +9,21 @@ Requirements for initial release (Feb 7, 2026 meeting).
 
 ### Authentication
 
-- [ ] **AUTH-01**: Business can log in with email/password
-- [ ] **AUTH-02**: Multiple users from same business see the same data (domain-based or shared credentials)
-- [ ] **AUTH-03**: Chester admin role can view all businesses and aggregated reports
-- [ ] **AUTH-04**: Business user role restricted to their own company's data only
-- [ ] **AUTH-05**: Session persists across browser refresh
+- [x] **AUTH-01**: Business can log in with email/password
+- [x] **AUTH-02**: Multiple users from same business see the same data (domain-based or shared credentials)
+- [x] **AUTH-03**: Chester admin role can view all businesses and aggregated reports
+- [x] **AUTH-04**: Business user role restricted to their own company's data only
+- [x] **AUTH-05**: Session persists across browser refresh
 
 ### Unified Company Form
 
-- [ ] **FORM-01**: Single form combining financials + qualitative scoring sections
-- [ ] **FORM-02**: Financial fields: Revenue, Gross Profit, Overheads, EBITDA (actual vs target)
-- [ ] **FORM-03**: Lead KPI fields: Outbound calls (number), First orders/new accounts (number)
-- [ ] **FORM-04**: Qualitative scoring: Leadership, Market demand, Marketing, Product, Suppliers, Sales
-- [ ] **FORM-05**: Commentary fields: Wins, Challenges, Biggest opportunity, Biggest risk
-- [ ] **FORM-06**: Form shows which month is being submitted
-- [ ] **FORM-07**: Form auto-calculates EBITDA from GP - Overheads (with manual override)
+- [x] **FORM-01**: Single form combining financials + qualitative scoring sections
+- [x] **FORM-02**: Financial fields: Revenue, Gross Profit, Overheads, EBITDA (actual vs target)
+- [x] **FORM-03**: Lead KPI fields: Outbound calls (number), First orders/new accounts (number)
+- [x] **FORM-04**: Qualitative scoring: Leadership, Market demand, Marketing, Product, Suppliers, Sales
+- [x] **FORM-05**: Commentary fields: Wins, Challenges, Biggest opportunity, Biggest risk
+- [x] **FORM-06**: Form shows which month is being submitted
+- [x] **FORM-07**: Form auto-calculates EBITDA from GP - Overheads (with manual override)
 
 ### Data Import
 
@@ -89,37 +89,37 @@ Deferred to future release.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01 | Phase 1 | Pending |
-| AUTH-02 | Phase 1 | Pending |
-| AUTH-03 | Phase 1 | Pending |
-| AUTH-04 | Phase 1 | Pending |
-| AUTH-05 | Phase 1 | Pending |
-| FORM-01 | Phase 2 | Pending |
-| FORM-02 | Phase 2 | Pending |
-| FORM-03 | Phase 2 | Pending |
-| FORM-04 | Phase 2 | Pending |
-| FORM-05 | Phase 2 | Pending |
-| FORM-06 | Phase 2 | Pending |
-| FORM-07 | Phase 2 | Pending |
-| DATA-01 | Phase 3 | Pending |
-| DATA-02 | Phase 3 | Pending |
-| DATA-03 | Phase 3 | Pending |
-| DATA-04 | Phase 3 | Pending |
-| REPORT-01 | Phase 4 | Pending |
-| REPORT-02 | Phase 4 | Pending |
-| REPORT-03 | Phase 4 | Pending |
-| REPORT-04 | Phase 4 | Pending |
-| REPORT-05 | Phase 4 | Pending |
-| REPORT-06 | Phase 4 | Pending |
-| ACTION-01 | Phase 5 | Pending |
-| ACTION-02 | Phase 5 | Pending |
-| ACTION-03 | Phase 5 | Pending |
-| REMIND-01 | Phase 6 | Pending |
-| REMIND-02 | Phase 6 | Pending |
-| REMIND-03 | Phase 6 | Pending |
 | BRAND-01 | Phase 1 | Complete |
 | BRAND-02 | Phase 1 | Complete |
 | BRAND-03 | Phase 1 | Complete |
+| AUTH-01 | Phase 2 | Complete |
+| AUTH-02 | Phase 2 | Complete |
+| AUTH-03 | Phase 2 | Complete |
+| AUTH-04 | Phase 2 | Complete |
+| AUTH-05 | Phase 2 | Complete |
+| FORM-01 | Phase 3 | Complete |
+| FORM-02 | Phase 3 | Complete |
+| FORM-03 | Phase 3 | Complete |
+| FORM-04 | Phase 3 | Complete |
+| FORM-05 | Phase 3 | Complete |
+| FORM-06 | Phase 3 | Complete |
+| FORM-07 | Phase 3 | Complete |
+| DATA-01 | Phase 4 | Pending |
+| DATA-02 | Phase 4 | Pending |
+| DATA-03 | Phase 4 | Pending |
+| DATA-04 | Phase 4 | Pending |
+| REPORT-01 | Phase 5 | Pending |
+| REPORT-02 | Phase 5 | Pending |
+| REPORT-03 | Phase 5 | Pending |
+| REPORT-04 | Phase 5 | Pending |
+| REPORT-05 | Phase 5 | Pending |
+| REPORT-06 | Phase 5 | Pending |
+| ACTION-01 | Phase 6 | Pending |
+| ACTION-02 | Phase 6 | Pending |
+| ACTION-03 | Phase 6 | Pending |
+| REMIND-01 | Phase 7 | Pending |
+| REMIND-02 | Phase 7 | Pending |
+| REMIND-03 | Phase 7 | Pending |
 
 **Coverage:**
 - v1 requirements: 28 total
@@ -128,4 +128,4 @@ Deferred to future release.
 
 ---
 *Requirements defined: 2026-02-02*
-*Last updated: 2026-02-02 after initial definition*
+*Last updated: 2026-02-02 — Phase 3 (Unified Form) complete*

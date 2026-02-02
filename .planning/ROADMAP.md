@@ -76,8 +76,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 03-01-PLAN.md - Database schema + types: qualitative columns, Lead KPI types, unified schema
-- [ ] 03-02-PLAN.md - Unified form page: /company/:businessId/submit route with all sections
+- [x] 03-01-PLAN.md - Database schema + types: qualitative columns, Lead KPI types, unified schema
+- [x] 03-02-PLAN.md - Unified form page: /company/:businessId/submit route with all sections
 
 **Requirements:**
 - FORM-01: Single form combining financials + qualitative sections
@@ -206,7 +206,7 @@ Phase 2 (Auth) ─────────┬───────────�
 Minimum viable for demo:
 - [x] Chester/Velocity branding
 - [x] Business login working
-- [ ] Unified form for data submission
+- [x] Unified form for data submission
 - [ ] Basic scorecard display with AI insights
 
 Nice to have:
@@ -221,4 +221,4 @@ Can ship after Friday:
 ---
 
 *Roadmap created: 2026-02-02*
-*Last updated: 2026-02-02 — Phase 3 planned (Unified Form)*
+*Last updated: 2026-02-02 — Phase 3 complete (Unified Form)*
