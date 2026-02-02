@@ -54,28 +54,28 @@ export function submissionToVariances(submission: CompanySubmission): {
   productivityActual: number
 } {
   const productivityActual = calculateProductivityActual(
-    submission.gross_profit_actual,
-    submission.total_wages
+    submission.gross_profit_actual ?? 0,
+    submission.total_wages ?? 0
   )
 
   return {
     revenueVariance: calculateVariance(
-      submission.revenue_actual,
-      submission.revenue_target
+      submission.revenue_actual ?? 0,
+      submission.revenue_target ?? 0
     ),
     grossProfitVariance: calculateVariance(
-      submission.gross_profit_actual,
-      submission.gross_profit_target
+      submission.gross_profit_actual ?? 0,
+      submission.gross_profit_target ?? 0
     ),
     overheadsVariance: calculateOverheadVariance(
-      submission.overheads_actual,
-      submission.overheads_budget
+      submission.overheads_actual ?? 0,
+      submission.overheads_budget ?? 0
     ),
     netProfitVariance: calculateVariance(
-      submission.net_profit_actual,
-      submission.net_profit_target
+      submission.net_profit_actual ?? 0,
+      submission.net_profit_target ?? 0
     ),
-    productivityBenchmark: submission.productivity_benchmark,
+    productivityBenchmark: submission.productivity_benchmark ?? 0,
     productivityActual: productivityActual,
   }
 }

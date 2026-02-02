@@ -120,30 +120,30 @@ export function SubmittedFinancialsDisplay({ submission }: SubmittedFinancialsDi
 
         <MetricDisplayRow
           label="Revenue"
-          actual={submission.revenue_actual}
-          target={submission.revenue_target}
+          actual={submission.revenue_actual ?? 0}
+          target={submission.revenue_target ?? 0}
           variance={variances.revenueVariance}
           score={scores.revenue}
         />
         <MetricDisplayRow
           label="Gross Profit"
-          actual={submission.gross_profit_actual}
-          target={submission.gross_profit_target}
+          actual={submission.gross_profit_actual ?? 0}
+          target={submission.gross_profit_target ?? 0}
           variance={variances.grossProfitVariance}
           score={scores.grossProfit}
         />
         <MetricDisplayRow
           label="Overheads"
-          actual={submission.overheads_actual}
-          target={submission.overheads_budget}
+          actual={submission.overheads_actual ?? 0}
+          target={submission.overheads_budget ?? 0}
           variance={variances.overheadsVariance}
           score={scores.overheads}
           invertedLabel
         />
         <MetricDisplayRow
           label="EBITDA"
-          actual={submission.net_profit_actual}
-          target={submission.net_profit_target}
+          actual={submission.net_profit_actual ?? 0}
+          target={submission.net_profit_target ?? 0}
           variance={variances.netProfitVariance}
           score={scores.netProfit}
         />
@@ -156,15 +156,15 @@ export function SubmittedFinancialsDisplay({ submission }: SubmittedFinancialsDi
             </div>
             <div className="col-span-6 md:col-span-9 text-sm">
               <span className="text-slate-600">
-                Wages: {formatCurrency(submission.total_wages)}
+                Wages: {formatCurrency(submission.total_wages ?? 0)}
               </span>
               <span className="mx-2 text-slate-300">|</span>
               <span className="text-slate-600">
-                Benchmark: {submission.productivity_benchmark.toFixed(2)}
+                Benchmark: {(submission.productivity_benchmark ?? 0).toFixed(2)}
               </span>
               <span className="mx-2 text-slate-300">|</span>
               <span className="text-slate-600">
-                Actual: {(submission.gross_profit_actual / submission.total_wages).toFixed(2)}
+                Actual: {submission.total_wages ? ((submission.gross_profit_actual ?? 0) / submission.total_wages).toFixed(2) : 'N/A'}
               </span>
             </div>
           </div>
