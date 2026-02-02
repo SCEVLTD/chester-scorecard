@@ -8,9 +8,55 @@ export type Json =
 
 export type DataRequestStatus = 'pending' | 'submitted' | 'used'
 
+export type ActionStatus = 'pending' | 'complete'
+
 export interface Database {
   public: {
     Tables: {
+      actions: {
+        Row: {
+          id: string
+          business_id: string
+          description: string
+          owner: string
+          due_date: string
+          status: ActionStatus
+          created_at: string
+          completed_at: string | null
+          created_by: string | null
+        }
+        Insert: {
+          id?: string
+          business_id: string
+          description: string
+          owner: string
+          due_date: string
+          status?: ActionStatus
+          created_at?: string
+          completed_at?: string | null
+          created_by?: string | null
+        }
+        Update: {
+          id?: string
+          business_id?: string
+          description?: string
+          owner?: string
+          due_date?: string
+          status?: ActionStatus
+          created_at?: string
+          completed_at?: string | null
+          created_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'actions_business_id_fkey'
+            columns: ['business_id']
+            isOneToOne: false
+            referencedRelation: 'businesses'
+            referencedColumns: ['id']
+          }
+        ]
+      }
       data_requests: {
         Row: {
           id: string
@@ -352,3 +398,7 @@ export type CompanySubmissionInsert = Database['public']['Tables']['company_subm
 
 export type Sector = Database['public']['Tables']['sectors']['Row']
 export type SectorInsert = Database['public']['Tables']['sectors']['Insert']
+
+export type Action = Database['public']['Tables']['actions']['Row']
+export type ActionInsert = Database['public']['Tables']['actions']['Insert']
+export type ActionUpdate = Database['public']['Tables']['actions']['Update']
