@@ -102,3 +102,10 @@ CREATE POLICY "Users can view own profile" ON profiles
 
 CREATE POLICY "Users can update own profile" ON profiles
   FOR UPDATE USING (auth.uid() = id);
+
+-- Grant supabase_auth_admin access to profiles for the custom access token hook
+GRANT SELECT ON public.profiles TO supabase_auth_admin;
+
+CREATE POLICY "Auth admin can read profiles for hook" ON public.profiles
+  FOR SELECT TO supabase_auth_admin
+  USING (true);
