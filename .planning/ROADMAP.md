@@ -24,8 +24,8 @@
 **Plans:** 2 plans
 
 Plans:
-- [ ] 01-01-PLAN.md - Core branding: extract logo, update PDF and charts
-- [ ] 01-02-PLAN.md - Page headers: add branding to all user-facing pages
+- [x] 01-01-PLAN.md - Core branding: extract logo, update PDF and charts
+- [x] 01-02-PLAN.md - Page headers: add branding to all user-facing pages
 
 **Requirements:**
 - BRAND-01: Velocity logo on all pages
@@ -191,7 +191,7 @@ Phase 2 (Auth) ─────────┬───────────�
 ## Friday Meeting MVP
 
 Minimum viable for demo:
-- [ ] Chester/Velocity branding
+- [x] Chester/Velocity branding
 - [ ] Business login working
 - [ ] Unified form for data submission
 - [ ] Basic scorecard display with AI insights
@@ -208,4 +208,4 @@ Can ship after Friday:
 ---
 
 *Roadmap created: 2026-02-02*
-*Last updated: 2026-02-02*
+*Last updated: 2026-02-02 — Phase 1 (Branding) complete*

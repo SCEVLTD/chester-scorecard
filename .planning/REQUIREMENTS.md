@@ -55,9 +55,9 @@ Requirements for initial release (Feb 7, 2026 meeting).
 
 ### Branding
 
-- [ ] **BRAND-01**: Velocity logo on all pages
-- [ ] **BRAND-02**: Strapline from PowerPoint ("Doing good by doing well")
-- [ ] **BRAND-03**: Chester Brethren Business Group naming
+- [x] **BRAND-01**: Velocity logo on all pages
+- [x] **BRAND-02**: Strapline from PowerPoint ("Doing good by doing well")
+- [x] **BRAND-03**: Chester Brethren Business Group naming
 
 ## v2 Requirements
 
@@ -117,9 +117,9 @@ Deferred to future release.
 | REMIND-01 | Phase 6 | Pending |
 | REMIND-02 | Phase 6 | Pending |
 | REMIND-03 | Phase 6 | Pending |
-| BRAND-01 | Phase 7 | Pending |
-| BRAND-02 | Phase 7 | Pending |
-| BRAND-03 | Phase 7 | Pending |
+| BRAND-01 | Phase 1 | Complete |
+| BRAND-02 | Phase 1 | Complete |
+| BRAND-03 | Phase 1 | Complete |
 
 **Coverage:**
 - v1 requirements: 28 total
