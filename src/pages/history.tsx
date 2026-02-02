@@ -48,21 +48,21 @@ export function HistoryPage() {
         </div>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>{business?.name || 'Loading...'}</CardTitle>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => navigate(`/business/${businessId}/charts`)}>
+          <CardHeader className="space-y-4">
+            <CardTitle className="text-2xl">{business?.name || 'Loading...'}</CardTitle>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" onClick={() => navigate(`/business/${businessId}/charts`)}>
                 <BarChart3 className="mr-2 h-4 w-4" />
                 Charts
               </Button>
               {scorecards && scorecards.length > 0 && business && (
-                <ExcelExportButton scorecards={scorecards} businessName={business.name} />
+                <ExcelExportButton scorecards={scorecards} businessName={business.name} size="sm" />
               )}
-              <Button variant="outline" onClick={() => setShowRequestModal(true)}>
+              <Button variant="outline" size="sm" onClick={() => setShowRequestModal(true)}>
                 <Send className="mr-2 h-4 w-4" />
                 Request Data
               </Button>
-              <Button onClick={() => navigate(`/business/${businessId}/scorecard`)}>
+              <Button size="sm" onClick={() => navigate(`/business/${businessId}/scorecard`)}>
                 <Plus className="mr-2 h-4 w-4" />
                 New Scorecard
               </Button>

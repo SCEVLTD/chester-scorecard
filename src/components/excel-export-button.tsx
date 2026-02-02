@@ -6,6 +6,7 @@ import type { Scorecard } from '@/types/database.types'
 interface ExcelExportButtonProps {
   scorecards: Scorecard[]
   businessName: string
+  size?: 'default' | 'sm' | 'lg' | 'icon'
 }
 
 /**
@@ -15,7 +16,7 @@ interface ExcelExportButtonProps {
  * Shows loading spinner during generation and error message if generation fails.
  * Disabled when no scorecards are available.
  */
-export function ExcelExportButton({ scorecards, businessName }: ExcelExportButtonProps) {
+export function ExcelExportButton({ scorecards, businessName, size }: ExcelExportButtonProps) {
   const { exportExcel, isExporting, error } = useExcelExport()
 
   const isDisabled = isExporting || scorecards.length === 0
@@ -26,6 +27,7 @@ export function ExcelExportButton({ scorecards, businessName }: ExcelExportButto
         onClick={() => exportExcel(scorecards, businessName)}
         disabled={isDisabled}
         variant="outline"
+        size={size}
       >
         {isExporting ? (
           <>
