@@ -19,6 +19,7 @@ import { TrendIndicator } from '@/components/trend-indicator'
 import { PortfolioHeatmap } from '@/components/portfolio/portfolio-heatmap'
 import { PortfolioAnalysisCard } from '@/components/portfolio/portfolio-analysis-card'
 import { MeetingSummaryCard } from '@/components/meeting-summary-card'
+import { PendingActionsBadge } from '@/components/pending-actions-badge'
 import { usePortfolioSummary } from '@/hooks/use-portfolio-summary'
 import { useGeneratePortfolioAnalysis } from '@/hooks/use-portfolio-analysis'
 import { useGenerateMeetingSummary } from '@/hooks/use-meeting-summary'
@@ -216,7 +217,10 @@ export function PortfolioPage() {
             Generate AI Analysis
           </Button>
         </div>
-        <h1 className="text-2xl font-bold text-center mb-4">Chester Portfolio Overview</h1>
+        <div className="flex items-center justify-center gap-2 mb-4">
+          <h1 className="text-2xl font-bold">Chester Portfolio Overview</h1>
+          <PendingActionsBadge />
+        </div>
 
         {/* 20 Business Limit Warning */}
         {portfolio && portfolio.length > 20 && (
@@ -342,7 +346,10 @@ export function PortfolioPage() {
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <h3 className="font-medium">{item.businessName}</h3>
+                            <div className="flex items-center">
+                              <h3 className="font-medium">{item.businessName}</h3>
+                              <PendingActionsBadge businessId={item.businessId} />
+                            </div>
                             <p className="text-sm text-muted-foreground">
                               {sectorName || 'No sector'}
                             </p>

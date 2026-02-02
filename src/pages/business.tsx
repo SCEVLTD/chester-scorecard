@@ -1,10 +1,13 @@
+import { useState } from 'react'
 import { useParams, useLocation } from 'wouter'
-import { ArrowLeft, BarChart3, History } from 'lucide-react'
+import { ArrowLeft, BarChart3, History, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { useBusinesses } from '@/hooks/use-businesses'
 import { useScorecard, useBusinessScorecards } from '@/hooks/use-scorecards'
 import { BusinessScorecardView } from '@/components/business-scorecard-view'
+import { AddActionModal } from '@/components/add-action-modal'
+import { PendingActionsList } from '@/components/pending-actions-list'
 
 /**
  * Business Scorecard Detail Page
@@ -20,6 +23,7 @@ import { BusinessScorecardView } from '@/components/business-scorecard-view'
 export function BusinessPage() {
   const { businessId, scorecardId } = useParams<{ businessId: string; scorecardId: string }>()
   const [, navigate] = useLocation()
+  const [actionModalOpen, setActionModalOpen] = useState(false)
 
   const { data: businesses } = useBusinesses()
   const { data: scorecard, isLoading: isLoadingScorecard } = useScorecard(scorecardId)
@@ -103,6 +107,10 @@ export function BusinessPage() {
                   <History className="mr-2 h-4 w-4" />
                   All History
                 </Button>
+                <Button onClick={() => setActionModalOpen(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Action
+                </Button>
               </div>
             </div>
           </CardContent>
@@ -113,6 +121,19 @@ export function BusinessPage() {
           scorecard={scorecard}
           previousScorecard={previousScorecard}
           businessName={business?.name || 'Unknown Business'}
+        />
+
+        {/* Pending Actions */}
+        <div className="mt-6">
+          <PendingActionsList businessId={businessId!} />
+        </div>
+
+        {/* Add Action Modal */}
+        <AddActionModal
+          businessId={businessId!}
+          businessName={business?.name || 'Unknown Business'}
+          open={actionModalOpen}
+          onOpenChange={setActionModalOpen}
         />
       </div>
     </div>
