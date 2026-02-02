@@ -215,7 +215,9 @@ export function HomePage() {
 
                       {/* Show email indicator if set */}
                       {business.contact_email && (
-                        <Mail className="h-4 w-4 text-green-600" title={business.contact_email} />
+                        <span title={business.contact_email}>
+                          <Mail className="h-4 w-4 text-green-600" />
+                        </span>
                       )}
 
                       {/* Sector edit section */}
