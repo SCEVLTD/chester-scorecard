@@ -6,7 +6,12 @@
  */
 import { read, utils, SSF } from 'xlsx'
 import { format, parse } from 'date-fns'
-import type { ImportRow } from '@/schemas/import-row'
+import {
+  importRowSchema,
+  type ImportRow,
+  type ValidatedImportRow,
+  type ParseResult,
+} from '@/schemas/import-row'
 
 /**
  * Column alias mapping - maps variations to canonical field names
@@ -332,5 +337,75 @@ export function matchBusinessNames(
     matchedRows,
     unmatchedRows,
     unmatchedBusinesses: Array.from(unmatchedBusinessesSet),
+  }
+}
+
+/**
+ * Validate mapped rows against schema and match business names
+ * Returns ParseResult with valid/invalid rows and unmatched businesses
+ *
+ * @param mappedRows - Rows from mapColumnsToFields
+ * @param businesses - Array of businesses from database
+ * @param detectedColumns - Column mappings detected (passed through to result)
+ * @returns ParseResult with valid rows, invalid rows, and unmatched businesses
+ */
+export function validateImportRows(
+  mappedRows: Record<string, unknown>[],
+  businesses: Array<{ id: string; name: string }>,
+  detectedColumns: string[] = []
+): ParseResult {
+  const validRows: ValidatedImportRow[] = []
+  const invalidRows: ParseResult['invalidRows'] = []
+  const unmatchedBusinessesSet = new Set<string>()
+
+  // Build business lookup
+  const businessMap = buildBusinessLookup(businesses)
+
+  for (let i = 0; i < mappedRows.length; i++) {
+    const rawRow = mappedRows[i]
+    const rowNumber = i + 2 // +1 for 0-index, +1 for header row
+
+    // Validate with Zod
+    const result = importRowSchema.safeParse(rawRow)
+
+    if (!result.success) {
+      invalidRows.push({
+        rowNumber,
+        data: rawRow,
+        errors: result.error.issues.map(
+          (issue) => `${issue.path.join('.')}: ${issue.message}`
+        ),
+      })
+      continue
+    }
+
+    const row = result.data
+
+    // Match business name
+    const businessId = matchSingleBusinessName(row.businessName, businessMap)
+
+    if (!businessId) {
+      unmatchedBusinessesSet.add(row.businessName)
+      invalidRows.push({
+        rowNumber,
+        data: rawRow,
+        errors: [`Unknown business: "${row.businessName}"`],
+      })
+      continue
+    }
+
+    validRows.push({
+      ...row,
+      businessId,
+      isValid: true,
+      errors: [],
+    })
+  }
+
+  return {
+    validRows,
+    invalidRows,
+    unmatchedBusinesses: Array.from(unmatchedBusinessesSet),
+    detectedColumns,
   }
 }
