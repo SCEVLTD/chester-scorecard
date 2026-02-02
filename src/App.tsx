@@ -17,6 +17,7 @@ import { UnauthorizedPage } from '@/pages/unauthorized'
 import CompanySubmitPage from '@/pages/company-submit'
 import SubmissionSuccessPage from '@/pages/submission-success'
 import { UnifiedSubmitPage } from '@/pages/unified-submit'
+import { AdminImportPage } from '@/pages/admin/import'
 
 function App() {
   return (
@@ -46,6 +47,11 @@ function App() {
               <Route path="/compare">
                 <ProtectedRoute requiredRole="admin">
                   <ComparePage />
+                </ProtectedRoute>
+              </Route>
+              <Route path="/admin/import">
+                <ProtectedRoute requiredRole="admin">
+                  <AdminImportPage />
                 </ProtectedRoute>
               </Route>
 

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Pencil, Check, X, LayoutGrid } from 'lucide-react'
+import { Plus, Pencil, Check, X, LayoutGrid, Upload } from 'lucide-react'
 import { useBusinesses, useCreateBusiness, useUpdateBusinessSector } from '@/hooks/use-businesses'
 import { useLatestScoresPerBusiness } from '@/hooks/use-scorecards'
 import { useSectors } from '@/hooks/use-sectors'
@@ -101,6 +101,14 @@ export function HomePage() {
               >
                 <LayoutGrid className="mr-2 h-4 w-4" />
                 Portfolio
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/admin/import')}
+              >
+                <Upload className="mr-2 h-4 w-4" />
+                Import
               </Button>
             </div>
           </CardHeader>
