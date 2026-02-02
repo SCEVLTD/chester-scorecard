@@ -85,10 +85,17 @@ export function HomePage() {
     }
   }
 
-  const copySubmissionLink = (businessId: string, businessName: string) => {
+  const sendSubmissionLink = (businessId: string, businessName: string, email: string | null) => {
     const url = `${window.location.origin}/company/${businessId}/submit`
-    navigator.clipboard.writeText(url)
-    toast.success(`Link copied for ${businessName}`)
+    if (email) {
+      const subject = encodeURIComponent(`Chester Business Scorecard - ${businessName}`)
+      const body = encodeURIComponent(`Hi,\n\nPlease complete your business scorecard using the link below:\n\n${url}\n\nThanks`)
+      window.location.href = `mailto:${email}?subject=${subject}&body=${body}`
+      toast.success(`Opening email for ${businessName}`)
+    } else {
+      navigator.clipboard.writeText(url)
+      toast.success(`Link copied for ${businessName}`)
+    }
   }
 
   const handleDeleteBusiness = async (businessId: string, businessName: string) => {
@@ -234,26 +241,23 @@ export function HomePage() {
                         </div>
                       </Button>
 
-                      {/* Copy submission link */}
+                      {/* Send/copy submission link */}
                       <Button
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8"
                         onClick={(e) => {
                           e.stopPropagation()
-                          copySubmissionLink(business.id, business.name)
+                          sendSubmissionLink(business.id, business.name, business.contact_email)
                         }}
-                        title="Copy submission link"
+                        title={business.contact_email ? `Email link to ${business.contact_email}` : 'Copy submission link'}
                       >
-                        <Link2 className="h-4 w-4 text-blue-600" />
-                      </Button>
-
-                      {/* Show email indicator if set */}
-                      {business.contact_email && (
-                        <span title={business.contact_email}>
+                        {business.contact_email ? (
                           <Mail className="h-4 w-4 text-green-600" />
-                        </span>
-                      )}
+                        ) : (
+                          <Link2 className="h-4 w-4 text-blue-600" />
+                        )}
+                      </Button>
 
                       {/* Sector edit section */}
                       {isEditing ? (
