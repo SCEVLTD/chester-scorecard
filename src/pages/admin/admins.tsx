@@ -23,7 +23,7 @@ export function AdminsPage() {
     queryKey: ['admins'],
     queryFn: async (): Promise<Admin[]> => {
       const { data, error } = await supabase
-        .from('admins')
+        .from('admins' as never)
         .select('*')
         .order('created_at')
       if (error) throw error
@@ -34,8 +34,8 @@ export function AdminsPage() {
   const addAdmin = useMutation({
     mutationFn: async (email: string) => {
       const { error } = await supabase
-        .from('admins')
-        .insert({ email: email.toLowerCase().trim() })
+        .from('admins' as never)
+        .insert({ email: email.toLowerCase().trim() } as never)
       if (error) throw error
     },
     onSuccess: () => {
@@ -55,7 +55,7 @@ export function AdminsPage() {
   const removeAdmin = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from('admins')
+        .from('admins' as never)
         .delete()
         .eq('id', id)
       if (error) throw error
