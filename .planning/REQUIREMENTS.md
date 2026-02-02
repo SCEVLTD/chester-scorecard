@@ -27,25 +27,25 @@ Requirements for initial release (Feb 7, 2026 meeting).
 
 ### Data Import
 
-- [ ] **DATA-01**: Import historical sales data (from Jan 2021) from Shane's Excel
-- [ ] **DATA-02**: Import historical EBITDA data (from Jan 2025) from Shane's Excel
-- [ ] **DATA-03**: Import 2026 annual targets per business
-- [ ] **DATA-04**: Self-service upload tool for Chester admins (no BrandedAI handling raw data)
+- [x] **DATA-01**: Import historical sales data (from Jan 2021) from Shane's Excel
+- [x] **DATA-02**: Import historical EBITDA data (from Jan 2025) from Shane's Excel
+- [x] **DATA-03**: Import 2026 annual targets per business
+- [x] **DATA-04**: Self-service upload tool for Chester admins (no BrandedAI handling raw data)
 
 ### Reporting
 
-- [ ] **REPORT-01**: Individual scorecard view showing score (0-100) with RAG status
-- [ ] **REPORT-02**: AI-generated insights per business (opportunities, risks, recommended actions)
-- [ ] **REPORT-03**: Aggregated portfolio summary for Chester admins (trends, no individual identification)
-- [ ] **REPORT-04**: Meeting prep AI summary: aggregated wins, challenges, discussion points
-- [ ] **REPORT-05**: PDF export of individual business scorecard
-- [ ] **REPORT-06**: Heat map showing scores by month across portfolio
+- [x] **REPORT-01**: Individual scorecard view showing score (0-100) with RAG status
+- [x] **REPORT-02**: AI-generated insights per business (opportunities, risks, recommended actions)
+- [x] **REPORT-03**: Aggregated portfolio summary for Chester admins (trends, no individual identification)
+- [x] **REPORT-04**: Meeting prep AI summary: aggregated wins, challenges, discussion points
+- [x] **REPORT-05**: PDF export of individual business scorecard
+- [x] **REPORT-06**: Heat map showing scores by month across portfolio
 
 ### Action Tracking
 
-- [ ] **ACTION-01**: Capture actions from meetings against specific businesses
-- [ ] **ACTION-02**: Display pending actions on business dashboard
-- [ ] **ACTION-03**: Mark actions as complete
+- [x] **ACTION-01**: Capture actions from meetings against specific businesses
+- [x] **ACTION-02**: Display pending actions on business dashboard
+- [x] **ACTION-03**: Mark actions as complete
 
 ### Reminders
 
@@ -104,19 +104,19 @@ Deferred to future release.
 | FORM-05 | Phase 3 | Complete |
 | FORM-06 | Phase 3 | Complete |
 | FORM-07 | Phase 3 | Complete |
-| DATA-01 | Phase 4 | Pending |
-| DATA-02 | Phase 4 | Pending |
-| DATA-03 | Phase 4 | Pending |
-| DATA-04 | Phase 4 | Pending |
-| REPORT-01 | Phase 5 | Pending |
-| REPORT-02 | Phase 5 | Pending |
-| REPORT-03 | Phase 5 | Pending |
-| REPORT-04 | Phase 5 | Pending |
-| REPORT-05 | Phase 5 | Pending |
-| REPORT-06 | Phase 5 | Pending |
-| ACTION-01 | Phase 6 | Pending |
-| ACTION-02 | Phase 6 | Pending |
-| ACTION-03 | Phase 6 | Pending |
+| DATA-01 | Phase 4 | Complete |
+| DATA-02 | Phase 4 | Complete |
+| DATA-03 | Phase 4 | Complete |
+| DATA-04 | Phase 4 | Complete |
+| REPORT-01 | Phase 5 | Complete |
+| REPORT-02 | Phase 5 | Complete |
+| REPORT-03 | Phase 5 | Complete |
+| REPORT-04 | Phase 5 | Complete |
+| REPORT-05 | Phase 5 | Complete |
+| REPORT-06 | Phase 5 | Complete |
+| ACTION-01 | Phase 6 | Complete |
+| ACTION-02 | Phase 6 | Complete |
+| ACTION-03 | Phase 6 | Complete |
 | REMIND-01 | Phase 7 | Pending |
 | REMIND-02 | Phase 7 | Pending |
 | REMIND-03 | Phase 7 | Pending |
@@ -128,4 +128,4 @@ Deferred to future release.
 
 ---
 *Requirements defined: 2026-02-02*
-*Last updated: 2026-02-02 — Phase 3 (Unified Form) complete*
+*Last updated: 2026-02-02 — Phase 6 (Action Tracking) complete*

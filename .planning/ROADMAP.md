@@ -161,8 +161,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 06-01-PLAN.md - Database schema, types, and hooks for actions CRUD
-- [ ] 06-02-PLAN.md - UI components: modal form, pending list, dashboard badge
+- [x] 06-01-PLAN.md - Database schema, types, and hooks for actions CRUD
+- [x] 06-02-PLAN.md - UI components: modal form, pending list, dashboard badge
 
 **Requirements:**
 - ACTION-01: Capture actions against businesses
@@ -239,4 +239,4 @@ Can ship after Friday:
 ---
 
 *Roadmap created: 2026-02-02*
-*Last updated: 2026-02-02 — Phase 6 planned (Action Tracking)*
+*Last updated: 2026-02-02 — Phase 6 complete (Action Tracking)*
