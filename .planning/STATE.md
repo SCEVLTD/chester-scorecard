@@ -5,7 +5,7 @@
 See: .planning/PROJECT.md (updated 2026-02-02)
 
 **Core value:** Companies see ONLY their own data; Chester admins see aggregated insights.
-**Current focus:** Phase 3 Complete - Ready for Phase 4 (Data Import)
+**Current focus:** Phase 4 Plan 1 Complete - Excel Parser Core
 
 ## Current Status
 
@@ -14,12 +14,12 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 | 1 | Branding | Complete | 100% |
 | 2 | Authentication | Complete | 100% |
 | 3 | Unified Form | Complete | 100% (2/2 plans) |
-| 4 | Data Import | Pending | 0% |
+| 4 | Data Import | In Progress | 33% (1/3 plans) |
 | 5 | Reporting | Pending | 0% |
 | 6 | Action Tracking | Pending | 0% |
 | 7 | Reminders | Pending | 0% |
 
-**Overall Progress:** [========================================] 41% (7/17 plans)
+**Overall Progress:** [================........................] 47% (8/17 plans)
 
 ## Milestone
 
@@ -30,6 +30,7 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 
 | Date | Action |
 |------|--------|
+| 2026-02-02 | Completed 04-01-PLAN.md (Excel parser core) |
 | 2026-02-02 | Completed 03-02-PLAN.md (Unified form page + hooks) |
 | 2026-02-02 | Completed 03-01-PLAN.md (Unified form schema + types) |
 | 2026-02-02 | Completed Phase 2: Authentication (3 plans) |
@@ -52,6 +53,8 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 | 02-03 | RLS policies use public.is_admin() | Consistent with public schema helper functions |
 | 03-01 | Qualitative fields required in unified form | Companies must self-assess - not optional like old consultant flow |
 | 03-02 | Route path /company/:businessId/submit | Distinguishes company-facing routes from admin /business/ routes |
+| 04-01 | Use Zod v4 .issues for error handling | Zod v4 changed error structure from .errors to .issues |
+| 04-01 | All financial fields optional in import schema | Historical data may be incomplete (sales from 2021, EBITDA from 2025) |
 
 ## Blockers
 
@@ -60,18 +63,19 @@ None currently.
 ## Session Continuity
 
 **Last session:** 2026-02-02
-**Stopped at:** Completed 03-02-PLAN.md
+**Stopped at:** Completed 04-01-PLAN.md
 **Resume file:** None
 
 ## Next Action
 
-Phase 3 (Unified Form) is complete. Proceed to Phase 4 (Data Import) when ready.
+Proceed to Phase 4 Plan 2 (Import UI Components).
 
-Key deliverables from Phase 3:
-- /company/:businessId/submit route for authenticated submissions
-- Form with month selector, financials, lead KPIs, qualitative scoring, commentary
-- EBITDA auto-calculation with override option
-- Score calculation on submission
+Key deliverables from Phase 4 Plan 1:
+- Excel parser with SheetJS for browser-based file reading
+- Column alias mapping (26 variations to 13 fields)
+- Business name matching with suffix normalization
+- Date format normalization (Date objects, strings, Excel serial)
+- Validation pipeline producing ParseResult with valid/invalid rows
 
 ---
 *State updated: 2026-02-02*
