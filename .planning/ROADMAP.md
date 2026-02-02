@@ -73,6 +73,12 @@ Plans:
 ### Phase 3: Unified Form
 **Goal:** Single form where companies enter financials + qualitative scoring + commentary.
 
+**Plans:** 2 plans
+
+Plans:
+- [ ] 03-01-PLAN.md - Database schema + types: qualitative columns, Lead KPI types, unified schema
+- [ ] 03-02-PLAN.md - Unified form page: /company/:businessId/submit route with all sections
+
 **Requirements:**
 - FORM-01: Single form combining financials + qualitative sections
 - FORM-02: Financial fields: Revenue, GP, Overheads, EBITDA
@@ -215,4 +221,4 @@ Can ship after Friday:
 ---
 
 *Roadmap created: 2026-02-02*
-*Last updated: 2026-02-02 — Phase 2 complete (Authentication)*
+*Last updated: 2026-02-02 — Phase 3 planned (Unified Form)*
