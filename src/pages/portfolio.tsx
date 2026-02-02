@@ -20,6 +20,7 @@ import { PortfolioHeatmap } from '@/components/portfolio/portfolio-heatmap'
 import { PortfolioAnalysisCard } from '@/components/portfolio/portfolio-analysis-card'
 import { MeetingSummaryCard } from '@/components/meeting-summary-card'
 import { PendingActionsBadge } from '@/components/pending-actions-badge'
+import { SubmissionStatusPanel } from '@/components/submission-status-panel'
 import { usePortfolioSummary } from '@/hooks/use-portfolio-summary'
 import { useGeneratePortfolioAnalysis } from '@/hooks/use-portfolio-analysis'
 import { useGenerateMeetingSummary } from '@/hooks/use-meeting-summary'
@@ -45,6 +46,13 @@ export function PortfolioPage() {
   const [meetingSummary, setMeetingSummary] = useState<MeetingSummary | null>(null)
   const generateAnalysis = useGeneratePortfolioAnalysis()
   const generateMeetingSummary = useGenerateMeetingSummary()
+
+  // Calculate display month for submission status panel
+  const displayMonth = useMemo(() => {
+    if (selectedMonth) return selectedMonth
+    const now = new Date()
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+  }, [selectedMonth])
 
   const handleGenerateAnalysis = async () => {
     if (!portfolio || portfolio.length === 0) {
@@ -262,6 +270,11 @@ export function PortfolioPage() {
             <MeetingSummaryCard summary={meetingSummary} />
           </div>
         )}
+
+        {/* Submission Status Panel */}
+        <div className="mb-6">
+          <SubmissionStatusPanel month={displayMonth} />
+        </div>
 
         {/* Anomaly Alert Section */}
         {anomalies.length > 0 && (
