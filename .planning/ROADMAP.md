@@ -132,8 +132,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 05-01-PLAN.md - Individual scorecard display: prominent score, AI insights, PDF export
-- [ ] 05-02-PLAN.md - Portfolio reporting: month filter, meeting prep summary
+- [x] 05-01-PLAN.md - Individual scorecard display: prominent score, AI insights, PDF export
+- [x] 05-02-PLAN.md - Portfolio reporting: month filter, meeting prep summary
 
 **Requirements:**
 - REPORT-01: Individual scorecard with 0-100 score and RAG
@@ -219,7 +219,7 @@ Minimum viable for demo:
 - [x] Chester/Velocity branding
 - [x] Business login working
 - [x] Unified form for data submission
-- [ ] Basic scorecard display with AI insights
+- [x] Basic scorecard display with AI insights
 
 Nice to have:
 - Historical data imported (shows trends)
@@ -233,4 +233,4 @@ Can ship after Friday:
 ---
 
 *Roadmap created: 2026-02-02*
-*Last updated: 2026-02-02 — Phase 5 planned (Reporting)*
+*Last updated: 2026-02-02 — Phase 5 complete (Reporting)*

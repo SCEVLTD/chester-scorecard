@@ -5,7 +5,7 @@
 See: .planning/PROJECT.md (updated 2026-02-02)
 
 **Core value:** Companies see ONLY their own data; Chester admins see aggregated insights.
-**Current focus:** Phase 4 Complete - Ready for Phase 5 (Reporting)
+**Current focus:** Phase 5 Complete - Friday MVP Ready (Human Verification Needed)
 
 ## Current Status
 
@@ -15,11 +15,11 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 | 2 | Authentication | Complete | 100% |
 | 3 | Unified Form | Complete | 100% (2/2 plans) |
 | 4 | Data Import | Complete | 100% (2/2 plans) |
-| 5 | Reporting | In Progress | 67% (2/3 plans) |
+| 5 | Reporting | Complete | 100% (2/2 plans) |
 | 6 | Action Tracking | Pending | 0% |
 | 7 | Reminders | Pending | 0% |
 
-**Overall Progress:** [=======================.................] 65% (11/17 plans)
+**Overall Progress:** [==========================..............] 73% (11/15 plans)
 
 ## Milestone
 
@@ -30,9 +30,9 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 
 | Date | Action |
 |------|--------|
+| 2026-02-02 | Completed Phase 5: Reporting (2 plans) - Human verification needed |
 | 2026-02-02 | Completed 05-02-PLAN.md (Portfolio month filter & meeting prep) |
 | 2026-02-02 | Completed 05-01-PLAN.md (Business scorecard display) |
-| 2026-02-02 | Started Phase 5: Reporting |
 | 2026-02-02 | Completed Phase 4: Data Import (2 plans) |
 | 2026-02-02 | Completed 04-02-PLAN.md (Import UI Components) |
 | 2026-02-02 | Completed 04-01-PLAN.md (Excel parser core) |
@@ -81,22 +81,27 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 
 ## Next Action
 
-Phase 5 (Reporting) in progress - 2 of 3 plans complete.
+Phase 5 (Reporting) complete. Friday MVP is ready pending human verification.
 
-Key deliverables from 05-02:
-- Month selector for portfolio heatmap (historical views)
-- Meeting prep AI summary with anonymized insights
-- Aggregated wins, challenges, discussion points, group actions
-- Reuses aggregatePortfolio pattern for consistent anonymization
+Key deliverables:
+- Business scorecard view with prominent score, RAG badge, section scores, AI analysis, PDF export
+- Portfolio month filter for historical score viewing
+- Meeting prep AI summary with anonymized insights (wins, challenges, discussion points, group actions)
 
-Chester admins can now filter portfolio by month for historical analysis and generate AI-powered meeting prep summaries without identifying individual businesses.
+**Human Verification Required (6 items):**
+1. Visual quality - Score prominence, RAG colors, layout
+2. AI timing - Verify analysis generates within 10 seconds
+3. PDF output - Verify Chester branding in actual PDF
+4. Month filter UX - Test dropdown interaction
+5. Meeting summary content - Verify aggregate language, no business names
+6. Edge Function deployment - BLOCKER: Requires manual deployment
 
-**Next:** Complete 05-03 (remaining reporting plan) to finish Phase 5.
-
-**Manual action needed:** Deploy Edge Function with Supabase credentials:
+**Critical:** Deploy Edge Function before Friday demo:
 ```bash
 npx supabase functions deploy generate-meeting-summary --no-verify-jwt
 ```
+
+**Next:** Phase 6 (Action Tracking) or Phase 7 (Reminders) - both are post-Friday priority.
 
 ---
 *State updated: 2026-02-02*
