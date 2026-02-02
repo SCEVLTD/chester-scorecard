@@ -13,17 +13,21 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { ArrowLeft, AlertTriangle, GitCompare, Sparkles, Loader2, X } from 'lucide-react'
+import { ArrowLeft, AlertTriangle, GitCompare, Sparkles, Loader2, X, FileText } from 'lucide-react'
 import { toast } from 'sonner'
 import { TrendIndicator } from '@/components/trend-indicator'
 import { PortfolioHeatmap } from '@/components/portfolio/portfolio-heatmap'
 import { PortfolioAnalysisCard } from '@/components/portfolio/portfolio-analysis-card'
+import { MeetingSummaryCard } from '@/components/meeting-summary-card'
 import { usePortfolioSummary } from '@/hooks/use-portfolio-summary'
 import { useGeneratePortfolioAnalysis } from '@/hooks/use-portfolio-analysis'
+import { useGenerateMeetingSummary } from '@/hooks/use-meeting-summary'
 import type { PortfolioAnalysis } from '@/schemas/portfolio-analysis'
+import type { MeetingSummary } from '@/schemas/meeting-summary'
 import { useSectors } from '@/hooks/use-sectors'
 import { supabase } from '@/lib/supabase'
 import type { Scorecard } from '@/types/database.types'
+import { aggregatePortfolio } from '@/lib/portfolio-aggregator'
 
 const ragColors: Record<string, string> = {
   green: 'bg-green-500',
@@ -37,7 +41,9 @@ export function PortfolioPage() {
   const { data: portfolio, isLoading } = usePortfolioSummary(selectedMonth)
   const { data: sectors } = useSectors()
   const [analysis, setAnalysis] = useState<PortfolioAnalysis | null>(null)
+  const [meetingSummary, setMeetingSummary] = useState<MeetingSummary | null>(null)
   const generateAnalysis = useGeneratePortfolioAnalysis()
+  const generateMeetingSummary = useGenerateMeetingSummary()
 
   const handleGenerateAnalysis = async () => {
     if (!portfolio || portfolio.length === 0) {
@@ -58,6 +64,26 @@ export function PortfolioPage() {
       toast.success('Portfolio analysis generated')
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to generate analysis')
+    }
+  }
+
+  const handleGenerateMeetingSummary = async () => {
+    if (!portfolio || portfolio.length === 0) {
+      toast.error('No businesses to analyze')
+      return
+    }
+    if (!latestScorecards || latestScorecards.size === 0) {
+      toast.error('No scorecard data available')
+      return
+    }
+
+    try {
+      const aggregatedData = aggregatePortfolio(portfolio, latestScorecards)
+      const result = await generateMeetingSummary.mutateAsync({ aggregatedData })
+      setMeetingSummary(result)
+      toast.success('Meeting summary generated')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to generate meeting summary')
     }
   }
 
@@ -167,6 +193,18 @@ export function PortfolioPage() {
             Compare
           </Button>
           <Button
+            variant="outline"
+            onClick={handleGenerateMeetingSummary}
+            disabled={generateMeetingSummary.isPending || !portfolio?.length}
+          >
+            {generateMeetingSummary.isPending ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <FileText className="h-4 w-4 mr-2" />
+            )}
+            Meeting Prep
+          </Button>
+          <Button
             onClick={handleGenerateAnalysis}
             disabled={generateAnalysis.isPending || !portfolio?.length}
           >
@@ -201,6 +239,23 @@ export function PortfolioPage() {
               </Button>
             </div>
             <PortfolioAnalysisCard analysis={analysis} />
+          </div>
+        )}
+
+        {/* Meeting Summary Display */}
+        {meetingSummary && (
+          <div className="mb-6">
+            <div className="flex justify-end mb-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setMeetingSummary(null)}
+              >
+                <X className="h-4 w-4 mr-1" />
+                Clear
+              </Button>
+            </div>
+            <MeetingSummaryCard summary={meetingSummary} />
           </div>
         )}
 
