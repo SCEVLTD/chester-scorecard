@@ -48,9 +48,9 @@ Plans:
 **Plans:** 3 plans
 
 Plans:
-- [ ] 02-01-PLAN.md - Database schema: profiles table, auth hook, helper functions
-- [ ] 02-02-PLAN.md - React auth: AuthContext, login form, login page
-- [ ] 02-03-PLAN.md - Route protection and RLS policies
+- [x] 02-01-PLAN.md - Database schema: profiles table, auth hook, helper functions
+- [x] 02-02-PLAN.md - React auth: AuthContext, login form, login page
+- [x] 02-03-PLAN.md - Route protection and RLS policies
 
 **Requirements:**
 - AUTH-01: Business can log in with email/password
@@ -199,7 +199,7 @@ Phase 2 (Auth) ─────────┬───────────�
 
 Minimum viable for demo:
 - [x] Chester/Velocity branding
-- [ ] Business login working
+- [x] Business login working
 - [ ] Unified form for data submission
 - [ ] Basic scorecard display with AI insights
 
@@ -215,4 +215,4 @@ Can ship after Friday:
 ---
 
 *Roadmap created: 2026-02-02*
-*Last updated: 2026-02-02 — Phase 2 planned (3 plans in 2 waves)*
+*Last updated: 2026-02-02 — Phase 2 complete (Authentication)*
