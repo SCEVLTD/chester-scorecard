@@ -5,7 +5,7 @@
 See: .planning/PROJECT.md (updated 2026-02-02)
 
 **Core value:** Companies see ONLY their own data; Chester admins see aggregated insights.
-**Current focus:** Phase 7 - Reminders COMPLETE (1/1 plan)
+**Current focus:** Phase 7 - Reminders COMPLETE (2/2 plans)
 
 ## Current Status
 
@@ -17,9 +17,9 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 | 4 | Data Import | Complete | 100% (2/2 plans) |
 | 5 | Reporting | Complete | 100% (2/2 plans) |
 | 6 | Action Tracking | Complete | 100% (2/2 plans) |
-| 7 | Reminders | Complete | 100% (1/1 plan) |
+| 7 | Reminders | Complete | 100% (2/2 plans) |
 
-**Overall Progress:** [========================================] 100% (14/14 plans)
+**Overall Progress:** [========================================] 100% (15/15 plans)
 
 ## Milestone
 
@@ -30,8 +30,9 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 
 | Date | Action |
 |------|--------|
+| 2026-02-02 | Completed 07-02-PLAN.md (Submission status UI) |
+| 2026-02-02 | Completed Phase 7: Reminders (2 plans) |
 | 2026-02-02 | Completed 07-01-PLAN.md (Reminder email infrastructure) |
-| 2026-02-02 | Completed Phase 7: Reminders (1 plan) |
 | 2026-02-02 | Completed 06-02-PLAN.md (Action UI components) |
 | 2026-02-02 | Completed 06-01-PLAN.md (Action tracking foundation) |
 | 2026-02-02 | Completed Phase 5: Reporting (2 plans) - Human verification needed |
@@ -80,6 +81,9 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 | 07-01 | Daily 9am UTC reminders | Aligns with business hours, not too aggressive |
 | 07-01 | Manual pg_cron setup | Requires Vault secrets to be configured first |
 | 07-01 | Current month only | Keep reminders focused on recent data |
+| 07-02 | Two-column submitted/pending layout | Clear visual separation, color-coded badges for quick status |
+| 07-02 | Send button in card header | Always visible, disabled when no pending businesses |
+| 07-02 | Month filter integration | Consistent filtering across all dashboard elements |
 
 ## Blockers
 
@@ -93,12 +97,18 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 ## Session Continuity
 
 **Last session:** 2026-02-02
-**Stopped at:** Completed 07-01-PLAN.md
+**Stopped at:** Completed 07-02-PLAN.md
 **Resume file:** None
 
 ## Next Action
 
-**PROJECT COMPLETE!** All 7 phases finished. 14/14 plans executed.
+**PROJECT COMPLETE!** All 7 phases finished. 15/15 plans executed.
+
+**Completed in 07-02:**
+- useSubmissionStatus React Query hook
+- SubmissionStatusPanel component with submitted/pending lists
+- Manual "Send Reminders" button on portfolio dashboard
+- Integration with month filter for dynamic status updates
 
 **Completed in 07-01:**
 - send-reminders Edge Function with Resend API integration
