@@ -1,12 +1,13 @@
 -- Chester Business Scorecard - Authentication Schema
 -- Migration: 20260202_add_auth_schema
 -- Purpose: Add profiles table, auth hook, and helper functions for multi-tenant auth
+-- Applied via Supabase MCP: 2026-02-02
 
 -- =============================================================================
 -- 1. PROFILES TABLE - Links auth.users to businesses
 -- =============================================================================
 
-CREATE TABLE public.profiles (
+CREATE TABLE IF NOT EXISTS public.profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   business_id UUID REFERENCES businesses(id) ON DELETE SET NULL,
   role TEXT NOT NULL DEFAULT 'business_user' CHECK (role IN ('admin', 'business_user')),
@@ -29,6 +30,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
@@ -36,7 +38,7 @@ CREATE TRIGGER on_auth_user_created
 -- =============================================================================
 -- 3. AUTH HOOK - Add role and business_id to JWT claims
 -- =============================================================================
--- NOTE: After running this migration, you must enable the hook in Supabase Dashboard:
+-- NOTE: After running this migration, enable the hook in Supabase Dashboard:
 --   Authentication > Hooks > Custom Access Token > select custom_access_token_hook
 
 CREATE OR REPLACE FUNCTION public.custom_access_token_hook(event JSONB)
@@ -73,8 +75,9 @@ REVOKE EXECUTE ON FUNCTION public.custom_access_token_hook FROM authenticated, a
 -- =============================================================================
 -- 4. HELPER FUNCTIONS - For use in RLS policies
 -- =============================================================================
+-- Note: Created in public schema (auth schema requires elevated permissions)
 
-CREATE OR REPLACE FUNCTION auth.business_id()
+CREATE OR REPLACE FUNCTION public.get_my_business_id()
 RETURNS UUID AS $$
   SELECT NULLIF(
     current_setting('request.jwt.claims', true)::jsonb->>'business_id',
@@ -82,7 +85,7 @@ RETURNS UUID AS $$
   )::UUID
 $$ LANGUAGE sql STABLE;
 
-CREATE OR REPLACE FUNCTION auth.is_admin()
+CREATE OR REPLACE FUNCTION public.is_admin()
 RETURNS BOOLEAN AS $$
   SELECT COALESCE(
     current_setting('request.jwt.claims', true)::jsonb->>'user_role' = 'admin',
@@ -95,7 +98,7 @@ $$ LANGUAGE sql STABLE;
 -- =============================================================================
 
 CREATE POLICY "Users can view own profile" ON profiles
-  FOR SELECT USING (auth.uid() = id OR auth.is_admin());
+  FOR SELECT USING (auth.uid() = id OR public.is_admin());
 
 CREATE POLICY "Users can update own profile" ON profiles
   FOR UPDATE USING (auth.uid() = id);

@@ -37,9 +37,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe()
   }, [])
 
-  // Extract custom claims from JWT (app_metadata is secure, not user-modifiable)
-  const userRole = session?.user?.app_metadata?.user_role as 'admin' | 'business_user' | null
-  const businessId = session?.user?.app_metadata?.business_id as string | null
+  // Extract custom claims from JWT
+  // Custom access token hook adds claims to JWT payload, not app_metadata
+  // Decode JWT to get the claims (access_token is a JWT: header.payload.signature)
+  const getJwtClaims = (accessToken: string | undefined) => {
+    if (!accessToken) return { user_role: null, business_id: null }
+    try {
+      const payload = accessToken.split('.')[1]
+      const decoded = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')))
+      return {
+        user_role: decoded.user_role || null,
+        business_id: decoded.business_id || null
+      }
+    } catch {
+      return { user_role: null, business_id: null }
+    }
+  }
+
+  const claims = getJwtClaims(session?.access_token)
+  const userRole = claims.user_role as 'admin' | 'business_user' | null
+  const businessId = claims.business_id as string | null
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
