@@ -1,5 +1,5 @@
 /**
- * PDF Styles for UBT Monthly Business Scorecard
+ * PDF Styles for Chester Business Scorecard
  *
  * Uses @react-pdf/renderer StyleSheet.create() for PDF-specific styling.
  * These styles are NOT CSS - they use a subset of CSS properties that

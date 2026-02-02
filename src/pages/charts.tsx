@@ -105,8 +105,8 @@ export function ChartsPage() {
             Back to History
           </Button>
           <img
-            src="/ubt-logo.png"
-            alt="Universal Business Team"
+            src="/velocity-logo.png"
+            alt="Velocity"
             className="h-8"
           />
         </div>

@@ -1,5 +1,5 @@
 /**
- * Scoring Functions for UBT Monthly Business Scorecard
+ * Scoring Functions for Chester Business Scorecard
  *
  * These functions implement Nick's predefined scoring formulas for financial metrics.
  * Source: PROJECT.md scoring specification

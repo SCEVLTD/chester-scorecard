@@ -1,5 +1,5 @@
 /**
- * Chart Utilities for UBT Monthly Business Scorecard
+ * Chart Utilities for Chester Business Scorecard
  *
  * Provides section score calculation and chart configuration for Recharts.
  * Section scores are NOT stored in the database - they must be calculated

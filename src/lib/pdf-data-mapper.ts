@@ -1,5 +1,5 @@
 /**
- * PDF Data Mapper for UBT Monthly Business Scorecard
+ * PDF Data Mapper for Chester Business Scorecard
  *
  * Transforms Scorecard database records into a PDF-friendly format
  * with pre-calculated scores for display.
