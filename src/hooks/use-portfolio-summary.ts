@@ -37,10 +37,12 @@ interface ScorecardRow {
  * const { data: portfolio, isLoading } = usePortfolioSummary()
  * const anomalies = portfolio?.filter(p => p.isAnomaly)
  * ```
+ *
+ * @param month - Optional month filter (YYYY-MM format). If provided, filters to that specific month.
  */
-export function usePortfolioSummary() {
+export function usePortfolioSummary(month?: string) {
   return useQuery({
-    queryKey: ['portfolio', 'summary'],
+    queryKey: ['portfolio', 'summary', month],
     queryFn: async (): Promise<PortfolioSummary[]> => {
       // Fetch all businesses
       const { data: businesses, error: businessError } = await supabase
@@ -49,11 +51,17 @@ export function usePortfolioSummary() {
         .order('name')
       if (businessError) throw businessError
 
-      // Fetch all scorecards ordered by month descending
-      const { data: scorecards, error: scorecardError } = await supabase
+      // Fetch scorecards - filtered by month if provided
+      let scorecardQuery = supabase
         .from('scorecards')
         .select('business_id, total_score, rag_status, month')
         .order('month', { ascending: false })
+
+      if (month) {
+        scorecardQuery = scorecardQuery.eq('month', month)
+      }
+
+      const { data: scorecards, error: scorecardError } = await scorecardQuery
       if (scorecardError) throw scorecardError
 
       // Group scorecards by business_id, keeping only latest 2 per business

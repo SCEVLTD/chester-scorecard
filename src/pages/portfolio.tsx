@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ArrowLeft, AlertTriangle, GitCompare, Sparkles, Loader2, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { TrendIndicator } from '@/components/trend-indicator'
@@ -32,7 +33,8 @@ const ragColors: Record<string, string> = {
 
 export function PortfolioPage() {
   const [, navigate] = useLocation()
-  const { data: portfolio, isLoading } = usePortfolioSummary()
+  const [selectedMonth, setSelectedMonth] = useState<string | undefined>(undefined)
+  const { data: portfolio, isLoading } = usePortfolioSummary(selectedMonth)
   const { data: sectors } = useSectors()
   const [analysis, setAnalysis] = useState<PortfolioAnalysis | null>(null)
   const generateAnalysis = useGeneratePortfolioAnalysis()
@@ -59,25 +61,41 @@ export function PortfolioPage() {
     }
   }
 
-  // Fetch latest full scorecards for heatmap
+  // Fetch full scorecards for heatmap - filtered by selectedMonth
   const { data: latestScorecards, isLoading: isLoadingScorecards } = useQuery({
-    queryKey: ['scorecards', 'latest-full'],
+    queryKey: ['scorecards', 'for-heatmap', selectedMonth],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('scorecards')
-        .select('*')
-        .order('month', { ascending: false })
-      if (error) throw error
+      if (selectedMonth) {
+        // Specific month - fetch only that month's scorecards
+        const { data, error } = await supabase
+          .from('scorecards')
+          .select('*')
+          .eq('month', selectedMonth)
+        if (error) throw error
 
-      // Group by business, keep only latest
-      const scorecards = data as Scorecard[]
-      const byBusiness = new Map<string, Scorecard>()
-      for (const sc of scorecards) {
-        if (!byBusiness.has(sc.business_id)) {
+        const byBusiness = new Map<string, Scorecard>()
+        for (const sc of data as Scorecard[]) {
           byBusiness.set(sc.business_id, sc)
         }
+        return byBusiness
+      } else {
+        // Latest per business
+        const { data, error } = await supabase
+          .from('scorecards')
+          .select('*')
+          .order('month', { ascending: false })
+        if (error) throw error
+
+        // Group by business, keep only latest
+        const scorecards = data as Scorecard[]
+        const byBusiness = new Map<string, Scorecard>()
+        for (const sc of scorecards) {
+          if (!byBusiness.has(sc.business_id)) {
+            byBusiness.set(sc.business_id, sc)
+          }
+        }
+        return byBusiness
       }
-      return byBusiness
     },
   })
 
@@ -99,6 +117,19 @@ export function PortfolioPage() {
       .map((p) => ({ id: p.businessId, name: p.businessName }))
       .sort((a, b) => a.name.localeCompare(b.name))
   }, [portfolio])
+
+  // Generate month options (last 12 months)
+  const monthOptions = useMemo(() => {
+    const options: { value: string; label: string }[] = []
+    const now = new Date()
+    for (let i = 0; i < 12; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+      const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+      const label = d.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })
+      options.push({ value, label })
+    }
+    return options
+  }, [])
 
   if (isLoading) {
     return (
@@ -207,6 +238,29 @@ export function PortfolioPage() {
             </CardContent>
           </Card>
         )}
+
+        {/* Month Filter */}
+        <div className="flex items-center gap-4 mb-4">
+          <label htmlFor="month-filter" className="text-sm font-medium">
+            Filter by month:
+          </label>
+          <Select
+            value={selectedMonth ?? 'latest'}
+            onValueChange={(value) => setSelectedMonth(value === 'latest' ? undefined : value)}
+          >
+            <SelectTrigger id="month-filter" className="w-[200px]">
+              <SelectValue placeholder="Select month" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="latest">Latest</SelectItem>
+              {monthOptions.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
         {/* Tabs for Card and Heatmap views */}
         <Tabs defaultValue="cards" className="mt-6">
