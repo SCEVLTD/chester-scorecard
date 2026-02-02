@@ -82,6 +82,16 @@ export function HomePage() {
       <div className="mx-auto max-w-2xl">
         <Card>
           <CardHeader className="text-center">
+            <div className="flex flex-col items-center mb-4">
+              <img
+                src="/velocity-logo.png"
+                alt="Velocity"
+                className="h-10 mb-2"
+              />
+              <p className="text-sm text-muted-foreground">
+                Doing good by doing well
+              </p>
+            </div>
             <div className="flex items-center justify-center gap-2">
               <CardTitle>Chester Business Scorecard</CardTitle>
               <Button

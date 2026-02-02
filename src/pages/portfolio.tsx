@@ -123,7 +123,10 @@ export function PortfolioPage() {
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-2xl font-bold">Chester Portfolio Overview</h1>
+          <div className="flex flex-col items-center flex-1">
+            <img src="/velocity-logo.png" alt="Velocity" className="h-8 mb-1" />
+            <p className="text-xs text-muted-foreground">Doing good by doing well</p>
+          </div>
           <div className="flex-1" />
           <Button
             variant="outline"
@@ -144,6 +147,7 @@ export function PortfolioPage() {
             Generate AI Analysis
           </Button>
         </div>
+        <h1 className="text-2xl font-bold text-center mb-4">Chester Portfolio Overview</h1>
 
         {/* 20 Business Limit Warning */}
         {portfolio && portfolio.length > 20 && (
