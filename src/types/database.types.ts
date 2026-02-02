@@ -67,7 +67,17 @@ export interface Database {
           net_profit_override: boolean
           total_wages: number
           productivity_benchmark: number
-          // Qualitative inputs from company
+          // Lead KPIs
+          outbound_calls: number | null
+          first_orders: number | null
+          // Qualitative scoring (self-assessment)
+          leadership: string | null
+          market_demand: string | null
+          marketing: string | null
+          product_strength: string | null
+          supplier_strength: string | null
+          sales_execution: string | null
+          // Qualitative inputs from company (commentary)
           company_biggest_opportunity: string | null
           company_biggest_risk: string | null
           company_challenges: string | null
@@ -91,6 +101,17 @@ export interface Database {
           net_profit_override?: boolean
           total_wages: number
           productivity_benchmark: number
+          // Lead KPIs (optional)
+          outbound_calls?: number | null
+          first_orders?: number | null
+          // Qualitative scoring (optional)
+          leadership?: string | null
+          market_demand?: string | null
+          marketing?: string | null
+          product_strength?: string | null
+          supplier_strength?: string | null
+          sales_execution?: string | null
+          // Commentary (optional)
           company_biggest_opportunity?: string | null
           company_biggest_risk?: string | null
           company_challenges?: string | null
@@ -113,6 +134,17 @@ export interface Database {
           net_profit_override?: boolean
           total_wages?: number
           productivity_benchmark?: number
+          // Lead KPIs
+          outbound_calls?: number | null
+          first_orders?: number | null
+          // Qualitative scoring
+          leadership?: string | null
+          market_demand?: string | null
+          marketing?: string | null
+          product_strength?: string | null
+          supplier_strength?: string | null
+          sales_execution?: string | null
+          // Commentary
           company_biggest_opportunity?: string | null
           company_biggest_risk?: string | null
           company_challenges?: string | null
