@@ -21,6 +21,12 @@
 ### Phase 1: Branding
 **Goal:** Transform UBT visual identity to Chester/Velocity for credibility at Friday demo.
 
+**Plans:** 2 plans
+
+Plans:
+- [ ] 01-01-PLAN.md - Core branding: extract logo, update PDF and charts
+- [ ] 01-02-PLAN.md - Page headers: add branding to all user-facing pages
+
 **Requirements:**
 - BRAND-01: Velocity logo on all pages
 - BRAND-02: Strapline from PowerPoint ("Doing good by doing well")
@@ -185,10 +191,10 @@ Phase 2 (Auth) ─────────┬───────────�
 ## Friday Meeting MVP
 
 Minimum viable for demo:
-- ✓ Chester/Velocity branding
-- ✓ Business login working
-- ✓ Unified form for data submission
-- ✓ Basic scorecard display with AI insights
+- [ ] Chester/Velocity branding
+- [ ] Business login working
+- [ ] Unified form for data submission
+- [ ] Basic scorecard display with AI insights
 
 Nice to have:
 - Historical data imported (shows trends)
