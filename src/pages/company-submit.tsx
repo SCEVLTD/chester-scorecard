@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
 import { AlertCircle, CheckCircle, Loader2, Calculator, Pencil } from 'lucide-react'
 
 export default function CompanySubmitPage() {
@@ -27,25 +28,42 @@ export default function CompanySubmitPage() {
   const form = useForm<CompanySubmissionData>({
     resolver: zodResolver(companySubmissionSchema) as Resolver<CompanySubmissionData>,
     defaultValues: existingSubmission ? {
-      revenueActual: existingSubmission.revenue_actual,
-      revenueTarget: existingSubmission.revenue_target,
-      grossProfitActual: existingSubmission.gross_profit_actual,
-      grossProfitTarget: existingSubmission.gross_profit_target,
-      overheadsActual: existingSubmission.overheads_actual,
-      overheadsBudget: existingSubmission.overheads_budget,
-      netProfitActual: existingSubmission.net_profit_actual,
-      netProfitTarget: existingSubmission.net_profit_target,
+      // N/A flags
+      revenueNa: existingSubmission.revenue_na || false,
+      grossProfitNa: existingSubmission.gross_profit_na || false,
+      overheadsNa: existingSubmission.overheads_na || false,
+      wagesNa: existingSubmission.wages_na || false,
+      // Financial values
+      revenueActual: existingSubmission.revenue_actual ?? undefined,
+      revenueTarget: existingSubmission.revenue_target ?? undefined,
+      grossProfitActual: existingSubmission.gross_profit_actual ?? undefined,
+      grossProfitTarget: existingSubmission.gross_profit_target ?? undefined,
+      overheadsActual: existingSubmission.overheads_actual ?? undefined,
+      overheadsBudget: existingSubmission.overheads_budget ?? undefined,
+      netProfitActual: existingSubmission.net_profit_actual ?? undefined,
+      netProfitTarget: existingSubmission.net_profit_target ?? undefined,
       netProfitOverride: existingSubmission.net_profit_override,
-      totalWages: existingSubmission.total_wages,
-      productivityBenchmark: existingSubmission.productivity_benchmark,
+      totalWages: existingSubmission.total_wages ?? undefined,
+      productivityBenchmark: existingSubmission.productivity_benchmark ?? undefined,
       companyBiggestOpportunity: existingSubmission.company_biggest_opportunity || '',
       companyBiggestRisk: existingSubmission.company_biggest_risk || '',
       companyChallenges: existingSubmission.company_challenges || '',
       companyWins: existingSubmission.company_wins || '',
       submitterName: existingSubmission.submitted_by_name || '',
       submitterEmail: existingSubmission.submitted_by_email || '',
-    } : undefined,
+    } : {
+      revenueNa: false,
+      grossProfitNa: false,
+      overheadsNa: false,
+      wagesNa: false,
+    },
   })
+
+  // Watch N/A flags
+  const revenueNa = useWatch({ control: form.control, name: 'revenueNa' })
+  const grossProfitNa = useWatch({ control: form.control, name: 'grossProfitNa' })
+  const overheadsNa = useWatch({ control: form.control, name: 'overheadsNa' })
+  const wagesNa = useWatch({ control: form.control, name: 'wagesNa' })
 
   // Watch values for auto-calculation
   const grossProfitActual = useWatch({ control: form.control, name: 'grossProfitActual' })
@@ -55,7 +73,7 @@ export default function CompanySubmitPage() {
   const totalWages = useWatch({ control: form.control, name: 'totalWages' })
 
   // Calculate productivity actual (GP / Wages)
-  const productivityActual = totalWages > 0
+  const productivityActual = totalWages && totalWages > 0
     ? (Number(grossProfitActual) / Number(totalWages)).toFixed(2)
     : '0.00'
 
@@ -77,17 +95,23 @@ export default function CompanySubmitPage() {
     if (existingSubmission && !form.formState.isDirty) {
       setNetProfitOverride(existingSubmission.net_profit_override || false)
       form.reset({
-        revenueActual: existingSubmission.revenue_actual,
-        revenueTarget: existingSubmission.revenue_target,
-        grossProfitActual: existingSubmission.gross_profit_actual,
-        grossProfitTarget: existingSubmission.gross_profit_target,
-        overheadsActual: existingSubmission.overheads_actual,
-        overheadsBudget: existingSubmission.overheads_budget,
-        netProfitActual: existingSubmission.net_profit_actual,
-        netProfitTarget: existingSubmission.net_profit_target,
+        // N/A flags
+        revenueNa: existingSubmission.revenue_na || false,
+        grossProfitNa: existingSubmission.gross_profit_na || false,
+        overheadsNa: existingSubmission.overheads_na || false,
+        wagesNa: existingSubmission.wages_na || false,
+        // Financial values
+        revenueActual: existingSubmission.revenue_actual ?? undefined,
+        revenueTarget: existingSubmission.revenue_target ?? undefined,
+        grossProfitActual: existingSubmission.gross_profit_actual ?? undefined,
+        grossProfitTarget: existingSubmission.gross_profit_target ?? undefined,
+        overheadsActual: existingSubmission.overheads_actual ?? undefined,
+        overheadsBudget: existingSubmission.overheads_budget ?? undefined,
+        netProfitActual: existingSubmission.net_profit_actual ?? undefined,
+        netProfitTarget: existingSubmission.net_profit_target ?? undefined,
         netProfitOverride: existingSubmission.net_profit_override,
-        totalWages: existingSubmission.total_wages,
-        productivityBenchmark: existingSubmission.productivity_benchmark,
+        totalWages: existingSubmission.total_wages ?? undefined,
+        productivityBenchmark: existingSubmission.productivity_benchmark ?? undefined,
         companyBiggestOpportunity: existingSubmission.company_biggest_opportunity || '',
         companyBiggestRisk: existingSubmission.company_biggest_risk || '',
         companyChallenges: existingSubmission.company_challenges || '',
@@ -235,231 +259,302 @@ export default function CompanySubmitPage() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               {/* Revenue */}
               <div className="space-y-3">
-                <h3 className="font-medium text-slate-900">Revenue</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm text-slate-600">Actual</label>
-                    <div className="relative mt-1">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">£</span>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        className="pl-7"
-                        placeholder="0"
-                        {...form.register('revenueActual')}
-                      />
-                    </div>
-                    {form.formState.errors.revenueActual && (
-                      <p className="text-sm text-red-500 mt-1">{form.formState.errors.revenueActual.message}</p>
-                    )}
-                  </div>
-                  <div>
-                    <label className="text-sm text-slate-600">Target</label>
-                    <div className="relative mt-1">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">£</span>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        className="pl-7"
-                        placeholder="0"
-                        {...form.register('revenueTarget')}
-                      />
-                    </div>
-                    {form.formState.errors.revenueTarget && (
-                      <p className="text-sm text-red-500 mt-1">{form.formState.errors.revenueTarget.message}</p>
-                    )}
-                  </div>
+                <div className="flex items-center justify-between">
+                  <h3 className="font-medium text-slate-900">Revenue</h3>
+                  <label className="flex items-center gap-2 text-sm text-slate-600">
+                    <Checkbox
+                      checked={revenueNa}
+                      onCheckedChange={(checked) => form.setValue('revenueNa', checked === true)}
+                    />
+                    <span>N/A</span>
+                  </label>
                 </div>
+                {revenueNa ? (
+                  <div className="p-4 bg-slate-50 rounded-lg text-center text-sm text-slate-500">
+                    Revenue data not applicable to this business
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm text-slate-600">Actual</label>
+                      <div className="relative mt-1">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">£</span>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          className="pl-7"
+                          placeholder="0"
+                          {...form.register('revenueActual')}
+                        />
+                      </div>
+                      {form.formState.errors.revenueActual && (
+                        <p className="text-sm text-red-500 mt-1">{form.formState.errors.revenueActual.message}</p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="text-sm text-slate-600">Target</label>
+                      <div className="relative mt-1">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">£</span>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          className="pl-7"
+                          placeholder="0"
+                          {...form.register('revenueTarget')}
+                        />
+                      </div>
+                      {form.formState.errors.revenueTarget && (
+                        <p className="text-sm text-red-500 mt-1">{form.formState.errors.revenueTarget.message}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Gross Profit */}
               <div className="space-y-3">
-                <h3 className="font-medium text-slate-900">Gross Profit</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm text-slate-600">Actual</label>
-                    <div className="relative mt-1">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">£</span>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        className="pl-7"
-                        placeholder="0"
-                        {...form.register('grossProfitActual')}
-                      />
-                    </div>
-                    {form.formState.errors.grossProfitActual && (
-                      <p className="text-sm text-red-500 mt-1">{form.formState.errors.grossProfitActual.message}</p>
-                    )}
-                  </div>
-                  <div>
-                    <label className="text-sm text-slate-600">Target</label>
-                    <div className="relative mt-1">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">£</span>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        className="pl-7"
-                        placeholder="0"
-                        {...form.register('grossProfitTarget')}
-                      />
-                    </div>
-                    {form.formState.errors.grossProfitTarget && (
-                      <p className="text-sm text-red-500 mt-1">{form.formState.errors.grossProfitTarget.message}</p>
-                    )}
-                  </div>
+                <div className="flex items-center justify-between">
+                  <h3 className="font-medium text-slate-900">Gross Profit</h3>
+                  <label className="flex items-center gap-2 text-sm text-slate-600">
+                    <Checkbox
+                      checked={grossProfitNa}
+                      onCheckedChange={(checked) => form.setValue('grossProfitNa', checked === true)}
+                    />
+                    <span>N/A</span>
+                  </label>
                 </div>
+                {grossProfitNa ? (
+                  <div className="p-4 bg-slate-50 rounded-lg text-center text-sm text-slate-500">
+                    Gross Profit data not applicable to this business
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm text-slate-600">Actual</label>
+                      <div className="relative mt-1">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">£</span>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          className="pl-7"
+                          placeholder="0"
+                          {...form.register('grossProfitActual')}
+                        />
+                      </div>
+                      {form.formState.errors.grossProfitActual && (
+                        <p className="text-sm text-red-500 mt-1">{form.formState.errors.grossProfitActual.message}</p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="text-sm text-slate-600">Target</label>
+                      <div className="relative mt-1">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">£</span>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          className="pl-7"
+                          placeholder="0"
+                          {...form.register('grossProfitTarget')}
+                        />
+                      </div>
+                      {form.formState.errors.grossProfitTarget && (
+                        <p className="text-sm text-red-500 mt-1">{form.formState.errors.grossProfitTarget.message}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Overheads */}
               <div className="space-y-3">
-                <h3 className="font-medium text-slate-900">Overheads</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm text-slate-600">Actual</label>
-                    <div className="relative mt-1">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">£</span>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        className="pl-7"
-                        placeholder="0"
-                        {...form.register('overheadsActual')}
-                      />
-                    </div>
-                    {form.formState.errors.overheadsActual && (
-                      <p className="text-sm text-red-500 mt-1">{form.formState.errors.overheadsActual.message}</p>
-                    )}
-                  </div>
-                  <div>
-                    <label className="text-sm text-slate-600">Budget</label>
-                    <div className="relative mt-1">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">£</span>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        className="pl-7"
-                        placeholder="0"
-                        {...form.register('overheadsBudget')}
-                      />
-                    </div>
-                    {form.formState.errors.overheadsBudget && (
-                      <p className="text-sm text-red-500 mt-1">{form.formState.errors.overheadsBudget.message}</p>
-                    )}
-                  </div>
+                <div className="flex items-center justify-between">
+                  <h3 className="font-medium text-slate-900">Overheads</h3>
+                  <label className="flex items-center gap-2 text-sm text-slate-600">
+                    <Checkbox
+                      checked={overheadsNa}
+                      onCheckedChange={(checked) => form.setValue('overheadsNa', checked === true)}
+                    />
+                    <span>N/A</span>
+                  </label>
                 </div>
+                {overheadsNa ? (
+                  <div className="p-4 bg-slate-50 rounded-lg text-center text-sm text-slate-500">
+                    Overheads data not applicable to this business
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm text-slate-600">Actual</label>
+                      <div className="relative mt-1">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">£</span>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          className="pl-7"
+                          placeholder="0"
+                          {...form.register('overheadsActual')}
+                        />
+                      </div>
+                      {form.formState.errors.overheadsActual && (
+                        <p className="text-sm text-red-500 mt-1">{form.formState.errors.overheadsActual.message}</p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="text-sm text-slate-600">Budget</label>
+                      <div className="relative mt-1">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">£</span>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          className="pl-7"
+                          placeholder="0"
+                          {...form.register('overheadsBudget')}
+                        />
+                      </div>
+                      {form.formState.errors.overheadsBudget && (
+                        <p className="text-sm text-red-500 mt-1">{form.formState.errors.overheadsBudget.message}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {/* EBITDA - Auto-calculated or Override */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
+              {/* EBITDA - Auto-calculated or Override (hidden if GP or Overheads are N/A) */}
+              {(grossProfitNa || overheadsNa) ? (
+                <div className="space-y-3">
                   <h3 className="font-medium text-slate-900">EBITDA</h3>
-                  {!netProfitOverride ? (
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-green-600 flex items-center gap-1">
-                        <Calculator className="h-3 w-3" />
-                        Auto-calculated (GP - Overheads)
-                      </span>
-                      <button
-                        type="button"
-                        onClick={enableNetProfitOverride}
-                        className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1"
-                      >
+                  <div className="p-4 bg-slate-50 rounded-lg text-center text-sm text-slate-500">
+                    EBITDA cannot be calculated when Gross Profit or Overheads are marked as N/A
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-medium text-slate-900">EBITDA</h3>
+                    {!netProfitOverride ? (
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-green-600 flex items-center gap-1">
+                          <Calculator className="h-3 w-3" />
+                          Auto-calculated (GP - Overheads)
+                        </span>
+                        <button
+                          type="button"
+                          onClick={enableNetProfitOverride}
+                          className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                        >
+                          <Pencil className="h-3 w-3" />
+                          Override
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-amber-600 flex items-center gap-1">
                         <Pencil className="h-3 w-3" />
-                        Override
-                      </button>
-                    </div>
-                  ) : (
-                    <span className="text-xs text-amber-600 flex items-center gap-1">
-                      <Pencil className="h-3 w-3" />
-                      Manual entry
-                    </span>
-                  )}
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm text-slate-600">Actual</label>
-                    <div className="relative mt-1">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">£</span>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        className={`pl-7 ${!netProfitOverride ? 'bg-slate-50' : ''}`}
-                        placeholder="0"
-                        readOnly={!netProfitOverride}
-                        {...form.register('netProfitActual')}
-                      />
-                    </div>
-                    {form.formState.errors.netProfitActual && (
-                      <p className="text-sm text-red-500 mt-1">{form.formState.errors.netProfitActual.message}</p>
+                        Manual entry
+                      </span>
                     )}
                   </div>
-                  <div>
-                    <label className="text-sm text-slate-600">Target</label>
-                    <div className="relative mt-1">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">£</span>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        className={`pl-7 ${!netProfitOverride ? 'bg-slate-50' : ''}`}
-                        placeholder="0"
-                        readOnly={!netProfitOverride}
-                        {...form.register('netProfitTarget')}
-                      />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm text-slate-600">Actual</label>
+                      <div className="relative mt-1">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">£</span>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          className={`pl-7 ${!netProfitOverride ? 'bg-slate-50' : ''}`}
+                          placeholder="0"
+                          readOnly={!netProfitOverride}
+                          {...form.register('netProfitActual')}
+                        />
+                      </div>
+                      {form.formState.errors.netProfitActual && (
+                        <p className="text-sm text-red-500 mt-1">{form.formState.errors.netProfitActual.message}</p>
+                      )}
                     </div>
-                    {form.formState.errors.netProfitTarget && (
-                      <p className="text-sm text-red-500 mt-1">{form.formState.errors.netProfitTarget.message}</p>
-                    )}
+                    <div>
+                      <label className="text-sm text-slate-600">Target</label>
+                      <div className="relative mt-1">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">£</span>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          className={`pl-7 ${!netProfitOverride ? 'bg-slate-50' : ''}`}
+                          placeholder="0"
+                          readOnly={!netProfitOverride}
+                          {...form.register('netProfitTarget')}
+                        />
+                      </div>
+                      {form.formState.errors.netProfitTarget && (
+                        <p className="text-sm text-red-500 mt-1">{form.formState.errors.netProfitTarget.message}</p>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
 
               {/* Wages & Productivity */}
               <div className="space-y-3">
-                <h3 className="font-medium text-slate-900">Wages & Productivity</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm text-slate-600">Total Wages</label>
-                    <div className="relative mt-1">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">£</span>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        className="pl-7"
-                        placeholder="0"
-                        {...form.register('totalWages')}
-                      />
-                    </div>
-                    {form.formState.errors.totalWages && (
-                      <p className="text-sm text-red-500 mt-1">{form.formState.errors.totalWages.message}</p>
-                    )}
-                  </div>
-                  <div>
-                    <label className="text-sm text-slate-600">Productivity Benchmark (Target)</label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      className="mt-1"
-                      placeholder="e.g., 2.5"
-                      {...form.register('productivityBenchmark')}
+                <div className="flex items-center justify-between">
+                  <h3 className="font-medium text-slate-900">Wages & Productivity</h3>
+                  <label className="flex items-center gap-2 text-sm text-slate-600">
+                    <Checkbox
+                      checked={wagesNa}
+                      onCheckedChange={(checked) => form.setValue('wagesNa', checked === true)}
                     />
-                    <p className="text-xs text-slate-500 mt-1">GP/Wages ratio target (typically 1.5-4.0)</p>
-                    {form.formState.errors.productivityBenchmark && (
-                      <p className="text-sm text-red-500 mt-1">{form.formState.errors.productivityBenchmark.message}</p>
-                    )}
-                  </div>
+                    <span>N/A</span>
+                  </label>
                 </div>
-                {/* Calculated Productivity Actual */}
-                {Number(totalWages) > 0 && (
-                  <div className="p-3 bg-slate-50 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-slate-600 flex items-center gap-1">
-                        <Calculator className="h-3 w-3" />
-                        Productivity Actual (GP/Wages)
-                      </span>
-                      <span className="font-semibold text-slate-900">{productivityActual}</span>
-                    </div>
+                {wagesNa ? (
+                  <div className="p-4 bg-slate-50 rounded-lg text-center text-sm text-slate-500">
+                    Wages & Productivity data not applicable to this business
                   </div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm text-slate-600">Total Wages</label>
+                        <div className="relative mt-1">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">£</span>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            className="pl-7"
+                            placeholder="0"
+                            {...form.register('totalWages')}
+                          />
+                        </div>
+                        {form.formState.errors.totalWages && (
+                          <p className="text-sm text-red-500 mt-1">{form.formState.errors.totalWages.message}</p>
+                        )}
+                      </div>
+                      <div>
+                        <label className="text-sm text-slate-600">Productivity Benchmark (Target)</label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          className="mt-1"
+                          placeholder="e.g., 2.5"
+                          {...form.register('productivityBenchmark')}
+                        />
+                        <p className="text-xs text-slate-500 mt-1">GP/Wages ratio target (typically 1.5-4.0)</p>
+                        {form.formState.errors.productivityBenchmark && (
+                          <p className="text-sm text-red-500 mt-1">{form.formState.errors.productivityBenchmark.message}</p>
+                        )}
+                      </div>
+                    </div>
+                    {/* Calculated Productivity Actual */}
+                    {Number(totalWages) > 0 && !grossProfitNa && (
+                      <div className="p-3 bg-slate-50 rounded-lg">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-slate-600 flex items-center gap-1">
+                            <Calculator className="h-3 w-3" />
+                            Productivity Actual (GP/Wages)
+                          </span>
+                          <span className="font-semibold text-slate-900">{productivityActual}</span>
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
 

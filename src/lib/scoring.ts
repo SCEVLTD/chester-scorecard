@@ -131,6 +131,7 @@ export const LEADERSHIP_SCORES: Record<string, number> = {
   minor: 7,
   misaligned: 3,
   toxic: 0,
+  na: 0,
 }
 
 /** Market Demand Index (0-7.5 points) */
@@ -139,6 +140,7 @@ export const MARKET_DEMAND_SCORES: Record<string, number> = {
   flat: 5,
   softening: 2.5,
   decline: 0,
+  na: 0,
 }
 
 /** Marketing Effectiveness Index (0-7.5 points) */
@@ -147,6 +149,7 @@ export const MARKETING_SCORES: Record<string, number> = {
   activity: 5,
   poor: 2.5,
   none: 0,
+  na: 0,
 }
 
 /** Product/Service Strength (0-10 points) */
@@ -155,6 +158,7 @@ export const PRODUCT_SCORES: Record<string, number> = {
   adequate: 6,
   weak: 3,
   broken: 0,
+  na: 0,
 }
 
 /** Suppliers/Purchasing Strength (0-5 points) */
@@ -163,6 +167,7 @@ export const SUPPLIER_SCORES: Record<string, number> = {
   acceptable: 3,
   weak: 1,
   damaging: 0,
+  na: 0,
 }
 
 /** Sales Execution (0-10 points) */
@@ -171,6 +176,7 @@ export const SALES_SCORES: Record<string, number> = {
   onTarget: 6,
   underperforming: 3,
   none: 0,
+  na: 0,
 }
 
 // ============================================================================
@@ -182,6 +188,7 @@ export const LEADERSHIP_OPTIONS = [
   { value: 'minor', label: 'Minor issues, not performance limiting', points: 7 },
   { value: 'misaligned', label: 'Clear misalignment affecting output', points: 3 },
   { value: 'toxic', label: 'Toxic / blocking progress', points: 0 },
+  { value: 'na', label: 'N/A - Not applicable to my business', points: 0 },
 ] as const
 
 export const MARKET_DEMAND_OPTIONS = [
@@ -189,6 +196,7 @@ export const MARKET_DEMAND_OPTIONS = [
   { value: 'flat', label: 'Flat / mixed signals', points: 5 },
   { value: 'softening', label: 'Softening / pressure on pricing', points: 2.5 },
   { value: 'decline', label: 'Clear decline', points: 0 },
+  { value: 'na', label: 'N/A - Not applicable to my business', points: 0 },
 ] as const
 
 export const MARKETING_OPTIONS = [
@@ -196,6 +204,7 @@ export const MARKETING_OPTIONS = [
   { value: 'activity', label: 'Activity but weak focus', points: 5 },
   { value: 'poor', label: 'Poor execution / no traction', points: 2.5 },
   { value: 'none', label: 'No meaningful marketing', points: 0 },
+  { value: 'na', label: 'N/A - Not applicable to my business', points: 0 },
 ] as const
 
 export const PRODUCT_OPTIONS = [
@@ -203,6 +212,7 @@ export const PRODUCT_OPTIONS = [
   { value: 'adequate', label: 'Adequate but undifferentiated', points: 6 },
   { value: 'weak', label: 'Weak / price-led / delivery issues', points: 3 },
   { value: 'broken', label: 'Fundamentally broken', points: 0 },
+  { value: 'na', label: 'N/A - Not applicable to my business', points: 0 },
 ] as const
 
 export const SUPPLIER_OPTIONS = [
@@ -210,6 +220,7 @@ export const SUPPLIER_OPTIONS = [
   { value: 'acceptable', label: 'Acceptable, no leverage', points: 3 },
   { value: 'weak', label: 'Weak suppliers / margin drag', points: 1 },
   { value: 'damaging', label: 'Actively damaging', points: 0 },
+  { value: 'na', label: 'N/A - Not applicable to my business', points: 0 },
 ] as const
 
 export const SALES_OPTIONS = [
@@ -217,6 +228,7 @@ export const SALES_OPTIONS = [
   { value: 'onTarget', label: 'On target / inconsistent performers', points: 6 },
   { value: 'underperforming', label: 'Underperforming / weak management', points: 3 },
   { value: 'none', label: 'No effective sales engine', points: 0 },
+  { value: 'na', label: 'N/A - Not applicable to my business', points: 0 },
 ] as const
 
 // ============================================================================

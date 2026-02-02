@@ -102,17 +102,23 @@ export interface Database {
         Row: {
           id: string
           data_request_id: string
-          revenue_actual: number
-          revenue_target: number
-          gross_profit_actual: number
-          gross_profit_target: number
-          overheads_actual: number
-          overheads_budget: number
-          net_profit_actual: number
-          net_profit_target: number
+          // N/A flags - allows sections to be marked as not applicable
+          revenue_na: boolean
+          gross_profit_na: boolean
+          overheads_na: boolean
+          wages_na: boolean
+          // Financial data (nullable when N/A)
+          revenue_actual: number | null
+          revenue_target: number | null
+          gross_profit_actual: number | null
+          gross_profit_target: number | null
+          overheads_actual: number | null
+          overheads_budget: number | null
+          net_profit_actual: number | null
+          net_profit_target: number | null
           net_profit_override: boolean
-          total_wages: number
-          productivity_benchmark: number
+          total_wages: number | null
+          productivity_benchmark: number | null
           // Lead KPIs
           outbound_calls: number | null
           first_orders: number | null
@@ -136,17 +142,23 @@ export interface Database {
         Insert: {
           id?: string
           data_request_id: string
-          revenue_actual: number
-          revenue_target: number
-          gross_profit_actual: number
-          gross_profit_target: number
-          overheads_actual: number
-          overheads_budget: number
-          net_profit_actual: number
-          net_profit_target: number
+          // N/A flags
+          revenue_na?: boolean
+          gross_profit_na?: boolean
+          overheads_na?: boolean
+          wages_na?: boolean
+          // Financial data (nullable when N/A)
+          revenue_actual?: number | null
+          revenue_target?: number | null
+          gross_profit_actual?: number | null
+          gross_profit_target?: number | null
+          overheads_actual?: number | null
+          overheads_budget?: number | null
+          net_profit_actual?: number | null
+          net_profit_target?: number | null
           net_profit_override?: boolean
-          total_wages: number
-          productivity_benchmark: number
+          total_wages?: number | null
+          productivity_benchmark?: number | null
           // Lead KPIs (optional)
           outbound_calls?: number | null
           first_orders?: number | null
@@ -169,17 +181,23 @@ export interface Database {
         Update: {
           id?: string
           data_request_id?: string
-          revenue_actual?: number
-          revenue_target?: number
-          gross_profit_actual?: number
-          gross_profit_target?: number
-          overheads_actual?: number
-          overheads_budget?: number
-          net_profit_actual?: number
-          net_profit_target?: number
+          // N/A flags
+          revenue_na?: boolean
+          gross_profit_na?: boolean
+          overheads_na?: boolean
+          wages_na?: boolean
+          // Financial data
+          revenue_actual?: number | null
+          revenue_target?: number | null
+          gross_profit_actual?: number | null
+          gross_profit_target?: number | null
+          overheads_actual?: number | null
+          overheads_budget?: number | null
+          net_profit_actual?: number | null
+          net_profit_target?: number | null
           net_profit_override?: boolean
-          total_wages?: number
-          productivity_benchmark?: number
+          total_wages?: number | null
+          productivity_benchmark?: number | null
           // Lead KPIs
           outbound_calls?: number | null
           first_orders?: number | null

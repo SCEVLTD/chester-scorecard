@@ -19,17 +19,23 @@ export function useCreateCompanySubmission() {
     }) => {
       const insert: CompanySubmissionInsert = {
         data_request_id: dataRequestId,
-        revenue_actual: data.revenueActual,
-        revenue_target: data.revenueTarget,
-        gross_profit_actual: data.grossProfitActual,
-        gross_profit_target: data.grossProfitTarget,
-        overheads_actual: data.overheadsActual,
-        overheads_budget: data.overheadsBudget,
-        net_profit_actual: data.netProfitActual,
-        net_profit_target: data.netProfitTarget,
+        // N/A flags
+        revenue_na: data.revenueNa || false,
+        gross_profit_na: data.grossProfitNa || false,
+        overheads_na: data.overheadsNa || false,
+        wages_na: data.wagesNa || false,
+        // Financial data (null when N/A is true)
+        revenue_actual: data.revenueNa ? null : data.revenueActual,
+        revenue_target: data.revenueNa ? null : data.revenueTarget,
+        gross_profit_actual: data.grossProfitNa ? null : data.grossProfitActual,
+        gross_profit_target: data.grossProfitNa ? null : data.grossProfitTarget,
+        overheads_actual: data.overheadsNa ? null : data.overheadsActual,
+        overheads_budget: data.overheadsNa ? null : data.overheadsBudget,
+        net_profit_actual: (data.grossProfitNa || data.overheadsNa) ? null : data.netProfitActual,
+        net_profit_target: (data.grossProfitNa || data.overheadsNa) ? null : data.netProfitTarget,
         net_profit_override: data.netProfitOverride || false,
-        total_wages: data.totalWages,
-        productivity_benchmark: data.productivityBenchmark,
+        total_wages: data.wagesNa ? null : data.totalWages,
+        productivity_benchmark: data.wagesNa ? null : data.productivityBenchmark,
         // Qualitative inputs
         company_biggest_opportunity: data.companyBiggestOpportunity || null,
         company_biggest_risk: data.companyBiggestRisk || null,
