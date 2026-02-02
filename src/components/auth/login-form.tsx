@@ -12,8 +12,9 @@ export function LoginForm() {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [isResetting, setIsResetting] = useState(false)
   const [, navigate] = useLocation()
-  const { signIn } = useAuth()
+  const { signIn, resetPassword } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -28,6 +29,21 @@ export function LoginForm() {
     }
 
     setIsLoading(false)
+  }
+
+  const handleResetPassword = async () => {
+    if (!email) {
+      toast.error('Please enter your email address first')
+      return
+    }
+    setIsResetting(true)
+    const { error } = await resetPassword(email)
+    if (error) {
+      toast.error('Failed to send reset email')
+    } else {
+      toast.success('Password reset email sent! Check your inbox.')
+    }
+    setIsResetting(false)
   }
 
   return (
@@ -73,6 +89,15 @@ export function LoginForm() {
           </div>
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? 'Signing in...' : 'Sign In'}
+          </Button>
+          <Button
+            type="button"
+            variant="link"
+            className="w-full text-sm"
+            onClick={handleResetPassword}
+            disabled={isResetting}
+          >
+            {isResetting ? 'Sending...' : 'Forgot password?'}
           </Button>
         </form>
       </CardContent>

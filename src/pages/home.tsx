@@ -5,11 +5,12 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Pencil, Check, X, LayoutGrid, Upload, Link2, Mail, Trash2 } from 'lucide-react'
+import { Plus, Pencil, Check, X, LayoutGrid, Upload, Link2, Mail, Trash2, LogOut, Shield } from 'lucide-react'
 import { useBusinesses, useCreateBusiness, useUpdateBusinessSector, useDeleteBusiness } from '@/hooks/use-businesses'
 import { useLatestScoresPerBusiness } from '@/hooks/use-scorecards'
 import { useSectors } from '@/hooks/use-sectors'
 import { SectorSelect } from '@/components/sector-select'
+import { useAuth } from '@/contexts/auth-context'
 
 const ragColors: Record<string, string> = {
   green: 'bg-green-500 hover:bg-green-600',
@@ -25,6 +26,7 @@ export function HomePage() {
   const [editingSectorId, setEditingSectorId] = useState<string | null>(null)
   const [pendingSectorId, setPendingSectorId] = useState<string | null>(null)
 
+  const { signOut } = useAuth()
   const { data: businesses, isLoading } = useBusinesses()
   const { data: sectors } = useSectors()
   const { data: latestScores } = useLatestScoresPerBusiness()
@@ -100,6 +102,11 @@ export function HomePage() {
     }
   }
 
+  const handleSignOut = async () => {
+    await signOut()
+    navigate('/login')
+  }
+
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="mx-auto max-w-2xl">
@@ -132,6 +139,22 @@ export function HomePage() {
               >
                 <Upload className="mr-2 h-4 w-4" />
                 Import
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/admin/admins')}
+              >
+                <Shield className="mr-2 h-4 w-4" />
+                Admins
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSignOut}
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Logout
               </Button>
             </div>
           </CardHeader>
