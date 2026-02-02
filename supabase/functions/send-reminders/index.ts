@@ -24,7 +24,7 @@ async function sendReminderEmail(
   resendApiKey: string,
   submission: PendingSubmission
 ): Promise<SendEmailResult> {
-  const submissionUrl = `https://chester-scorecard.vercel.app/company/${submission.business_id}/submit`
+  const submissionUrl = `https://chester.benchiva.com/company/${submission.business_id}/submit`
 
   const emailHtml = `
     <!DOCTYPE html>
@@ -66,7 +66,7 @@ async function sendReminderEmail(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Chester Business Group <noreply@velocitygrowth.co.uk>',
+        from: 'Chester Business Group <noreply@benchiva.com>',
         to: submission.user_email,
         subject: `Monthly Data Submission Reminder - ${submission.month}`,
         html: emailHtml,
