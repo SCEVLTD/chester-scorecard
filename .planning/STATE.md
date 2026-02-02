@@ -5,7 +5,7 @@
 See: .planning/PROJECT.md (updated 2026-02-02)
 
 **Core value:** Companies see ONLY their own data; Chester admins see aggregated insights.
-**Current focus:** Phase 4 Plan 2 Complete - Import UI Components
+**Current focus:** Phase 4 Complete - Ready for Phase 5 (Reporting)
 
 ## Current Status
 
@@ -14,12 +14,12 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 | 1 | Branding | Complete | 100% |
 | 2 | Authentication | Complete | 100% |
 | 3 | Unified Form | Complete | 100% (2/2 plans) |
-| 4 | Data Import | In Progress | 67% (2/3 plans) |
+| 4 | Data Import | Complete | 100% (2/2 plans) |
 | 5 | Reporting | Pending | 0% |
 | 6 | Action Tracking | Pending | 0% |
 | 7 | Reminders | Pending | 0% |
 
-**Overall Progress:** [==================......................] 53% (9/17 plans)
+**Overall Progress:** [====================....................] 53% (9/17 plans)
 
 ## Milestone
 
@@ -30,6 +30,7 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 
 | Date | Action |
 |------|--------|
+| 2026-02-02 | Completed Phase 4: Data Import (2 plans) |
 | 2026-02-02 | Completed 04-02-PLAN.md (Import UI Components) |
 | 2026-02-02 | Completed 04-01-PLAN.md (Excel parser core) |
 | 2026-02-02 | Completed 03-02-PLAN.md (Unified form page + hooks) |
@@ -71,18 +72,16 @@ None currently.
 
 ## Next Action
 
-Proceed to Phase 4 Plan 3 (if exists) or Phase 5 (Reporting).
+Phase 4 (Data Import) is complete. Proceed to Phase 5 (Reporting) when ready.
 
-Key deliverables from Phase 4 Plan 2:
-- Admin import page at /admin/import
-- Drag-drop file upload with react-dropzone
-- Column detection and preview table
-- Business name matching with unmatched highlighting
-- Bulk upsert to data_requests and company_submissions
-- Progress tracking during import
-- Historical data now visible in scorecards
+Key deliverables from Phase 4:
+- Excel parser with SheetJS, 26 column aliases, business name matching
+- Admin import page at /admin/import with route protection
+- Drag-drop file upload with preview and validation
+- Upsert functionality (updates existing, doesn't duplicate)
+- Imported data visible in business history
 
-Data import workflow complete - Chester admins can self-service upload Shane's historical Excel data.
+Chester admins can now self-service upload Shane's historical Excel data without developer intervention.
 
 ---
 *State updated: 2026-02-02*

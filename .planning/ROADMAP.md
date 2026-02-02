@@ -106,8 +106,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 04-01-PLAN.md - Excel parser core: SheetJS integration, column mapping, validation
-- [ ] 04-02-PLAN.md - Import UI + hook: dropzone, preview, bulk upsert, admin page
+- [x] 04-01-PLAN.md - Excel parser core: SheetJS integration, column mapping, validation
+- [x] 04-02-PLAN.md - Import UI + hook: dropzone, preview, bulk upsert, admin page
 
 **Requirements:**
 - DATA-01: Import historical sales (from Jan 2021)
@@ -227,4 +227,4 @@ Can ship after Friday:
 ---
 
 *Roadmap created: 2026-02-02*
-*Last updated: 2026-02-02 — Phase 4 planned (Data Import)*
+*Last updated: 2026-02-02 — Phase 4 complete (Data Import)*
