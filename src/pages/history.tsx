@@ -44,6 +44,7 @@ export function HistoryPage() {
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back
           </Button>
+          <img src="/velocity-logo.png" alt="Velocity" className="h-8" />
         </div>
 
         <Card>

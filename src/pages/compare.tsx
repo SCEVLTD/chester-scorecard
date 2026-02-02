@@ -78,6 +78,7 @@ export function ComparePage() {
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
+          <img src="/velocity-logo.png" alt="Velocity" className="h-8" />
           <div className="flex items-center gap-2">
             <GitCompare className="h-6 w-6 text-muted-foreground" />
             <h1 className="text-2xl font-bold">Compare Businesses</h1>
