@@ -1,0 +1,8 @@
+{
+  "project": "Chester Business Scorecard",
+  "mode": "yolo",
+  "depth": "standard",
+  "parallel_execution": true,
+  "commit_docs": true,
+  "created": "2026-02-02"
+}
