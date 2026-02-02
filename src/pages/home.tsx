@@ -85,16 +85,16 @@ export function HomePage() {
     }
   }
 
-  const sendSubmissionLink = (businessId: string, businessName: string, email: string | null) => {
-    const url = `${window.location.origin}/company/${businessId}/submit`
+  const sendLoginLink = (businessName: string, email: string | null) => {
+    const loginUrl = `${window.location.origin}/company/login`
     if (email) {
-      const subject = encodeURIComponent(`Chester Business Scorecard - ${businessName}`)
-      const body = encodeURIComponent(`Hi,\n\nPlease complete your business scorecard using the link below:\n\n${url}\n\nThanks`)
+      const subject = encodeURIComponent(`Your Chester Business Scorecard Access - ${businessName}`)
+      const body = encodeURIComponent(`Hi,\n\nYou can access your ${businessName} business scorecard using the link below:\n\n${loginUrl}\n\nSimply enter your email address and we'll send you a secure login link.\n\nThanks`)
       window.location.href = `mailto:${email}?subject=${subject}&body=${body}`
       toast.success(`Opening email for ${businessName}`)
     } else {
-      navigator.clipboard.writeText(url)
-      toast.success(`Link copied for ${businessName}`)
+      navigator.clipboard.writeText(loginUrl)
+      toast.success(`Login link copied`)
     }
   }
 
@@ -248,7 +248,7 @@ export function HomePage() {
                         className="h-8 w-8"
                         onClick={(e) => {
                           e.stopPropagation()
-                          sendSubmissionLink(business.id, business.name, business.contact_email)
+                          sendLoginLink(business.name, business.contact_email)
                         }}
                         title={business.contact_email ? `Email link to ${business.contact_email}` : 'Copy submission link'}
                       >
