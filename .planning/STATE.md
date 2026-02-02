@@ -5,7 +5,7 @@
 See: .planning/PROJECT.md (updated 2026-02-02)
 
 **Core value:** Companies see ONLY their own data; Chester admins see aggregated insights.
-**Current focus:** Phase 5 Complete - Friday MVP Ready (Human Verification Needed)
+**Current focus:** Phase 6 - Action Tracking (1/2 plans complete)
 
 ## Current Status
 
@@ -16,10 +16,10 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 | 3 | Unified Form | Complete | 100% (2/2 plans) |
 | 4 | Data Import | Complete | 100% (2/2 plans) |
 | 5 | Reporting | Complete | 100% (2/2 plans) |
-| 6 | Action Tracking | Pending | 0% |
+| 6 | Action Tracking | In Progress | 50% (1/2 plans) |
 | 7 | Reminders | Pending | 0% |
 
-**Overall Progress:** [==========================..............] 73% (11/15 plans)
+**Overall Progress:** [============================............] 80% (12/15 plans)
 
 ## Milestone
 
@@ -30,6 +30,7 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 
 | Date | Action |
 |------|--------|
+| 2026-02-02 | Completed 06-01-PLAN.md (Action tracking foundation) |
 | 2026-02-02 | Completed Phase 5: Reporting (2 plans) - Human verification needed |
 | 2026-02-02 | Completed 05-02-PLAN.md (Portfolio month filter & meeting prep) |
 | 2026-02-02 | Completed 05-01-PLAN.md (Business scorecard display) |
@@ -66,6 +67,9 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 | 05-01 | Section scores grid with color-coding | Quick visual health assessment for meetings |
 | 05-02 | Meeting summary uses aggregatePortfolio for anonymization | Reuses existing pattern from portfolio analysis for consistency |
 | 05-02 | Month filter applies to both cards and heatmap views | Consistent filtering across visualization types |
+| 06-01 | Simple status model (pending/complete) | Complex workflows deferred to v2 if needed |
+| 06-01 | Single owner per action | Research shows higher completion rates with single ownership |
+| 06-01 | Business user SELECT only for actions | Admins manage action CRUD during meetings |
 
 ## Blockers
 
@@ -76,32 +80,22 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 ## Session Continuity
 
 **Last session:** 2026-02-02
-**Stopped at:** Completed 05-02-PLAN.md
+**Stopped at:** Completed 06-01-PLAN.md
 **Resume file:** None
 
 ## Next Action
 
-Phase 5 (Reporting) complete. Friday MVP is ready pending human verification.
+Phase 6 Plan 01 complete. Action tracking foundation ready.
 
-Key deliverables:
-- Business scorecard view with prominent score, RAG badge, section scores, AI analysis, PDF export
-- Portfolio month filter for historical score viewing
-- Meeting prep AI summary with anonymized insights (wins, challenges, discussion points, group actions)
+**Completed in 06-01:**
+- Actions table with RLS policies (migration ready for deployment)
+- TypeScript types: Action, ActionInsert, ActionUpdate
+- Zod actionSchema for form validation
+- TanStack Query hooks: useCreateAction, useBusinessPendingActions, usePendingActionsCount, useCompleteAction
 
-**Human Verification Required (6 items):**
-1. Visual quality - Score prominence, RAG colors, layout
-2. AI timing - Verify analysis generates within 10 seconds
-3. PDF output - Verify Chester branding in actual PDF
-4. Month filter UX - Test dropdown interaction
-5. Meeting summary content - Verify aggregate language, no business names
-6. Edge Function deployment - BLOCKER: Requires manual deployment
+**Next:** 06-02 (Action UI components) - Add action modal, pending actions list, action completion UI
 
-**Critical:** Deploy Edge Function before Friday demo:
-```bash
-npx supabase functions deploy generate-meeting-summary --no-verify-jwt
-```
-
-**Next:** Phase 6 (Action Tracking) or Phase 7 (Reminders) - both are post-Friday priority.
+**Note:** Migration requires deployment via `supabase db push` or manual SQL execution.
 
 ---
 *State updated: 2026-02-02*
