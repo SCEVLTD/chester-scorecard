@@ -16,6 +16,7 @@ import { LoginPage } from '@/pages/login'
 import { UnauthorizedPage } from '@/pages/unauthorized'
 import CompanySubmitPage from '@/pages/company-submit'
 import SubmissionSuccessPage from '@/pages/submission-success'
+import { UnifiedSubmitPage } from '@/pages/unified-submit'
 
 function App() {
   return (
@@ -74,6 +75,13 @@ function App() {
                 {(params) => (
                   <ProtectedRoute allowedBusinessId={params.businessId}>
                     <ScorecardPage />
+                  </ProtectedRoute>
+                )}
+              </Route>
+              <Route path="/company/:businessId/submit">
+                {(params) => (
+                  <ProtectedRoute allowedBusinessId={params.businessId}>
+                    <UnifiedSubmitPage />
                   </ProtectedRoute>
                 )}
               </Route>
