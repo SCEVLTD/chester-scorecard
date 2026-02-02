@@ -18,6 +18,7 @@ import CompanySubmitPage from '@/pages/company-submit'
 import SubmissionSuccessPage from '@/pages/submission-success'
 import { UnifiedSubmitPage } from '@/pages/unified-submit'
 import { AdminImportPage } from '@/pages/admin/import'
+import { BusinessPage } from '@/pages/business'
 
 function App() {
   return (
@@ -60,6 +61,13 @@ function App() {
                 {(params) => (
                   <ProtectedRoute allowedBusinessId={params.businessId}>
                     <HistoryPage />
+                  </ProtectedRoute>
+                )}
+              </Route>
+              <Route path="/business/:businessId/view/:scorecardId">
+                {(params) => (
+                  <ProtectedRoute allowedBusinessId={params.businessId}>
+                    <BusinessPage />
                   </ProtectedRoute>
                 )}
               </Route>

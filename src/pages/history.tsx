@@ -106,7 +106,7 @@ export function HistoryPage() {
                     key={scorecard.id}
                     scorecard={scorecard}
                     trend={scorecard.trend}
-                    onClick={() => navigate(`/business/${businessId}/scorecard/${scorecard.id}`)}
+                    onClick={() => navigate(`/business/${businessId}/view/${scorecard.id}`)}
                   />
                 ))}
               </div>
