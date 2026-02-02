@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Pencil, Check, X, LayoutGrid, Upload, Link2, Mail } from 'lucide-react'
-import { useBusinesses, useCreateBusiness, useUpdateBusinessSector } from '@/hooks/use-businesses'
+import { Plus, Pencil, Check, X, LayoutGrid, Upload, Link2, Mail, Trash2 } from 'lucide-react'
+import { useBusinesses, useCreateBusiness, useUpdateBusinessSector, useDeleteBusiness } from '@/hooks/use-businesses'
 import { useLatestScoresPerBusiness } from '@/hooks/use-scorecards'
 import { useSectors } from '@/hooks/use-sectors'
 import { SectorSelect } from '@/components/sector-select'
@@ -30,6 +30,7 @@ export function HomePage() {
   const { data: latestScores } = useLatestScoresPerBusiness()
   const createBusiness = useCreateBusiness()
   const updateSector = useUpdateBusinessSector()
+  const deleteBusiness = useDeleteBusiness()
 
   // Build a sector lookup map for displaying names
   const sectorMap = useMemo(() => {
@@ -86,6 +87,17 @@ export function HomePage() {
     const url = `${window.location.origin}/company/${businessId}/submit`
     navigator.clipboard.writeText(url)
     toast.success(`Link copied for ${businessName}`)
+  }
+
+  const handleDeleteBusiness = async (businessId: string, businessName: string) => {
+    if (!confirm(`Delete "${businessName}"? This cannot be undone.`)) return
+    try {
+      await deleteBusiness.mutateAsync(businessId)
+      toast.success(`${businessName} deleted`)
+    } catch (error) {
+      console.error('Failed to delete business:', error)
+      toast.error('Failed to delete business')
+    }
   }
 
   return (
@@ -250,18 +262,32 @@ export function HomePage() {
                           </Button>
                         </div>
                       ) : (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            startEditingSector(business.id, business.sector_id)
-                          }}
-                          title="Edit sector"
-                        >
-                          <Pencil className="h-4 w-4 text-muted-foreground" />
-                        </Button>
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              startEditingSector(business.id, business.sector_id)
+                            }}
+                            title="Edit sector"
+                          >
+                            <Pencil className="h-4 w-4 text-muted-foreground" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleDeleteBusiness(business.id, business.name)
+                            }}
+                            title="Delete business"
+                          >
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          </Button>
+                        </>
                       )}
 
                       {/* Score badge */}

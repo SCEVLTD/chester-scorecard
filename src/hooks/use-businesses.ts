@@ -91,3 +91,20 @@ export function useUpdateBusinessSector() {
     },
   })
 }
+
+export function useDeleteBusiness() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (businessId: string): Promise<void> => {
+      const { error } = await supabase
+        .from('businesses')
+        .delete()
+        .eq('id', businessId)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['businesses'] })
+    },
+  })
+}
