@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react'
 import { toast } from 'sonner'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Upload } from 'lucide-react'
+import { ArrowLeft, Upload, Download } from 'lucide-react'
 import { useLocation } from 'wouter'
 
 import { ExcelImportDropzone } from '@/components/admin/excel-import-dropzone'
@@ -10,6 +10,7 @@ import { ImportPreviewTable } from '@/components/admin/import-preview-table'
 import { ImportProgress } from '@/components/admin/import-progress'
 
 import { parseExcelFile, mapColumnsToFields, validateImportRows } from '@/lib/excel-import-parser'
+import { downloadImportTemplate } from '@/lib/excel-template-generator'
 import { useExcelImport } from '@/hooks/use-excel-import'
 import { useBusinesses } from '@/hooks/use-businesses'
 import type { ParseResult } from '@/schemas/import-row'
@@ -131,6 +132,20 @@ export function AdminImportPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            {/* Download template button */}
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span>Need a template?</span>
+              <Button
+                variant="link"
+                size="sm"
+                className="h-auto p-0"
+                onClick={downloadImportTemplate}
+              >
+                <Download className="mr-1 h-3 w-3" />
+                Download Excel Template
+              </Button>
+            </div>
+
             {/* File dropzone - always visible for reference */}
             <ExcelImportDropzone
               onFileSelected={handleFileSelected}
