@@ -5,7 +5,7 @@
 See: .planning/PROJECT.md (updated 2026-02-02)
 
 **Core value:** Companies see ONLY their own data; Chester admins see aggregated insights.
-**Current focus:** Phase 3 Plan 1 Complete - Ready for Plan 2 (Unified Form Page)
+**Current focus:** Phase 3 Complete - Ready for Phase 4 (Data Import)
 
 ## Current Status
 
@@ -13,13 +13,13 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 |-------|------|--------|----------|
 | 1 | Branding | Complete | 100% |
 | 2 | Authentication | Complete | 100% |
-| 3 | Unified Form | In Progress | 50% (1/2 plans) |
+| 3 | Unified Form | Complete | 100% (2/2 plans) |
 | 4 | Data Import | Pending | 0% |
 | 5 | Reporting | Pending | 0% |
 | 6 | Action Tracking | Pending | 0% |
 | 7 | Reminders | Pending | 0% |
 
-**Overall Progress:** [================================] 35% (6/17 plans)
+**Overall Progress:** [========================================] 41% (7/17 plans)
 
 ## Milestone
 
@@ -30,6 +30,7 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 
 | Date | Action |
 |------|--------|
+| 2026-02-02 | Completed 03-02-PLAN.md (Unified form page + hooks) |
 | 2026-02-02 | Completed 03-01-PLAN.md (Unified form schema + types) |
 | 2026-02-02 | Completed Phase 2: Authentication (3 plans) |
 | 2026-02-02 | Completed 02-03-PLAN.md (Route protection + RLS) |
@@ -50,6 +51,7 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 | 02-01 | JWT claim decoding in AuthContext | Custom claims from hook go to JWT payload, not app_metadata |
 | 02-03 | RLS policies use public.is_admin() | Consistent with public schema helper functions |
 | 03-01 | Qualitative fields required in unified form | Companies must self-assess - not optional like old consultant flow |
+| 03-02 | Route path /company/:businessId/submit | Distinguishes company-facing routes from admin /business/ routes |
 
 ## Blockers
 
@@ -58,12 +60,18 @@ None currently.
 ## Session Continuity
 
 **Last session:** 2026-02-02
-**Stopped at:** Completed 03-01-PLAN.md
+**Stopped at:** Completed 03-02-PLAN.md
 **Resume file:** None
 
 ## Next Action
 
-Proceed to 03-02-PLAN.md (Unified Form Page) - build the actual form component with all sections.
+Phase 3 (Unified Form) is complete. Proceed to Phase 4 (Data Import) when ready.
+
+Key deliverables from Phase 3:
+- /company/:businessId/submit route for authenticated submissions
+- Form with month selector, financials, lead KPIs, qualitative scoring, commentary
+- EBITDA auto-calculation with override option
+- Score calculation on submission
 
 ---
 *State updated: 2026-02-02*
