@@ -181,7 +181,13 @@ Plans:
 ---
 
 ### Phase 7: Reminders
-**Goal:** Automated prompts to submit monthly data.
+**Goal:** Automated email reminders for monthly data submission with admin visibility.
+
+**Plans:** 2 plans
+
+Plans:
+- [ ] 07-01-PLAN.md - Reminder infrastructure: Edge Function, database function, pg_cron setup
+- [ ] 07-02-PLAN.md - Admin dashboard: submission status panel, manual send button
 
 **Requirements:**
 - REMIND-01: Email reminders for data submission
@@ -195,7 +201,7 @@ Plans:
 4. Reminder frequency adjustable (daily, every 2 days, etc.)
 5. Email includes direct link to submission form
 
-**Notes:** Use Supabase Edge Functions or external email service. Can be scheduled via cron.
+**Notes:** Use Supabase Edge Functions with Resend API. pg_cron for scheduling. Research complete - see 07-RESEARCH.md.
 
 ---
 
@@ -239,4 +245,4 @@ Can ship after Friday:
 ---
 
 *Roadmap created: 2026-02-02*
-*Last updated: 2026-02-02 — Phase 6 complete (Action Tracking)*
+*Last updated: 2026-02-02 — Phase 7 planned (Reminders)*
