@@ -204,6 +204,19 @@ export default function CompanySubmitPage() {
       <div className="max-w-2xl mx-auto">
         <Card>
           <CardHeader className="text-center">
+            <div className="flex flex-col items-center mb-4">
+              <img
+                src="/velocity-logo.png"
+                alt="Velocity"
+                className="h-10 mb-2"
+              />
+              <p className="text-sm text-muted-foreground">
+                Doing good by doing well
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Chester Brethren Business Group
+              </p>
+            </div>
             <CardTitle className="text-2xl">Chester Business Scorecard</CardTitle>
             <p className="text-lg text-muted-foreground">Financial Data Submission</p>
             <CardDescription className="text-base">
@@ -337,10 +350,10 @@ export default function CompanySubmitPage() {
                 </div>
               </div>
 
-              {/* Net Profit - Auto-calculated or Override */}
+              {/* EBITDA - Auto-calculated or Override */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-medium text-slate-900">Net Profit</h3>
+                  <h3 className="font-medium text-slate-900">EBITDA</h3>
                   {!netProfitOverride ? (
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-green-600 flex items-center gap-1">
