@@ -32,7 +32,7 @@ export const SCORECARD_COLUMNS: ExcelColumnDef[] = [
   { header: 'Revenue Variance (%)', width: 18 },
   { header: 'GP Variance (%)', width: 15 },
   { header: 'Overheads Variance (%)', width: 20 },
-  { header: 'Net Profit Variance (%)', width: 20 },
+  { header: 'EBITDA Variance (%)', width: 20 },
   // People
   { header: 'Productivity Benchmark', width: 22 },
   { header: 'Productivity Actual', width: 18 },

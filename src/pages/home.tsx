@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Pencil, Check, X, LayoutGrid, Upload } from 'lucide-react'
+import { Plus, Pencil, Check, X, LayoutGrid, Upload, Link2, Mail } from 'lucide-react'
 import { useBusinesses, useCreateBusiness, useUpdateBusinessSector } from '@/hooks/use-businesses'
 import { useLatestScoresPerBusiness } from '@/hooks/use-scorecards'
 import { useSectors } from '@/hooks/use-sectors'
@@ -20,6 +20,7 @@ const ragColors: Record<string, string> = {
 export function HomePage() {
   const [, navigate] = useLocation()
   const [newBusinessName, setNewBusinessName] = useState('')
+  const [newBusinessEmail, setNewBusinessEmail] = useState('')
   const [filterSectorId, setFilterSectorId] = useState<string | null>(null)
   const [editingSectorId, setEditingSectorId] = useState<string | null>(null)
   const [pendingSectorId, setPendingSectorId] = useState<string | null>(null)
@@ -68,13 +69,23 @@ export function HomePage() {
     e.preventDefault()
     if (!newBusinessName.trim()) return
     try {
-      await createBusiness.mutateAsync(newBusinessName.trim())
+      await createBusiness.mutateAsync({
+        name: newBusinessName.trim(),
+        contact_email: newBusinessEmail.trim() || undefined,
+      })
       toast.success('Business created successfully!')
       setNewBusinessName('')
+      setNewBusinessEmail('')
     } catch (error) {
       console.error('Failed to create business:', error)
       toast.error('Failed to create business. Please try again.')
     }
+  }
+
+  const copySubmissionLink = (businessId: string, businessName: string) => {
+    const url = `${window.location.origin}/company/${businessId}/submit`
+    navigator.clipboard.writeText(url)
+    toast.success(`Link copied for ${businessName}`)
   }
 
   return (
@@ -113,18 +124,27 @@ export function HomePage() {
             </div>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleCreateBusiness} className="mb-4 flex gap-2">
-              <Input
-                type="text"
-                placeholder="New business name"
-                value={newBusinessName}
-                onChange={(e) => setNewBusinessName(e.target.value)}
-                className="flex-1"
-              />
-              <Button type="submit" disabled={createBusiness.isPending}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add
-              </Button>
+            <form onSubmit={handleCreateBusiness} className="mb-4 space-y-2">
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  placeholder="Business name"
+                  value={newBusinessName}
+                  onChange={(e) => setNewBusinessName(e.target.value)}
+                  className="flex-1"
+                />
+                <Input
+                  type="email"
+                  placeholder="Contact email"
+                  value={newBusinessEmail}
+                  onChange={(e) => setNewBusinessEmail(e.target.value)}
+                  className="flex-1"
+                />
+                <Button type="submit" disabled={createBusiness.isPending}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add
+                </Button>
+              </div>
             </form>
 
             {/* Sector filter */}
@@ -178,6 +198,25 @@ export function HomePage() {
                           )}
                         </div>
                       </Button>
+
+                      {/* Copy submission link */}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          copySubmissionLink(business.id, business.name)
+                        }}
+                        title="Copy submission link"
+                      >
+                        <Link2 className="h-4 w-4 text-blue-600" />
+                      </Button>
+
+                      {/* Show email indicator if set */}
+                      {business.contact_email && (
+                        <Mail className="h-4 w-4 text-green-600" title={business.contact_email} />
+                      )}
 
                       {/* Sector edit section */}
                       {isEditing ? (

@@ -84,7 +84,7 @@ function MetricRow({ label, name, score, helpText }: MetricRowProps) {
  * - Revenue vs Target
  * - Gross Profit vs Target
  * - Overheads vs Budget (inverted scoring)
- * - Net Profit vs Target
+ * - EBITDA vs Target
  *
  * Uses useFormContext to watch values and calculate scores on every change.
  * Maximum subtotal: 40 points (10 per metric)
@@ -145,7 +145,7 @@ export function FinancialSection() {
           helpText="Negative = under budget (good)"
         />
         <MetricRow
-          label="Net Profit vs Target"
+          label="EBITDA vs Target"
           name="netProfitVariance"
           score={scores.netProfit}
           helpText="Positive = above target"

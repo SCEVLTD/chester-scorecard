@@ -22,7 +22,7 @@ const metricRows: MetricRow[] = [
   { label: 'Revenue Variance', key: 'revenue_variance', type: 'percentage' },
   { label: 'Gross Profit Variance', key: 'gross_profit_variance', type: 'percentage' },
   { label: 'Overheads Variance', key: 'overheads_variance', type: 'percentage' },
-  { label: 'Net Profit Variance', key: 'net_profit_variance', type: 'percentage' },
+  { label: 'EBITDA Variance', key: 'net_profit_variance', type: 'percentage' },
   { label: 'People', key: 'section-header', type: 'section-header' },
   { label: 'Productivity Benchmark', key: 'productivity_benchmark', type: 'number' },
   { label: 'Productivity Actual', key: 'productivity_actual', type: 'number' },

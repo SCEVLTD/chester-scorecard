@@ -141,7 +141,7 @@ export function SubmittedFinancialsDisplay({ submission }: SubmittedFinancialsDi
           invertedLabel
         />
         <MetricDisplayRow
-          label="Net Profit"
+          label="EBITDA"
           actual={submission.net_profit_actual}
           target={submission.net_profit_target}
           variance={variances.netProfitVariance}

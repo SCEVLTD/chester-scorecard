@@ -214,18 +214,24 @@ export interface Database {
           id: string
           name: string
           sector_id: string | null
+          contact_email: string | null
+          contact_name: string | null
           created_at: string
         }
         Insert: {
           id?: string
           name: string
           sector_id?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
           created_at?: string
         }
         Update: {
           id?: string
           name?: string
           sector_id?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
           created_at?: string
         }
         Relationships: [
