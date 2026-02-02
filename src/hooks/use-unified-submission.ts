@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { calculateTotalScore } from '@/lib/scoring'
-import type { CompanySubmission, CompanySubmissionInsert } from '@/types/database.types'
+import type { CompanySubmission, CompanySubmissionInsert, DataRequest } from '@/types/database.types'
 import type { UnifiedSubmissionData } from '@/schemas/unified-submission'
 
 /**
@@ -59,7 +59,7 @@ export function useCreateUnifiedSubmission() {
           .single()
 
         if (createError) throw createError
-        dataRequestId = newRequest.id
+        dataRequestId = (newRequest as DataRequest).id
       }
 
       // 2. Calculate variances for total score

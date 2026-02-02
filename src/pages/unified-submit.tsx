@@ -34,7 +34,7 @@ import {
 export function UnifiedSubmitPage() {
   const params = useParams<{ businessId: string }>()
   const [, navigate] = useLocation()
-  const { businessId: authBusinessId, userRole } = useAuth()
+  const { businessId: authBusinessId } = useAuth()
 
   // Use URL param or fallback to auth context businessId
   const businessId = params.businessId || authBusinessId
