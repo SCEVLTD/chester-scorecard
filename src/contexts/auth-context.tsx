@@ -10,6 +10,7 @@ interface AuthContextType {
   businessId: string | null
   isLoading: boolean
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>
+  signInWithMagicLink: (email: string) => Promise<{ error: Error | null }>
   signOut: () => Promise<void>
 }
 
@@ -63,6 +64,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error }
   }
 
+  const signInWithMagicLink = async (email: string) => {
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/company/dashboard`,
+      },
+    })
+    return { error }
+  }
+
   const signOut = async () => {
     await supabase.auth.signOut()
   }
@@ -75,6 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       businessId,
       isLoading,
       signIn,
+      signInWithMagicLink,
       signOut,
     }}>
       {children}

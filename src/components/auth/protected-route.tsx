@@ -27,10 +27,19 @@ export function ProtectedRoute({
   }
 
   if (!session) {
-    return <Redirect to="/login" />
+    // Redirect business users to company login, admins to regular login
+    return <Redirect to={requiredRole === 'business_user' ? '/company/login' : '/login'} />
   }
 
   if (requiredRole === 'admin' && userRole !== 'admin') {
+    // Business users trying to access admin pages go to their dashboard
+    if (userRole === 'business_user' && businessId) {
+      return <Redirect to="/company/dashboard" />
+    }
+    return <Redirect to="/unauthorized" />
+  }
+
+  if (requiredRole === 'business_user' && userRole !== 'business_user' && userRole !== 'admin') {
     return <Redirect to="/unauthorized" />
   }
 

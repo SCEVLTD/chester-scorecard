@@ -19,6 +19,8 @@ import SubmissionSuccessPage from '@/pages/submission-success'
 import { UnifiedSubmitPage } from '@/pages/unified-submit'
 import { AdminImportPage } from '@/pages/admin/import'
 import { BusinessPage } from '@/pages/business'
+import { CompanyLoginPage } from '@/pages/company/login'
+import { CompanyDashboardPage } from '@/pages/company/dashboard'
 
 function App() {
   return (
@@ -30,9 +32,17 @@ function App() {
             <Switch>
               {/* Public routes */}
               <Route path="/login" component={LoginPage} />
+              <Route path="/company/login" component={CompanyLoginPage} />
               <Route path="/unauthorized" component={UnauthorizedPage} />
               <Route path="/submit/:token" component={CompanySubmitPage} />
               <Route path="/submit/:token/success" component={SubmissionSuccessPage} />
+
+              {/* Company dashboard - requires business_user role */}
+              <Route path="/company/dashboard">
+                <ProtectedRoute requiredRole="business_user">
+                  <CompanyDashboardPage />
+                </ProtectedRoute>
+              </Route>
 
               {/* Admin-only routes */}
               <Route path="/">
