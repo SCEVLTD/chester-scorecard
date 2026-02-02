@@ -149,45 +149,48 @@ Deno.serve(async (req) => {
 
     const prompt = buildPrompt(scorecard, previousScorecard, businessName)
 
-    const response = await anthropic.beta.messages.create({
-      model: 'claude-sonnet-4-5-20250514',
-      max_tokens: 2000,
-      betas: ['structured-outputs-2025-11-13'],
-      messages: [{ role: 'user', content: prompt }],
-      output_format: {
-        type: 'json_schema',
-        schema: {
-          type: 'object',
-          properties: {
-            execSummary: { type: 'string' },
-            topQuestions: { type: 'array', items: { type: 'string' } },
-            actions30Day: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  action: { type: 'string' },
-                  priority: { type: 'string', enum: ['high', 'medium', 'low'] }
-                },
-                required: ['action', 'priority']
-              }
+    const analysisTool = {
+      name: 'submit_analysis',
+      description: 'Submit the completed business analysis',
+      input_schema: {
+        type: 'object' as const,
+        properties: {
+          execSummary: { type: 'string', description: 'Executive summary (150-250 words)' },
+          topQuestions: { type: 'array', items: { type: 'string' }, description: 'Top 5 questions for client call' },
+          actions30Day: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                action: { type: 'string' },
+                priority: { type: 'string', enum: ['high', 'medium', 'low'] }
+              },
+              required: ['action', 'priority']
             },
-            inconsistencies: { type: 'array', items: { type: 'string' } },
-            trendBreaks: { type: 'array', items: { type: 'string' } }
+            description: 'Prioritized 30-day action items'
           },
-          required: ['execSummary', 'topQuestions', 'actions30Day', 'inconsistencies', 'trendBreaks'],
-          additionalProperties: false
-        }
+          inconsistencies: { type: 'array', items: { type: 'string' }, description: 'Data inconsistencies detected (empty array if none)' },
+          trendBreaks: { type: 'array', items: { type: 'string' }, description: 'Significant trend breaks vs prior month (empty array if none or no prior data)' }
+        },
+        required: ['execSummary', 'topQuestions', 'actions30Day', 'inconsistencies', 'trendBreaks']
       }
-    })
-
-    // Parse the structured output
-    const textContent = response.content[0]
-    if (textContent.type !== 'text') {
-      throw new Error('Unexpected response type from Claude')
     }
 
-    const analysis = JSON.parse(textContent.text)
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-5-20250514',
+      max_tokens: 2000,
+      messages: [{ role: 'user', content: prompt }],
+      tools: [analysisTool],
+      tool_choice: { type: 'tool', name: 'submit_analysis' }
+    })
+
+    // Extract the tool use result
+    const toolUse = response.content.find(block => block.type === 'tool_use')
+    if (!toolUse || toolUse.type !== 'tool_use') {
+      throw new Error('No tool use response from Claude')
+    }
+
+    const analysis = toolUse.input as Record<string, unknown>
 
     // Add metadata
     analysis.generatedAt = new Date().toISOString()

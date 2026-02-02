@@ -28,3 +28,10 @@ Thumbs.db
 coverage/
 
 .vercel
+
+# Local tooling
+.claude/
+.mcp.json
+.specstory/
+.cursorindexingignore
+.planning/
