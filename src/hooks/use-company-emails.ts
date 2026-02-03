@@ -134,6 +134,8 @@ interface SendInviteResponse {
   success: boolean
   message: string
   email: string
+  emailSent?: boolean
+  setupLink?: string
   error?: string
 }
 
