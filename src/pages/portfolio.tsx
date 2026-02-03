@@ -13,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { ArrowLeft, AlertTriangle, GitCompare, Sparkles, Loader2, X, FileText } from 'lucide-react'
+import { ArrowLeft, AlertTriangle, GitCompare, Sparkles, Loader2, X, FileText, Pencil } from 'lucide-react'
 import { toast } from 'sonner'
 import { TrendIndicator } from '@/components/trend-indicator'
 import { PortfolioHeatmap } from '@/components/portfolio/portfolio-heatmap'
@@ -21,11 +21,15 @@ import { PortfolioAnalysisCard } from '@/components/portfolio/portfolio-analysis
 import { MeetingSummaryCard } from '@/components/meeting-summary-card'
 import { PendingActionsBadge } from '@/components/pending-actions-badge'
 import { SubmissionStatusPanel } from '@/components/submission-status-panel'
+import { CompanyEditDialog } from '@/components/admin/company-edit-dialog'
 import { usePortfolioSummary } from '@/hooks/use-portfolio-summary'
 import { useGeneratePortfolioAnalysis } from '@/hooks/use-portfolio-analysis'
 import { useGenerateMeetingSummary } from '@/hooks/use-meeting-summary'
+import { useBusinesses } from '@/hooks/use-businesses'
+import { useAuth } from '@/contexts/auth-context'
 import type { PortfolioAnalysis } from '@/schemas/portfolio-analysis'
 import type { MeetingSummary } from '@/schemas/meeting-summary'
+import type { Business } from '@/types/database.types'
 import { useSectors } from '@/hooks/use-sectors'
 import { supabase } from '@/lib/supabase'
 import type { Scorecard } from '@/types/database.types'
@@ -42,8 +46,11 @@ export function PortfolioPage() {
   const [selectedMonth, setSelectedMonth] = useState<string | undefined>(undefined)
   const { data: portfolio, isLoading } = usePortfolioSummary(selectedMonth)
   const { data: sectors } = useSectors()
+  const { data: allBusinesses } = useBusinesses()
+  const { userRole } = useAuth()
   const [analysis, setAnalysis] = useState<PortfolioAnalysis | null>(null)
   const [meetingSummary, setMeetingSummary] = useState<MeetingSummary | null>(null)
+  const [editingBusiness, setEditingBusiness] = useState<Business | null>(null)
   const generateAnalysis = useGeneratePortfolioAnalysis()
   const generateMeetingSummary = useGenerateMeetingSummary()
 
@@ -139,6 +146,12 @@ export function PortfolioPage() {
     if (!sectors) return new Map<string, string>()
     return new Map(sectors.map((s) => [s.id, s.name]))
   }, [sectors])
+
+  // Build business lookup map
+  const businessMap = useMemo(() => {
+    if (!allBusinesses) return new Map<string, Business>()
+    return new Map(allBusinesses.map((b) => [b.id, b]))
+  }, [allBusinesses])
 
   // Extract anomalies (businesses with >10 point score drop)
   const anomalies = useMemo(() => {
@@ -349,16 +362,19 @@ export function PortfolioPage() {
                   const sectorName = item.sectorId
                     ? sectorMap.get(item.sectorId)
                     : null
+                  const business = businessMap.get(item.businessId)
 
                   return (
                     <Card
                       key={item.businessId}
-                      className="cursor-pointer hover:shadow-md transition-shadow"
-                      onClick={() => navigate(`/business/${item.businessId}`)}
+                      className="hover:shadow-md transition-shadow"
                     >
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between">
-                          <div className="flex-1">
+                          <div
+                            className="flex-1 cursor-pointer"
+                            onClick={() => navigate(`/business/${item.businessId}`)}
+                          >
                             <div className="flex items-center">
                               <h3 className="font-medium">{item.businessName}</h3>
                               <PendingActionsBadge businessId={item.businessId} />
@@ -367,9 +383,24 @@ export function PortfolioPage() {
                               {sectorName || 'No sector'}
                             </p>
                           </div>
-                          <Badge className={ragColors[item.ragStatus]}>
-                            {item.latestScore}
-                          </Badge>
+                          <div className="flex items-center gap-2">
+                            <Badge className={ragColors[item.ragStatus]}>
+                              {item.latestScore}
+                            </Badge>
+                            {userRole === 'admin' && business && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setEditingBusiness(business)
+                                }}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
                         </div>
                         <div className="mt-2">
                           <TrendIndicator trend={item.trend} />
@@ -401,6 +432,15 @@ export function PortfolioPage() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Company Edit Dialog */}
+        {editingBusiness && (
+          <CompanyEditDialog
+            business={editingBusiness}
+            open={!!editingBusiness}
+            onOpenChange={(open) => !open && setEditingBusiness(null)}
+          />
+        )}
       </div>
     </div>
   )
