@@ -62,11 +62,14 @@ function buildPrompt(
     ? ((scorecard.productivity_actual - scorecard.productivity_benchmark) / scorecard.productivity_benchmark * 100).toFixed(1)
     : null
 
-  return `You are a business analyst reviewing a monthly scorecard for a client call preparation.
+  // Check if this is a self-assessment (no consultant commentary)
+  const isSelfAssessment = !scorecard.consultant_name && !scorecard.biggest_opportunity
+
+  return `You are a business performance advisor providing insights for a monthly business scorecard review.
 
 BUSINESS: ${businessName}
 MONTH: ${scorecard.month}
-CONSULTANT: ${scorecard.consultant_name}
+TYPE: ${isSelfAssessment ? 'Self-Assessment' : 'Consultant Review'}
 
 OVERALL SCORE: ${scorecard.total_score}/100 (${scorecard.rag_status.toUpperCase()})
 
@@ -95,13 +98,6 @@ Supplier Strength: ${formatQualitative(scorecard.supplier_strength)}
 === SALES ===
 Sales Execution: ${formatQualitative(scorecard.sales_execution)}
 
-=== CONSULTANT COMMENTARY ===
-Biggest Opportunity: ${scorecard.biggest_opportunity}
-Biggest Risk: ${scorecard.biggest_risk}
-What Management Is Avoiding: ${scorecard.management_avoiding}
-Leadership Confidence: ${scorecard.leadership_confidence}
-Gut Feel: ${scorecard.consultant_gut_feel}
-
 ${previousScorecard ? `
 === PREVIOUS MONTH (${previousScorecard.month}) ===
 Previous Score: ${previousScorecard.total_score}/100 (${previousScorecard.rag_status.toUpperCase()})
@@ -112,20 +108,20 @@ Score Change: ${scorecard.total_score - previousScorecard.total_score} points
 
 INCONSISTENCY DETECTION:
 Flag these specific contradictions if present:
-1. Strong market_demand (4-5) BUT negative revenue_variance - Ask: "You report strong market demand, yet revenue is down. What's blocking conversion?"
-2. Strong sales_execution (4-5) BUT low productivity scores (actual < benchmark) - Ask: "Sales appear strong but productivity lags. Is the team stretched thin?"
-3. High leadership rating (4-5) BUT poor financial_performance (multiple negative variances) - Ask: "Leadership is confident despite financial headwinds. What's the basis for optimism?"
-4. Product rated as differentiated (4-5) BUT GP margins compressed (negative gross_profit_variance) - Ask: "If product is differentiated, why is GP margin under pressure? Pricing power issue?"
-5. Positive leadership_confidence commentary BUT declining revenue trend (revenue_variance negative) - Ask: "Pipeline looks healthy but revenue is declining. Is the pipeline converting?"
+1. Strong market_demand (4-5) BUT negative revenue_variance - Note: "Strong market demand reported, yet revenue is below target. Consider what's blocking conversion."
+2. Strong sales_execution (4-5) BUT low productivity scores (actual < benchmark) - Note: "Sales execution rated highly but productivity lags benchmark. Team may be stretched thin."
+3. High leadership rating (4-5) BUT poor financial_performance (multiple negative variances) - Note: "Leadership rated confident despite financial headwinds. Review the basis for optimism."
+4. Product rated as differentiated (4-5) BUT GP margins compressed (negative gross_profit_variance) - Note: "Product rated strong but GP margin under pressure. May indicate pricing power issue."
+5. Positive revenue trend BUT negative net_profit_variance - Note: "Revenue growing but net profit declining. Review cost structure and overhead efficiency."
 
 Only include an inconsistency if the data clearly shows the contradiction. Be specific about which data points conflict.
 
 ---
 
 REQUIRED OUTPUT:
-1. Executive Summary (150-250 words): Synthesize the scorecard into a clear narrative. Reference specific numbers and ratings. Highlight what's going well and what needs attention.
+1. Executive Summary (150-250 words): Synthesize the scorecard into a clear narrative. Reference specific numbers and ratings. Highlight what's going well and what needs attention. Write in second person ("Your business...") for self-assessment context.
 
-2. Top 5 Questions for Client Call: Sharp, specific questions grounded in the data. Reference actual metrics. Probe the commentary sections. Focus on understanding root causes.
+2. 5 Focus Points for Next Month: Key areas to monitor and improve based on this month's data. Each point should be specific, actionable, and grounded in the metrics. Focus on progress opportunities and areas needing attention. These should help the business owner know what to track and prioritize.
 
 3. 30-Day Action Items: Prioritized list of concrete actions. Each action must have a priority (high/medium/low). Focus on quick wins and urgent issues first.
 
@@ -156,7 +152,7 @@ Deno.serve(async (req) => {
         type: 'object' as const,
         properties: {
           execSummary: { type: 'string', description: 'Executive summary (150-250 words)' },
-          topQuestions: { type: 'array', items: { type: 'string' }, description: 'Top 5 questions for client call' },
+          topQuestions: { type: 'array', items: { type: 'string' }, description: '5 focus points for next month - areas to monitor, improve, or track progress' },
           actions30Day: {
             type: 'array',
             items: {

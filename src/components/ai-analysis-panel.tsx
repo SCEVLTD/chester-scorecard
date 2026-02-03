@@ -80,7 +80,7 @@ function LoadingSkeleton() {
  *
  * Displays AI-generated analysis for a scorecard including:
  * - Executive Summary
- * - Questions for Next Call
+ * - Focus Points for Next Month
  * - 30-Day Actions with priority badges
  * - Inconsistencies detected (if any)
  * - Trend breaks vs previous month (if any)
@@ -193,18 +193,18 @@ export function AIAnalysisPanel({
         </CardContent>
       </Card>
 
-      {/* Questions for Next Call */}
+      {/* Focus Points for Next Month */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <ListChecks className="h-4 w-4" />
-            Questions for Next Call
+            Focus Points for Next Month
           </CardTitle>
         </CardHeader>
         <CardContent>
           <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
-            {analysis.topQuestions.map((question, index) => (
-              <li key={index}>{question}</li>
+            {analysis.topQuestions.map((point, index) => (
+              <li key={index}>{point}</li>
             ))}
           </ol>
         </CardContent>
