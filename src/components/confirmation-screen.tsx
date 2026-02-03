@@ -133,8 +133,7 @@ export function ConfirmationScreen({
               Leadership Confidence
             </p>
             <p className="text-sm">
-              {confidenceLabels[scorecard.leadership_confidence] ||
-                scorecard.leadership_confidence}
+              {scorecard.leadership_confidence ? (confidenceLabels[scorecard.leadership_confidence] || scorecard.leadership_confidence) : 'Not specified'}
             </p>
           </div>
 

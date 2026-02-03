@@ -164,7 +164,7 @@ export function mapScorecardToPdfData(
   return {
     businessName,
     month: format(new Date(scorecard.month + '-01'), 'MMMM yyyy'),
-    consultantName: scorecard.consultant_name,
+    consultantName: scorecard.consultant_name || '',
     totalScore: scorecard.total_score,
     ragStatus: scorecard.rag_status as 'green' | 'amber' | 'red',
     submittedAt: format(new Date(scorecard.created_at), 'dd MMM yyyy, HH:mm'),
@@ -217,11 +217,11 @@ export function mapScorecardToPdfData(
     },
 
     commentary: {
-      biggestOpportunity: scorecard.biggest_opportunity,
-      biggestRisk: scorecard.biggest_risk,
-      managementAvoiding: scorecard.management_avoiding,
-      leadershipConfidence: scorecard.leadership_confidence,
-      gutFeel: scorecard.consultant_gut_feel,
+      biggestOpportunity: scorecard.biggest_opportunity || '',
+      biggestRisk: scorecard.biggest_risk || '',
+      managementAvoiding: scorecard.management_avoiding || '',
+      leadershipConfidence: scorecard.leadership_confidence || '',
+      gutFeel: scorecard.consultant_gut_feel || '',
     },
 
     aiAnalysis,

@@ -23,7 +23,7 @@ import {
 export function mapScorecardToForm(scorecard: Scorecard): ScorecardData {
   return {
     month: scorecard.month,
-    consultantName: scorecard.consultant_name,
+    consultantName: scorecard.consultant_name || '',
     // Financial (null -> undefined)
     revenueVariance: scorecard.revenue_variance ?? undefined,
     grossProfitVariance: scorecard.gross_profit_variance ?? undefined,
@@ -42,11 +42,11 @@ export function mapScorecardToForm(scorecard: Scorecard): ScorecardData {
     supplierStrength: validateSupplierStrength(scorecard.supplier_strength),
     // Sales - validated enum
     salesExecution: validateSalesExecution(scorecard.sales_execution),
-    // Commentary (mandatory fields, no null handling needed)
-    biggestOpportunity: scorecard.biggest_opportunity,
-    biggestRisk: scorecard.biggest_risk,
-    managementAvoiding: scorecard.management_avoiding,
-    leadershipConfidence: validateLeadershipConfidence(scorecard.leadership_confidence)!,
-    consultantGutFeel: scorecard.consultant_gut_feel,
+    // Commentary (nullable fields, provide defaults)
+    biggestOpportunity: scorecard.biggest_opportunity || '',
+    biggestRisk: scorecard.biggest_risk || '',
+    managementAvoiding: scorecard.management_avoiding || '',
+    leadershipConfidence: validateLeadershipConfidence(scorecard.leadership_confidence) || 'confident',
+    consultantGutFeel: scorecard.consultant_gut_feel || '',
   }
 }

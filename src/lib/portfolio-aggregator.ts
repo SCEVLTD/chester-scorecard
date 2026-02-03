@@ -155,8 +155,8 @@ export function aggregatePortfolio(
       rag: summary.ragStatus,
       trend: summary.trend?.direction || null,
       trendChange: summary.trend?.change || null,
-      topRisk: scorecard.biggest_risk,
-      topOpportunity: scorecard.biggest_opportunity,
+      topRisk: scorecard.biggest_risk || 'Not specified',
+      topOpportunity: scorecard.biggest_opportunity || 'Not specified',
       weakestSection,
     })
   }
