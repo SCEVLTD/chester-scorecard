@@ -461,3 +461,6 @@ export type ActionUpdate = Database['public']['Tables']['actions']['Update']
 
 export type CompanyEmail = Database['public']['Tables']['company_emails']['Row']
 export type CompanyEmailInsert = Database['public']['Tables']['company_emails']['Insert']
+
+export type AdminRole = 'super_admin' | 'consultant'
+export type UserRole = AdminRole | 'business_user' | null
