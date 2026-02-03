@@ -6,13 +6,14 @@ const corsHeaders = {
 }
 
 /**
- * Create a Supabase Auth account for a company email.
- * This allows companies to log in with email + password.
+ * Send a password setup invitation email to a company.
+ * Uses Supabase's built-in inviteUserByEmail which handles user creation AND email sending.
+ * Falls back to password reset for existing users.
  *
  * Request body:
  * - email: string (required) - The company email address
- * - password: string (required) - The password to set
  * - business_id: string (required) - The business ID for verification
+ * - business_name: string (optional) - For personalized email (not used with built-in emails)
  */
 Deno.serve(async (req) => {
   // Handle CORS preflight
@@ -25,7 +26,10 @@ Deno.serve(async (req) => {
     const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
     if (!supabaseUrl || !supabaseServiceRoleKey) {
-      throw new Error('Supabase environment variables not set')
+      return new Response(
+        JSON.stringify({ error: 'Supabase environment variables not set' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
     // Verify the request has authorization (admin only)
@@ -37,7 +41,6 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Extract JWT token from Bearer header
     const token = authHeader.replace('Bearer ', '')
 
     // Create admin client with service role
@@ -45,10 +48,9 @@ Deno.serve(async (req) => {
       auth: { autoRefreshToken: false, persistSession: false }
     })
 
-    // Get user from the JWT token
+    // Verify caller is authenticated
     const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token)
     if (userError || !user) {
-      console.error('Auth error:', userError)
       return new Response(
         JSON.stringify({ error: 'Invalid authorization token' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -63,36 +65,30 @@ Deno.serve(async (req) => {
       .maybeSingle()
 
     if (adminError || !adminCheck) {
-      console.error('Admin check error:', adminError, 'User email:', user.email)
       return new Response(
-        JSON.stringify({ error: 'Only admins can create company accounts' }),
+        JSON.stringify({ error: 'Only admins can send company invites' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
     // Parse request body
-    const { email, password, business_id } = await req.json()
+    const { email, business_id } = await req.json()
 
-    if (!email || !password || !business_id) {
+    if (!email || !business_id) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields: email, password, business_id' }),
+        JSON.stringify({ error: 'Missing required fields: email, business_id' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    if (password.length < 6) {
-      return new Response(
-        JSON.stringify({ error: 'Password must be at least 6 characters' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
+    const emailLower = email.toLowerCase().trim()
 
     // Verify the email belongs to the business
     const { data: emailRecord, error: emailError } = await supabaseAdmin
       .from('company_emails')
       .select('id')
       .eq('business_id', business_id)
-      .eq('email', email.toLowerCase())
+      .eq('email', emailLower)
       .maybeSingle()
 
     if (emailError || !emailRecord) {
@@ -102,51 +98,49 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Check if user already exists
-    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers()
-    const existingUser = existingUsers?.users?.find(u => u.email?.toLowerCase() === email.toLowerCase())
+    const siteUrl = Deno.env.get('SITE_URL') || 'https://chester.benchiva.com'
 
-    if (existingUser) {
-      // User exists - update their password instead
-      const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
-        existingUser.id,
-        { password }
-      )
-
-      if (updateError) {
-        console.error('Failed to update user password:', updateError)
-        return new Response(
-          JSON.stringify({ error: `Failed to update password: ${updateError.message}` }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        )
-      }
-
-      return new Response(
-        JSON.stringify({
-          success: true,
-          message: 'Password updated for existing account',
-          user_id: existingUser.id,
-          email: email.toLowerCase(),
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
-
-    // Create new auth user
-    const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
-      email: email.toLowerCase(),
-      password,
-      email_confirm: true, // Auto-confirm the email
-      user_metadata: {
+    // Try inviteUserByEmail first - this creates user AND sends email automatically
+    const { error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(emailLower, {
+      data: {
         business_id,
         role: 'company',
       },
+      redirectTo: `${siteUrl}/company/login`,
     })
 
-    if (createError) {
-      console.error('Failed to create user:', createError)
+    if (inviteError) {
+      // If user already exists, send password reset instead
+      if (inviteError.message.includes('already been registered') ||
+          inviteError.message.includes('already exists') ||
+          inviteError.message.includes('User already registered')) {
+
+        // Use resetPasswordForEmail which sends email automatically
+        const { error: resetError } = await supabaseAdmin.auth.resetPasswordForEmail(emailLower, {
+          redirectTo: `${siteUrl}/company/login`,
+        })
+
+        if (resetError) {
+          console.error('Reset password error:', resetError)
+          return new Response(
+            JSON.stringify({ error: `Failed to send reset email: ${resetError.message}` }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          )
+        }
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            message: 'Password reset email sent successfully',
+            email: emailLower,
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      console.error('Invite error:', inviteError)
       return new Response(
-        JSON.stringify({ error: `Failed to create account: ${createError.message}` }),
+        JSON.stringify({ error: `Failed to send invite: ${inviteError.message}` }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
@@ -154,19 +148,18 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        message: 'Company account created successfully',
-        user_id: newUser.user.id,
-        email: email.toLowerCase(),
+        message: 'Invitation email sent successfully',
+        email: emailLower,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
 
   } catch (error) {
-    console.error('Error creating company account:', error)
+    console.error('Error sending company invite:', error)
 
     return new Response(
       JSON.stringify({
-        error: 'Failed to create company account',
+        error: 'Failed to send invitation',
         details: error instanceof Error ? error.message : 'Unknown error',
       }),
       {
