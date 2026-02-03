@@ -10,6 +10,9 @@ export type DataRequestStatus = 'pending' | 'submitted' | 'used'
 
 export type ActionStatus = 'pending' | 'complete'
 
+export type MeetingType = 'friday_group' | 'one_on_one' | 'quarterly_review' | 'ad_hoc'
+export type MeetingStatus = 'draft' | 'finalized' | 'archived'
+
 export interface Database {
   public: {
     Tables: {
@@ -24,6 +27,7 @@ export interface Database {
           created_at: string
           completed_at: string | null
           created_by: string | null
+          meeting_id: string | null
         }
         Insert: {
           id?: string
@@ -35,6 +39,7 @@ export interface Database {
           created_at?: string
           completed_at?: string | null
           created_by?: string | null
+          meeting_id?: string | null
         }
         Update: {
           id?: string
@@ -46,6 +51,7 @@ export interface Database {
           created_at?: string
           completed_at?: string | null
           created_by?: string | null
+          meeting_id?: string | null
         }
         Relationships: [
           {
@@ -54,8 +60,72 @@ export interface Database {
             isOneToOne: false
             referencedRelation: 'businesses'
             referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'actions_meeting_id_fkey'
+            columns: ['meeting_id']
+            isOneToOne: false
+            referencedRelation: 'meetings'
+            referencedColumns: ['id']
           }
         ]
+      }
+      meetings: {
+        Row: {
+          id: string
+          title: string
+          meeting_date: string
+          meeting_type: MeetingType
+          status: MeetingStatus
+          portfolio_snapshot: Json
+          businesses_count: number
+          month_analyzed: string
+          ai_summary: Json
+          model_used: string
+          user_notes: string | null
+          attendees: string[] | null
+          created_by: string
+          created_at: string
+          finalized_at: string | null
+          finalized_by: string | null
+        }
+        Insert: {
+          id?: string
+          title: string
+          meeting_date: string
+          meeting_type?: MeetingType
+          status?: MeetingStatus
+          portfolio_snapshot: Json
+          businesses_count: number
+          month_analyzed: string
+          ai_summary: Json
+          model_used: string
+          user_notes?: string | null
+          attendees?: string[] | null
+          created_by: string
+          created_at?: string
+          finalized_at?: string | null
+          finalized_by?: string | null
+        }
+        Update: {
+          id?: string
+          title?: string
+          meeting_date?: string
+          meeting_type?: MeetingType
+          status?: MeetingStatus
+          portfolio_snapshot?: Json
+          businesses_count?: number
+          month_analyzed?: string
+          ai_summary?: Json
+          model_used?: string
+          user_notes?: string | null
+          attendees?: string[] | null
+          created_by?: string
+          created_at?: string
+          finalized_at?: string | null
+          finalized_by?: string | null
+        }
+        Relationships: []
       }
       data_requests: {
         Row: {
@@ -317,7 +387,7 @@ export interface Database {
           id: string
           business_id: string
           month: string
-          consultant_name: string
+          consultant_name: string | null
           // Financial variances (nullable)
           revenue_variance: number | null
           gross_profit_variance: number | null
@@ -336,12 +406,12 @@ export interface Database {
           supplier_strength: string | null
           // Sales (nullable)
           sales_execution: string | null
-          // Commentary (mandatory - NOT NULL in database)
-          biggest_opportunity: string
-          biggest_risk: string
-          management_avoiding: string
-          leadership_confidence: string
-          consultant_gut_feel: string
+          // Commentary (nullable for self-assessments)
+          biggest_opportunity: string | null
+          biggest_risk: string | null
+          management_avoiding: string | null
+          leadership_confidence: string | null
+          consultant_gut_feel: string | null
           // Computed at insert time
           total_score: number
           rag_status: string
@@ -357,7 +427,7 @@ export interface Database {
           id?: string
           business_id: string
           month: string
-          consultant_name: string
+          consultant_name?: string | null
           // Financial variances (optional)
           revenue_variance?: number | null
           gross_profit_variance?: number | null
@@ -376,12 +446,12 @@ export interface Database {
           supplier_strength?: string | null
           // Sales (optional)
           sales_execution?: string | null
-          // Commentary (mandatory)
-          biggest_opportunity: string
-          biggest_risk: string
-          management_avoiding: string
-          leadership_confidence: string
-          consultant_gut_feel: string
+          // Commentary (optional for self-assessments)
+          biggest_opportunity?: string | null
+          biggest_risk?: string | null
+          management_avoiding?: string | null
+          leadership_confidence?: string | null
+          consultant_gut_feel?: string | null
           // Computed at insert time (mandatory)
           total_score: number
           rag_status: string
@@ -397,7 +467,7 @@ export interface Database {
           id?: string
           business_id?: string
           month?: string
-          consultant_name?: string
+          consultant_name?: string | null
           revenue_variance?: number | null
           gross_profit_variance?: number | null
           overheads_variance?: number | null
@@ -410,11 +480,11 @@ export interface Database {
           product_strength?: string | null
           supplier_strength?: string | null
           sales_execution?: string | null
-          biggest_opportunity?: string
-          biggest_risk?: string
-          management_avoiding?: string
-          leadership_confidence?: string
-          consultant_gut_feel?: string
+          biggest_opportunity?: string | null
+          biggest_risk?: string | null
+          management_avoiding?: string | null
+          leadership_confidence?: string | null
+          consultant_gut_feel?: string | null
           total_score?: number
           rag_status?: string
           ai_analysis?: Json | null
@@ -461,6 +531,10 @@ export type ActionUpdate = Database['public']['Tables']['actions']['Update']
 
 export type CompanyEmail = Database['public']['Tables']['company_emails']['Row']
 export type CompanyEmailInsert = Database['public']['Tables']['company_emails']['Insert']
+
+export type Meeting = Database['public']['Tables']['meetings']['Row']
+export type MeetingInsert = Database['public']['Tables']['meetings']['Insert']
+export type MeetingUpdate = Database['public']['Tables']['meetings']['Update']
 
 export type AdminRole = 'super_admin' | 'consultant'
 export type UserRole = AdminRole | 'business_user' | null

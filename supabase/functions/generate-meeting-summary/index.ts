@@ -1,4 +1,5 @@
 import Anthropic from 'npm:@anthropic-ai/sdk'
+import { createClient } from 'npm:@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -37,6 +38,10 @@ interface PortfolioAggregate {
 
 interface RequestBody {
   aggregatedData: PortfolioAggregate
+  persist?: boolean
+  meetingDate?: string
+  meetingType?: 'friday_group' | 'one_on_one' | 'quarterly_review' | 'ad_hoc'
+  title?: string
 }
 
 function buildPrompt(agg: PortfolioAggregate): string {
@@ -120,6 +125,26 @@ function extractJSON(text: string): unknown {
   throw new Error('Could not extract valid JSON from response')
 }
 
+function formatMeetingTitle(meetingDate: string, meetingType: string): string {
+  const date = new Date(meetingDate)
+  const formatted = date.toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
+
+  switch (meetingType) {
+    case 'friday_group':
+      return `Chester Friday Meeting - ${formatted}`
+    case 'quarterly_review':
+      return `Quarterly Review - ${formatted}`
+    case 'one_on_one':
+      return `1:1 Meeting - ${formatted}`
+    default:
+      return `Meeting - ${formatted}`
+  }
+}
+
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -127,7 +152,8 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { aggregatedData } = await req.json() as RequestBody
+    const body = await req.json() as RequestBody
+    const { aggregatedData, persist, meetingDate, meetingType, title } = body
 
     const anthropic = new Anthropic({
       apiKey: Deno.env.get('ANTHROPIC_API_KEY'),
@@ -153,7 +179,73 @@ Deno.serve(async (req) => {
     parsed.generatedAt = new Date().toISOString()
     parsed.modelUsed = 'claude-sonnet-4-20250514'
 
-    return new Response(JSON.stringify(parsed), {
+    // Persist to database if requested
+    let meetingId: string | null = null
+
+    if (persist) {
+      // Get user email from JWT for created_by field
+      const authHeader = req.headers.get('authorization')
+      let userEmail = 'system'
+
+      if (authHeader) {
+        try {
+          const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+          const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+          const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+          // Decode the JWT to get user info
+          const token = authHeader.replace('Bearer ', '')
+          const { data: { user } } = await supabase.auth.getUser(token)
+          if (user?.email) {
+            userEmail = user.email
+          }
+        } catch (e) {
+          console.warn('Could not extract user email from token:', e)
+        }
+      }
+
+      // Determine meeting date and type
+      const effectiveDate = meetingDate || new Date().toISOString().split('T')[0]
+      const effectiveType = meetingType || 'friday_group'
+      const effectiveTitle = title || formatMeetingTitle(effectiveDate, effectiveType)
+
+      // Insert into meetings table
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+      const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+      const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+      const { data: meeting, error: insertError } = await supabase
+        .from('meetings')
+        .insert({
+          title: effectiveTitle,
+          meeting_date: effectiveDate,
+          meeting_type: effectiveType,
+          status: 'draft',
+          portfolio_snapshot: aggregatedData,
+          businesses_count: aggregatedData.totalBusinesses,
+          month_analyzed: aggregatedData.analysisMonth,
+          ai_summary: parsed,
+          model_used: 'claude-sonnet-4-20250514',
+          created_by: userEmail,
+        })
+        .select('id')
+        .single()
+
+      if (insertError) {
+        console.error('Failed to persist meeting:', insertError)
+        // Don't fail the whole request, just log the error
+      } else {
+        meetingId = meeting.id
+      }
+    }
+
+    // Return response with optional meetingId
+    const result = {
+      ...parsed,
+      ...(meetingId && { meetingId }),
+    }
+
+    return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
 

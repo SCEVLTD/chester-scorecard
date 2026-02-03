@@ -13,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { ArrowLeft, AlertTriangle, GitCompare, Sparkles, Loader2, X, FileText, Pencil, Mail, Link2, Trash2, Plus } from 'lucide-react'
+import { ArrowLeft, AlertTriangle, GitCompare, Sparkles, Loader2, X, FileText, Pencil, Mail, Link2, Trash2, Plus, Calendar } from 'lucide-react'
 import { toast } from 'sonner'
 import { TrendIndicator } from '@/components/trend-indicator'
 import { PortfolioHeatmap } from '@/components/portfolio/portfolio-heatmap'
@@ -27,11 +27,11 @@ import { PortfolioActionModal } from '@/components/admin/portfolio-action-modal'
 import { BatchExportButton } from '@/components/batch-export-button'
 import { usePortfolioSummary } from '@/hooks/use-portfolio-summary'
 import { useGeneratePortfolioAnalysis } from '@/hooks/use-portfolio-analysis'
-import { useGenerateMeetingSummary } from '@/hooks/use-meeting-summary'
+import { useGenerateMeetingSummary, type MeetingSummaryWithId } from '@/hooks/use-meeting-summary'
 import { useBusinesses, useDeleteBusiness } from '@/hooks/use-businesses'
 import { useAuth } from '@/contexts/auth-context'
 import type { PortfolioAnalysis } from '@/schemas/portfolio-analysis'
-import type { MeetingSummary } from '@/schemas/meeting-summary'
+// MeetingSummary type still used for base schema, MeetingSummaryWithId for persisted meetings
 import type { Business } from '@/types/database.types'
 import { useSectors } from '@/hooks/use-sectors'
 import { supabase } from '@/lib/supabase'
@@ -52,9 +52,10 @@ export function PortfolioPage() {
   const { data: allBusinesses } = useBusinesses()
   const { userRole } = useAuth()
   const [analysis, setAnalysis] = useState<PortfolioAnalysis | null>(null)
-  const [meetingSummary, setMeetingSummary] = useState<MeetingSummary | null>(null)
+  const [meetingSummary, setMeetingSummary] = useState<MeetingSummaryWithId | null>(null)
   const [editingBusiness, setEditingBusiness] = useState<Business | null>(null)
   const [actionModalOpen, setActionModalOpen] = useState(false)
+  const [prefillActionDescription, setPrefillActionDescription] = useState('')
   const generateAnalysis = useGeneratePortfolioAnalysis()
   const generateMeetingSummary = useGenerateMeetingSummary()
   const deleteBusiness = useDeleteBusiness()
@@ -124,9 +125,14 @@ export function PortfolioPage() {
 
     try {
       const aggregatedData = aggregatePortfolio(portfolio, latestScorecards)
-      const result = await generateMeetingSummary.mutateAsync({ aggregatedData })
+      // Persist meeting to database (Granola-style: auto-save as draft)
+      const result = await generateMeetingSummary.mutateAsync({
+        aggregatedData,
+        persist: true,
+        meetingType: 'friday_group',
+      })
       setMeetingSummary(result)
-      toast.success('Meeting summary generated')
+      toast.success('Meeting summary generated and saved')
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to generate meeting summary')
     }
@@ -275,6 +281,13 @@ export function PortfolioPage() {
             )}
             Meeting Prep
           </Button>
+          <Button
+            variant="outline"
+            onClick={() => navigate('/meetings')}
+          >
+            <Calendar className="h-4 w-4 mr-2" />
+            Meeting History
+          </Button>
           <BatchExportButton
             scorecards={scorecardsForExport}
             businessNames={businessNamesForExport}
@@ -324,7 +337,17 @@ export function PortfolioPage() {
         {/* Meeting Summary Display */}
         {meetingSummary && (
           <div className="mb-6">
-            <div className="flex justify-end mb-2">
+            <div className="flex justify-between items-center mb-2">
+              {meetingSummary.meetingId && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate(`/meetings/${meetingSummary.meetingId}`)}
+                >
+                  <FileText className="h-4 w-4 mr-1" />
+                  View Full Meeting
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 size="sm"
@@ -334,7 +357,14 @@ export function PortfolioPage() {
                 Clear
               </Button>
             </div>
-            <MeetingSummaryCard summary={meetingSummary} />
+            <MeetingSummaryCard
+              summary={meetingSummary}
+              meetingId={meetingSummary.meetingId}
+              onCreateAction={(description) => {
+                setPrefillActionDescription(description)
+                setActionModalOpen(true)
+              }}
+            />
           </div>
         )}
 
@@ -601,7 +631,12 @@ export function PortfolioPage() {
         {/* Portfolio Action Modal */}
         <PortfolioActionModal
           open={actionModalOpen}
-          onOpenChange={setActionModalOpen}
+          onOpenChange={(open) => {
+            setActionModalOpen(open)
+            if (!open) setPrefillActionDescription('')
+          }}
+          prefillDescription={prefillActionDescription}
+          meetingId={meetingSummary?.meetingId}
         />
       </div>
     </div>

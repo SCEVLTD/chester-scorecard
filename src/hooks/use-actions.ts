@@ -23,6 +23,10 @@ export function useCreateAction() {
       // Invalidate business-specific and global queries
       queryClient.invalidateQueries({ queryKey: ['actions', data.business_id] })
       queryClient.invalidateQueries({ queryKey: ['actions', 'pending'] })
+      // Invalidate meeting-specific queries if linked
+      if (data.meeting_id) {
+        queryClient.invalidateQueries({ queryKey: ['actions', 'meeting', data.meeting_id] })
+      }
     },
   })
 }

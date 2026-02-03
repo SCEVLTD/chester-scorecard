@@ -26,6 +26,8 @@ import { CompanyVerifyPage } from '@/pages/company/verify'
 import { CompanySetupPage } from '@/pages/company/setup'
 import { AdminSetupPage } from '@/pages/admin/setup'
 import { CompanyDashboardPage } from '@/pages/company/dashboard'
+import { MeetingsPage } from '@/pages/meetings'
+import { MeetingPage } from '@/pages/meeting'
 
 function App() {
   return (
@@ -61,6 +63,16 @@ function App() {
               <Route path="/portfolio">
                 <ProtectedRoute requiredRole="admin">
                   <PortfolioPage />
+                </ProtectedRoute>
+              </Route>
+              <Route path="/meetings">
+                <ProtectedRoute requiredRole="admin">
+                  <MeetingsPage />
+                </ProtectedRoute>
+              </Route>
+              <Route path="/meetings/:meetingId">
+                <ProtectedRoute requiredRole="admin">
+                  <MeetingPage />
                 </ProtectedRoute>
               </Route>
               <Route path="/compare">

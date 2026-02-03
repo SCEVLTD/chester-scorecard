@@ -1,9 +1,9 @@
-import * as React from 'react'
+import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
+import { z } from 'zod'
 import { useCreateAction } from '@/hooks/use-actions'
 import { useBusinesses } from '@/hooks/use-businesses'
 import { actionSchema } from '@/schemas/action'
@@ -14,6 +14,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Select,
   SelectContent,
@@ -21,69 +24,83 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 
-interface PortfolioActionModalProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  prefillDescription?: string
-  meetingId?: string
-}
-
-// Extend action schema to include business_id
-const portfolioActionSchema = actionSchema.extend({
-  business_id: z.string().uuid('Please select a business'),
+// Extended schema with business_id
+const actionWithBusinessSchema = actionSchema.extend({
+  business_id: z.string().min(1, 'Business is required'),
 })
 
-type PortfolioActionFormData = z.infer<typeof portfolioActionSchema>
+type ActionWithBusinessFormData = z.infer<typeof actionWithBusinessSchema>
 
-export function PortfolioActionModal({
+interface ActionModalProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  meetingId?: string
+  prefillDescription?: string
+  businessId?: string
+}
+
+/**
+ * Action Modal for creating actions from meetings
+ *
+ * Features:
+ * - Pre-fill description from AI suggestions
+ * - Link action to source meeting
+ * - Select business if not specified
+ */
+export function ActionModal({
   open,
   onOpenChange,
-  prefillDescription = '',
   meetingId,
-}: PortfolioActionModalProps) {
+  prefillDescription,
+  businessId,
+}: ActionModalProps) {
   const createAction = useCreateAction()
   const { data: businesses } = useBusinesses()
 
   // Default due date to 7 days from now
-  const getDefaultDueDate = () => {
-    const date = new Date()
-    date.setDate(date.getDate() + 7)
-    return date.toISOString().split('T')[0]
-  }
+  const defaultDueDate = new Date()
+  defaultDueDate.setDate(defaultDueDate.getDate() + 7)
 
-  const form = useForm<PortfolioActionFormData>({
-    resolver: zodResolver(portfolioActionSchema),
+  const form = useForm<ActionWithBusinessFormData>({
+    resolver: zodResolver(actionWithBusinessSchema),
     defaultValues: {
-      business_id: '',
-      description: prefillDescription,
+      description: prefillDescription || '',
       owner: '',
-      due_date: getDefaultDueDate(),
+      due_date: defaultDueDate.toISOString().split('T')[0],
+      business_id: businessId || '',
     },
   })
 
-  // Update description when prefillDescription changes
-  React.useEffect(() => {
-    if (open && prefillDescription) {
+  // Update description when prefill changes
+  useEffect(() => {
+    if (prefillDescription) {
       form.setValue('description', prefillDescription)
     }
-  }, [open, prefillDescription, form])
+  }, [prefillDescription, form])
 
-  const onSubmit = async (data: PortfolioActionFormData) => {
+  // Reset form when modal opens
+  useEffect(() => {
+    if (open) {
+      form.reset({
+        description: prefillDescription || '',
+        owner: '',
+        due_date: defaultDueDate.toISOString().split('T')[0],
+        business_id: businessId || '',
+      })
+    }
+  }, [open])
+
+  const onSubmit = async (data: ActionWithBusinessFormData) => {
     try {
-      const { business_id, ...actionData } = data
       await createAction.mutateAsync({
-        business_id,
-        ...actionData,
+        business_id: data.business_id,
+        description: data.description,
+        owner: data.owner,
+        due_date: data.due_date,
         meeting_id: meetingId,
       })
-
-      // Find business name for toast
-      const businessName = businesses?.find(b => b.id === business_id)?.name || 'business'
-      toast.success(`Action created for ${businessName}`)
+      toast.success('Action created successfully')
       handleClose()
     } catch (error) {
       console.error('Failed to create action:', error)
@@ -96,48 +113,44 @@ export function PortfolioActionModal({
     onOpenChange(false)
   }
 
-  // Sort businesses alphabetically
-  const sortedBusinesses = businesses
-    ? [...businesses].sort((a, b) => a.name.localeCompare(b.name))
-    : []
-
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Add Action Item</DialogTitle>
+          <DialogTitle>Create Action Item</DialogTitle>
           <DialogDescription>
-            Create an action item from the Friday meeting for a specific business.
+            Create an action item from this meeting suggestion.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          {/* Business Selector */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Business</label>
-            <Select
-              value={form.watch('business_id')}
-              onValueChange={(value) => form.setValue('business_id', value, { shouldValidate: true })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select business..." />
-              </SelectTrigger>
-              <SelectContent>
-                {sortedBusinesses.map((business) => (
-                  <SelectItem key={business.id} value={business.id}>
-                    {business.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {form.formState.errors.business_id && (
-              <p className="text-sm text-red-500">
-                {form.formState.errors.business_id.message}
-              </p>
-            )}
-          </div>
+          {/* Business selector (if not specified) */}
+          {!businessId && businesses && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Business</label>
+              <Select
+                value={form.watch('business_id')}
+                onValueChange={(value) => form.setValue('business_id', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a business" />
+                </SelectTrigger>
+                <SelectContent>
+                  {businesses.map((business) => (
+                    <SelectItem key={business.id} value={business.id}>
+                      {business.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {form.formState.errors.business_id && (
+                <p className="text-sm text-red-500">
+                  Please select a business
+                </p>
+              )}
+            </div>
+          )}
 
-          {/* Action Description */}
           <div className="space-y-2">
             <label className="text-sm font-medium">Action Description</label>
             <Textarea
@@ -152,7 +165,6 @@ export function PortfolioActionModal({
             )}
           </div>
 
-          {/* Owner */}
           <div className="space-y-2">
             <label className="text-sm font-medium">Owner</label>
             <Input
@@ -166,7 +178,6 @@ export function PortfolioActionModal({
             )}
           </div>
 
-          {/* Due Date */}
           <div className="space-y-2">
             <label className="text-sm font-medium">Due Date</label>
             <Input
@@ -180,12 +191,14 @@ export function PortfolioActionModal({
             )}
           </div>
 
-          {/* Form Actions */}
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={handleClose}>
               Cancel
             </Button>
-            <Button type="submit" disabled={createAction.isPending}>
+            <Button
+              type="submit"
+              disabled={createAction.isPending || (!businessId && !form.watch('business_id'))}
+            >
               {createAction.isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
