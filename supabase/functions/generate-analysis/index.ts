@@ -173,7 +173,7 @@ Deno.serve(async (req) => {
     }
 
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-5-20250514',
+      model: 'claude-sonnet-4-5-20250929',
       max_tokens: 2000,
       messages: [{ role: 'user', content: prompt }],
       tools: [analysisTool],
@@ -190,7 +190,7 @@ Deno.serve(async (req) => {
 
     // Add metadata
     analysis.generatedAt = new Date().toISOString()
-    analysis.modelUsed = 'claude-sonnet-4-5-20250514'
+    analysis.modelUsed = 'claude-sonnet-4-5-20250929'
 
     return new Response(JSON.stringify(analysis), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
