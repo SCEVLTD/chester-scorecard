@@ -10,31 +10,32 @@ See: .planning/PROJECT.md (updated 2026-02-03)
 ## Current Position
 
 Phase: 10 (Consultant View & Reporting) of 10
-Plan: 3 of 3 complete
+Plan: 5 of 5 complete
 Status: Phase complete
-Last activity: 2026-02-03 — Completed 10-03-PLAN.md
+Last activity: 2026-02-03 — Completed 10-05-PLAN.md
 
-Progress: █████████████████████ 110% (21/19 plans complete)
+Progress: ██████████████████████ 115% (23/20 plans complete)
 
 ## Current Status
 
 | Milestone | Phases | Plans | Status |
 |-----------|--------|-------|--------|
 | v1.0 MVP | 1-7 | 15/15 | SHIPPED |
-| v1.1 Friday Launch | 8-10 | 6/6 | IN PROGRESS |
+| v1.1 Friday Launch | 8-10 | 8/8 | COMPLETE |
 
 ## Milestone History
 
 See: .planning/MILESTONES.md
 
 - **v1.0 MVP** — Shipped 2026-02-03 (7 phases, 15 plans)
+- **v1.1 Friday Launch** — Complete 2026-02-03 (3 phases, 8 plans)
 
 ## v1.1 Priority Order
 
 **RIGHT NOW (unblocks everything):**
 1. ✓ Fix Magic Link — companies can't log in
 2. ✓ Company Management — add all 19 companies with emails
-3. Super Admin role — Shane can upload historical data
+3. ✓ Super Admin role — Shane can upload historical data
 
 **WHILE BUSINESSES FILL FORMS:**
 4. ✓ Form fix — remove N/A except Leadership
@@ -42,6 +43,7 @@ See: .planning/MILESTONES.md
 6. ✓ Consultant role — Dylan/Nick see results without financials
 7. ✓ Add actions from portfolio level
 8. ✓ Print all scorecards
+9. ✓ Admin role management — Shane/Scott can assign roles via UI
 
 ## Deployment Checklist (Pre-Meeting)
 
@@ -85,14 +87,16 @@ Before Feb 7, 2026 Friday meeting:
 | BATCH-01 | 10-03 | Concurrent PDF generation approach | Promise.all for parallel generation | Browser handles 6-10 concurrent efficiently, 6-10x faster |
 | BATCH-02 | 10-03 | Progress tracking granularity | Update after each PDF completes | Simple, accurate, no performance impact with 19 businesses |
 | BATCH-03 | 10-03 | ZIP compression level | DEFLATE level 6 | Good balance for PDFs (already compressed internally) |
+| ROLE-05 | 10-05 | Role selector default | Default to consultant | Safer default; most new admins will be consultants |
+| ROLE-06 | 10-05 | Role editing approach | Inline dropdown in list | Quick access without modal; matches admin list pattern |
 
 ## Session Continuity
 
-**Last session:** 2026-02-03 17:20 UTC
-**Current milestone:** v1.1 Friday Launch Ready - ALL PLANS COMPLETE
-**Stopped at:** Completed 10-03-PLAN.md (Batch PDF export)
+**Last session:** 2026-02-03 17:28 UTC
+**Current milestone:** v1.1 Friday Launch Ready - ALL FEATURES COMPLETE
+**Stopped at:** Completed 10-05-PLAN.md (Admin role management)
 **Resume file:** None
-**Next action:** Phase 10 complete. All v1.1 features implemented. Ready for deployment preparation.
+**Next action:** v1.1 complete. Ready for deployment preparation and Feb 7 Friday meeting.
 
 ---
-*State updated: 2026-02-03 — Phase 10 complete (all 3 plans)*
+*State updated: 2026-02-03 — Phase 10 complete (all 5 plans)*
