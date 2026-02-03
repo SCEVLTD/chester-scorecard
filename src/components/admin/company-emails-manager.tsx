@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { Plus, Trash2, Star, Loader2, Key, Eye, EyeOff, Send } from 'lucide-react'
+import { Plus, Trash2, Star, Loader2, Key, Eye, EyeOff, Send, Copy, CheckCircle } from 'lucide-react'
 import {
   useCompanyEmails,
   useAddCompanyEmail,
@@ -35,6 +35,12 @@ export function CompanyEmailsManager({ businessId, businessName }: CompanyEmails
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [sendingInviteTo, setSendingInviteTo] = useState<string | null>(null)
+  const [setupLinkDialog, setSetupLinkDialog] = useState<{ open: boolean; email: string; link: string }>({
+    open: false,
+    email: '',
+    link: '',
+  })
+  const [linkCopied, setLinkCopied] = useState(false)
 
   const { data: emails = [], isLoading } = useCompanyEmails(businessId)
   const addEmail = useAddCompanyEmail()
@@ -95,17 +101,39 @@ export function CompanyEmailsManager({ businessId, businessName }: CompanyEmails
   const handleSendInvite = async (email: string) => {
     setSendingInviteTo(email)
     try {
-      await sendInvite.mutateAsync({
+      const result = await sendInvite.mutateAsync({
         email,
         businessId,
         businessName,
       })
-      toast.success(`Setup email sent to ${email}`)
+      if (result.emailSent) {
+        toast.success(`Setup email sent to ${email}`)
+      } else if (result.setupLink) {
+        // Email not sent (Resend not configured), show the link
+        setSetupLinkDialog({
+          open: true,
+          email,
+          link: result.setupLink,
+        })
+        setLinkCopied(false)
+      } else {
+        toast.success('Invitation created')
+      }
     } catch (error) {
       console.error('Failed to send invite:', error)
       toast.error(error instanceof Error ? error.message : 'Failed to send setup email')
     } finally {
       setSendingInviteTo(null)
+    }
+  }
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(setupLinkDialog.link)
+      setLinkCopied(true)
+      toast.success('Link copied to clipboard')
+    } catch {
+      toast.error('Failed to copy link')
     }
   }
 
@@ -332,6 +360,48 @@ export function CompanyEmailsManager({ businessId, businessName }: CompanyEmails
               ) : (
                 'Set Password'
               )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Setup link dialog (when email sending is not configured) */}
+      <Dialog open={setupLinkDialog.open} onOpenChange={(open) => setSetupLinkDialog(prev => ({ ...prev, open }))}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Invitation Created</DialogTitle>
+            <DialogDescription>
+              Share this link with <strong>{setupLinkDialog.email}</strong> to set up their account.
+              The link expires in 7 days.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="flex items-center gap-2">
+              <Input
+                readOnly
+                value={setupLinkDialog.link}
+                className="font-mono text-xs"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleCopyLink}
+              >
+                {linkCopied ? (
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              onClick={() => setSetupLinkDialog(prev => ({ ...prev, open: false }))}
+            >
+              Done
             </Button>
           </DialogFooter>
         </DialogContent>
