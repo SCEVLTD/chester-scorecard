@@ -18,6 +18,7 @@ import CompanySubmitPage from '@/pages/company-submit'
 import SubmissionSuccessPage from '@/pages/submission-success'
 import { UnifiedSubmitPage } from '@/pages/unified-submit'
 import { AdminImportPage } from '@/pages/admin/import'
+import { ImportBusinessesPage } from '@/pages/admin/import-businesses'
 import { AdminsPage } from '@/pages/admin/admins'
 import { BusinessPage } from '@/pages/business'
 import { CompanyLoginPage } from '@/pages/company/login'
@@ -69,6 +70,11 @@ function App() {
               <Route path="/admin/admins">
                 <ProtectedRoute requiredRole="admin">
                   <AdminsPage />
+                </ProtectedRoute>
+              </Route>
+              <Route path="/admin/import-businesses">
+                <ProtectedRoute requiredRole="admin">
+                  <ImportBusinessesPage />
                 </ProtectedRoute>
               </Route>
 

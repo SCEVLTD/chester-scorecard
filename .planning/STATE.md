@@ -9,19 +9,19 @@ See: .planning/PROJECT.md (updated 2026-02-03)
 
 ## Current Position
 
-Phase: 8 (Access & Data Setup) of 10
-Plan: 2 of 3 complete
-Status: In progress
-Last activity: 2026-02-03 — Completed 08-02-PLAN.md
+Phase: 9 (Invitations Form) of 10
+Plan: 1 of 1 complete
+Status: Phase complete
+Last activity: 2026-02-03 — Completed 09-01-PLAN.md
 
-Progress: ████████████████░░░░ 82% (16/19 plans complete)
+Progress: █████████████████░░░ 89% (17/19 plans complete)
 
 ## Current Status
 
 | Milestone | Phases | Plans | Status |
 |-----------|--------|-------|--------|
 | v1.0 MVP | 1-7 | 15/15 | SHIPPED |
-| v1.1 Friday Launch | 8-10 | 2/4 | IN PROGRESS |
+| v1.1 Friday Launch | 8-10 | 3/4 | IN PROGRESS |
 
 ## Milestone History
 
@@ -32,12 +32,12 @@ See: .planning/MILESTONES.md
 ## v1.1 Priority Order
 
 **RIGHT NOW (unblocks everything):**
-1. Fix Magic Link — companies can't log in
-2. Company Management — add all 19 companies with emails
+1. ✓ Fix Magic Link — companies can't log in
+2. ✓ Company Management — add all 19 companies with emails
 3. Super Admin role — Shane can upload historical data
 
 **WHILE BUSINESSES FILL FORMS:**
-4. Form fix — remove N/A except Leadership
+4. ✓ Form fix — remove N/A except Leadership
 5. Consultant role — Dylan/Nick see results without financials
 6. Add actions from portfolio level
 7. Print all scorecards
@@ -70,14 +70,15 @@ Before Feb 7, 2026 Friday meeting:
 | Decision ID | Phase | What | Chosen | Why |
 |------------|-------|------|--------|-----|
 | ADMIN-UI-01 | 08-02 | Edit button placement | Icon button in card header | Minimal clutter, clear affordance |
+| FORM-UX-01 | 09-01 | N/A option placement | Only on Leadership Alignment | Client feedback: N/A misused on other questions |
 
 ## Session Continuity
 
-**Last session:** 2026-02-03 10:41 UTC
+**Last session:** 2026-02-03 09:56 UTC
 **Current milestone:** v1.1 Friday Launch Ready
-**Stopped at:** Completed 08-02-PLAN.md (Company Edit UI)
+**Stopped at:** Completed 09-01-PLAN.md (Remove N/A from qualitative questions)
 **Resume file:** None
-**Next action:** Execute 08-03 (Add All Companies from spreadsheet)
+**Next action:** Execute Phase 10-01 (Go Live preparation)
 
 ---
-*State updated: 2026-02-03 — Phase 08 Plan 02 complete*
+*State updated: 2026-02-03 — Phase 09 Plan 01 complete*
