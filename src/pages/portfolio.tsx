@@ -13,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { ArrowLeft, AlertTriangle, GitCompare, Sparkles, Loader2, X, FileText, Pencil, Mail, Link2, Trash2 } from 'lucide-react'
+import { ArrowLeft, AlertTriangle, GitCompare, Sparkles, Loader2, X, FileText, Pencil, Mail, Link2, Trash2, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { TrendIndicator } from '@/components/trend-indicator'
 import { PortfolioHeatmap } from '@/components/portfolio/portfolio-heatmap'
@@ -23,6 +23,7 @@ import { PendingActionsBadge } from '@/components/pending-actions-badge'
 import { SubmissionStatusPanel } from '@/components/submission-status-panel'
 import { CompanyEditDialog } from '@/components/admin/company-edit-dialog'
 import { BulkInvitationPanel } from '@/components/admin/bulk-invitation-panel'
+import { PortfolioActionModal } from '@/components/admin/portfolio-action-modal'
 import { usePortfolioSummary } from '@/hooks/use-portfolio-summary'
 import { useGeneratePortfolioAnalysis } from '@/hooks/use-portfolio-analysis'
 import { useGenerateMeetingSummary } from '@/hooks/use-meeting-summary'
@@ -52,6 +53,7 @@ export function PortfolioPage() {
   const [analysis, setAnalysis] = useState<PortfolioAnalysis | null>(null)
   const [meetingSummary, setMeetingSummary] = useState<MeetingSummary | null>(null)
   const [editingBusiness, setEditingBusiness] = useState<Business | null>(null)
+  const [actionModalOpen, setActionModalOpen] = useState(false)
   const generateAnalysis = useGeneratePortfolioAnalysis()
   const generateMeetingSummary = useGenerateMeetingSummary()
   const deleteBusiness = useDeleteBusiness()
@@ -233,6 +235,15 @@ export function PortfolioPage() {
             <p className="text-xs text-muted-foreground">Doing good by doing well</p>
           </div>
           <div className="flex-1" />
+          {(userRole === 'super_admin' || userRole === 'consultant' || userRole === 'admin') && (
+            <Button
+              variant="outline"
+              onClick={() => setActionModalOpen(true)}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Action
+            </Button>
+          )}
           <Button
             variant="outline"
             onClick={() => navigate('/compare')}
@@ -569,6 +580,12 @@ export function PortfolioPage() {
             onOpenChange={(open) => !open && setEditingBusiness(null)}
           />
         )}
+
+        {/* Portfolio Action Modal */}
+        <PortfolioActionModal
+          open={actionModalOpen}
+          onOpenChange={setActionModalOpen}
+        />
       </div>
     </div>
   )
