@@ -68,7 +68,9 @@ export function LoginForm() {
 
   // Redirect if already logged in with valid role (but not in recovery mode)
   useEffect(() => {
+    console.log('[LoginForm] Check redirect:', { hasSession: !!session, userRole, businessId, isRecoveryMode })
     if (session && userRole && !isRecoveryMode) {
+      console.log('[LoginForm] Redirecting by role:', userRole)
       redirectByRole(userRole, businessId)
     }
   }, [session, userRole, businessId, isRecoveryMode])

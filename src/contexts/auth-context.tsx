@@ -43,10 +43,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Custom access token hook adds claims to JWT payload, not app_metadata
   // Decode JWT to get the claims (access_token is a JWT: header.payload.signature)
   const getJwtClaims = (accessToken: string | undefined): { user_role: 'super_admin' | 'consultant' | 'business_user' | null, business_id: string | null } => {
-    if (!accessToken) return { user_role: null, business_id: null }
+    if (!accessToken) {
+      console.log('[Auth] No access token')
+      return { user_role: null, business_id: null }
+    }
     try {
       const payload = accessToken.split('.')[1]
       const decoded = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')))
+      console.log('[Auth] JWT decoded claims:', { user_role: decoded.user_role, business_id: decoded.business_id })
       const rawRole = decoded.user_role || null
       // Backward compat: old 'admin' role maps to 'super_admin'
       const user_role = rawRole === 'admin' ? 'super_admin' : rawRole
@@ -54,7 +58,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user_role,
         business_id: decoded.business_id || null
       }
-    } catch {
+    } catch (e) {
+      console.error('[Auth] JWT parse error:', e)
       return { user_role: null, business_id: null }
     }
   }
