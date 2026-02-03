@@ -46,7 +46,7 @@ export function mapScorecardToForm(scorecard: Scorecard): ScorecardData {
     biggestOpportunity: scorecard.biggest_opportunity || '',
     biggestRisk: scorecard.biggest_risk || '',
     managementAvoiding: scorecard.management_avoiding || '',
-    leadershipConfidence: validateLeadershipConfidence(scorecard.leadership_confidence) || 'confident',
+    leadershipConfidence: validateLeadershipConfidence(scorecard.leadership_confidence) || 'yes',
     consultantGutFeel: scorecard.consultant_gut_feel || '',
   }
 }
