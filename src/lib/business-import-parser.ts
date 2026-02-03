@@ -8,8 +8,8 @@ import { read, utils } from 'xlsx'
 
 export interface BusinessImportRow {
   companyName: string
-  contactEmail: string | null
-  contactName: string | null
+  contactEmail?: string
+  contactName?: string
 }
 
 /**
@@ -37,7 +37,6 @@ export const BUSINESS_COLUMN_ALIASES: Record<string, keyof BusinessImportRow> = 
   'contact': 'contactName',
   'contact name': 'contactName',
   'person': 'contactName',
-  'name': 'contactName',
   'contact person': 'contactName',
 }
 
@@ -119,7 +118,7 @@ export async function parseBusinessSpreadsheet(file: File): Promise<{
       if (canonicalField) {
         // Convert value to string and trim
         const stringValue = value != null ? String(value).trim() : ''
-        mapped[canonicalField] = stringValue || null
+        mapped[canonicalField] = stringValue || undefined
       }
     }
 
@@ -131,8 +130,8 @@ export async function parseBusinessSpreadsheet(file: File): Promise<{
 
     parsedRows.push({
       companyName: mapped.companyName,
-      contactEmail: mapped.contactEmail || null,
-      contactName: mapped.contactName || null,
+      contactEmail: mapped.contactEmail,
+      contactName: mapped.contactName,
     })
   }
 

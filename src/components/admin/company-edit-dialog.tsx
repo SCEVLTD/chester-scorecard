@@ -137,7 +137,7 @@ export function CompanyEditDialog({
 
           {/* Email addresses management */}
           <div className="pt-2 border-t">
-            <CompanyEmailsManager businessId={business.id} />
+            <CompanyEmailsManager businessId={business.id} businessName={business.name} />
           </div>
 
           <div className="flex justify-end gap-2 pt-2">

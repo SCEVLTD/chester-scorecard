@@ -48,7 +48,7 @@ export function useAddCompanyEmail() {
 export function useRemoveCompanyEmail() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async ({ emailId, businessId }: { emailId: string; businessId: string }) => {
+    mutationFn: async ({ emailId }: { emailId: string; businessId: string }) => {
       const { error } = await supabase
         .from('company_emails')
         .delete()
@@ -121,6 +121,51 @@ export function useCreateCompanyAccount() {
       }
 
       const data = response.data as CreateAccountResponse
+      if (data.error) {
+        throw new Error(data.error)
+      }
+
+      return data
+    },
+  })
+}
+
+interface SendInviteResponse {
+  success: boolean
+  message: string
+  email: string
+  error?: string
+}
+
+export function useSendCompanyInvite() {
+  return useMutation({
+    mutationFn: async ({
+      email,
+      businessId,
+      businessName,
+    }: {
+      email: string
+      businessId: string
+      businessName?: string
+    }): Promise<SendInviteResponse> => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        throw new Error('Not authenticated')
+      }
+
+      const response = await supabase.functions.invoke('send-company-invite', {
+        body: {
+          email,
+          business_id: businessId,
+          business_name: businessName,
+        },
+      })
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Failed to send invite')
+      }
+
+      const data = response.data as SendInviteResponse
       if (data.error) {
         throw new Error(data.error)
       }

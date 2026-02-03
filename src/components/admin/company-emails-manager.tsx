@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { Plus, Trash2, Star, Loader2, Key } from 'lucide-react'
+import { Plus, Trash2, Star, Loader2, Key, Eye, EyeOff, Send } from 'lucide-react'
 import {
   useCompanyEmails,
   useAddCompanyEmail,
   useRemoveCompanyEmail,
   useSetPrimaryEmail,
   useCreateCompanyAccount,
+  useSendCompanyInvite,
 } from '@/hooks/use-company-emails'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -22,20 +23,25 @@ import {
 
 interface CompanyEmailsManagerProps {
   businessId: string
+  businessName?: string
 }
 
-export function CompanyEmailsManager({ businessId }: CompanyEmailsManagerProps) {
+export function CompanyEmailsManager({ businessId, businessName }: CompanyEmailsManagerProps) {
   const [newEmail, setNewEmail] = useState('')
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false)
   const [selectedEmail, setSelectedEmail] = useState<string | null>(null)
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [sendingInviteTo, setSendingInviteTo] = useState<string | null>(null)
 
   const { data: emails = [], isLoading } = useCompanyEmails(businessId)
   const addEmail = useAddCompanyEmail()
   const removeEmail = useRemoveCompanyEmail()
   const setPrimary = useSetPrimaryEmail()
   const createAccount = useCreateCompanyAccount()
+  const sendInvite = useSendCompanyInvite()
 
   const handleAddEmail = async () => {
     if (!newEmail.trim()) return
@@ -81,7 +87,26 @@ export function CompanyEmailsManager({ businessId }: CompanyEmailsManagerProps) 
     setSelectedEmail(email)
     setPassword('')
     setConfirmPassword('')
+    setShowPassword(false)
+    setShowConfirmPassword(false)
     setPasswordDialogOpen(true)
+  }
+
+  const handleSendInvite = async (email: string) => {
+    setSendingInviteTo(email)
+    try {
+      await sendInvite.mutateAsync({
+        email,
+        businessId,
+        businessName,
+      })
+      toast.success(`Setup email sent to ${email}`)
+    } catch (error) {
+      console.error('Failed to send invite:', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to send setup email')
+    } finally {
+      setSendingInviteTo(null)
+    }
   }
 
   const handleCreateAccount = async () => {
@@ -130,7 +155,7 @@ export function CompanyEmailsManager({ businessId }: CompanyEmailsManagerProps) 
     <div className="space-y-2">
       <Label>Email Addresses</Label>
       <p className="text-sm text-muted-foreground">
-        Manage email addresses and login credentials. Click the key icon to set a password for login.
+        Manage email addresses and login credentials. Use the send icon to email them a password setup link.
       </p>
 
       {/* Existing emails list */}
@@ -154,8 +179,22 @@ export function CompanyEmailsManager({ businessId }: CompanyEmailsManagerProps) 
                 type="button"
                 size="sm"
                 variant="ghost"
+                onClick={() => handleSendInvite(email.email)}
+                disabled={sendingInviteTo === email.email}
+                title="Send password setup email"
+              >
+                {sendingInviteTo === email.email ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-green-600" />
+                ) : (
+                  <Send className="h-4 w-4 text-green-600" />
+                )}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
                 onClick={() => openPasswordDialog(email.email)}
-                title="Set login password"
+                title="Set login password manually"
               >
                 <Key className="h-4 w-4 text-blue-600" />
               </Button>
@@ -230,23 +269,46 @@ export function CompanyEmailsManager({ businessId }: CompanyEmailsManagerProps) 
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Enter password (min 6 characters)"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Enter password (min 6 characters)"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                placeholder="Confirm password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-              />
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  placeholder="Confirm password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              {password && confirmPassword && password !== confirmPassword && (
+                <p className="text-sm text-red-500">Passwords do not match</p>
+              )}
             </div>
           </div>
           <DialogFooter>

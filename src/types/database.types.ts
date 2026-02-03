@@ -280,6 +280,38 @@ export interface Database {
         }
         Relationships: []
       }
+      company_emails: {
+        Row: {
+          id: string
+          business_id: string
+          email: string
+          is_primary: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          business_id: string
+          email: string
+          is_primary?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          business_id?: string
+          email?: string
+          is_primary?: boolean
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'company_emails_business_id_fkey'
+            columns: ['business_id']
+            isOneToOne: false
+            referencedRelation: 'businesses'
+            referencedColumns: ['id']
+          }
+        ]
+      }
       scorecards: {
         Row: {
           id: string
@@ -426,3 +458,6 @@ export type SectorInsert = Database['public']['Tables']['sectors']['Insert']
 export type Action = Database['public']['Tables']['actions']['Row']
 export type ActionInsert = Database['public']['Tables']['actions']['Insert']
 export type ActionUpdate = Database['public']['Tables']['actions']['Update']
+
+export type CompanyEmail = Database['public']['Tables']['company_emails']['Row']
+export type CompanyEmailInsert = Database['public']['Tables']['company_emails']['Insert']

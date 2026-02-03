@@ -16,7 +16,7 @@ import { Badge } from '@/components/ui/badge'
 
 import { ExcelImportDropzone } from '@/components/admin/excel-import-dropzone'
 import { parseBusinessSpreadsheet, type BusinessImportRow } from '@/lib/business-import-parser'
-import { useBusinesses, useCreateBusiness } from '@/hooks/use-businesses'
+import { useBusinesses } from '@/hooks/use-businesses'
 import { supabase } from '@/lib/supabase'
 
 type ImportState = 'idle' | 'parsing' | 'preview' | 'importing' | 'complete'
@@ -120,7 +120,7 @@ export function ImportBusinessesPage() {
               contact_email: business.contactEmail,
               contact_name: business.contactName,
             })
-            .select()
+            .select('id')
             .single()
 
           if (businessError) throw businessError
@@ -130,7 +130,7 @@ export function ImportBusinessesPage() {
             const { error: emailError } = await supabase
               .from('company_emails')
               .insert({
-                business_id: createdBusiness.id,
+                business_id: (createdBusiness as { id: string }).id,
                 email: business.contactEmail,
                 is_primary: true,
               })
@@ -227,7 +227,7 @@ export function ImportBusinessesPage() {
       )}
 
       {/* Preview state */}
-      {state === 'preview' && (
+      {(state === 'preview' || state === 'importing') && (
         <>
           {/* Detected columns */}
           <Card>
@@ -312,16 +312,6 @@ export function ImportBusinessesPage() {
             </CardContent>
           </Card>
         </>
-      )}
-
-      {/* Importing state */}
-      {state === 'importing' && (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <Upload className="mx-auto h-12 w-12 text-muted-foreground animate-pulse" />
-            <p className="mt-4 text-lg font-medium">Importing businesses...</p>
-          </CardContent>
-        </Card>
       )}
 
       {/* Complete state */}
