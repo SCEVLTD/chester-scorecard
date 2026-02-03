@@ -52,9 +52,9 @@ Plans:
 **Plans:** 3 plans
 
 Plans:
-- [ ] 09-01-PLAN.md — Remove N/A from qualitative options (except Leadership)
-- [ ] 09-02-PLAN.md — Business import from spreadsheet
-- [ ] 09-03-PLAN.md — Bulk invitation emails to all businesses
+- [x] 09-01-PLAN.md — Remove N/A from qualitative options (except Leadership)
+- [x] 09-02-PLAN.md — Business import from spreadsheet
+- [x] 09-03-PLAN.md — Bulk invitation emails to all businesses
 
 **Requirements:**
 - ADMIN-03: Bulk email invitations with personalized links
@@ -75,6 +75,13 @@ Plans:
 ## Phase 10: Consultant View & Reporting
 
 **Goal:** Consultant role sees results without financials, improved portfolio management.
+
+**Plans:** 3 plans
+
+Plans:
+- [ ] 10-01-PLAN.md — Consultant role with filtered data access (DB migration + auth types)
+- [ ] 10-02-PLAN.md — Portfolio-level action creation with business dropdown
+- [ ] 10-03-PLAN.md — Batch PDF export (Print All button with ZIP download)
 
 **Requirements:**
 - AUTH-08: Consultant role sees qualitative + AI summaries, NO financials
