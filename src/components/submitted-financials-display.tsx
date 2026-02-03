@@ -8,6 +8,7 @@ import {
 import { submissionToVariances, formatVariance, formatCurrency } from '@/lib/variance-calculator'
 import type { CompanySubmission } from '@/types/database.types'
 import { FileCheck } from 'lucide-react'
+import { useAuth } from '@/contexts/auth-context'
 
 interface SubmittedFinancialsDisplayProps {
   submission: CompanySubmission
@@ -71,6 +72,13 @@ function MetricDisplayRow({
  * Shows raw values, calculated variances, and scores
  */
 export function SubmittedFinancialsDisplay({ submission }: SubmittedFinancialsDisplayProps) {
+  const { userRole } = useAuth()
+
+  // Consultants should not see raw financial figures (AUTH-08)
+  if (userRole === 'consultant') {
+    return null
+  }
+
   const variances = submissionToVariances(submission)
 
   const scores = {
