@@ -20,7 +20,7 @@ import { ArrowLeft, Plus, Trash2, Shield } from 'lucide-react'
 interface Admin {
   id: string
   email: string
-  role: 'super_admin' | 'consultant'
+  role: 'super_admin' | 'consultant' | null
   created_at: string
 }
 
@@ -29,7 +29,8 @@ export function AdminsPage() {
   const [newEmail, setNewEmail] = useState('')
   const [newRole, setNewRole] = useState<'super_admin' | 'consultant'>('consultant')
   const queryClient = useQueryClient()
-  const { userRole } = useAuth()
+  const { userRole, user } = useAuth()
+  const currentUserEmail = user?.email?.toLowerCase()
 
   // Page protection: super_admin only
   if (userRole !== 'super_admin') {
@@ -184,37 +185,46 @@ export function AdminsPage() {
 
             {admins && admins.length > 0 && (
               <div className="space-y-2">
-                {admins.map((admin) => (
-                  <div
-                    key={admin.id}
-                    className="flex items-center justify-between p-3 border rounded-lg"
-                  >
-                    <div className="flex items-center gap-4">
-                      <span className="font-medium">{admin.email}</span>
-                      <Select
-                        value={admin.role}
-                        onValueChange={(role) => updateRole.mutate({ id: admin.id, role })}
-                      >
-                        <SelectTrigger className="w-[140px]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="consultant">Consultant</SelectItem>
-                          <SelectItem value="super_admin">Super Admin</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => handleRemoveAdmin(admin)}
-                      disabled={removeAdmin.isPending}
+                {admins.map((admin) => {
+                  const isCurrentUser = admin.email.toLowerCase() === currentUserEmail
+                  const displayRole = admin.role || 'super_admin' // Handle null roles
+                  return (
+                    <div
+                      key={admin.id}
+                      className="flex items-center justify-between p-3 border rounded-lg"
                     >
-                      <Trash2 className="h-4 w-4 text-red-500" />
-                    </Button>
-                  </div>
-                ))}
+                      <div className="flex items-center gap-4">
+                        <span className="font-medium">
+                          {admin.email}
+                          {isCurrentUser && <span className="text-muted-foreground ml-1">(you)</span>}
+                        </span>
+                        <Select
+                          value={displayRole}
+                          onValueChange={(role) => updateRole.mutate({ id: admin.id, role })}
+                          disabled={isCurrentUser}
+                        >
+                          <SelectTrigger className="w-[140px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="consultant">Consultant</SelectItem>
+                            <SelectItem value="super_admin">Super Admin</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => handleRemoveAdmin(admin)}
+                        disabled={removeAdmin.isPending || isCurrentUser}
+                        title={isCurrentUser ? "You cannot remove yourself" : "Remove admin"}
+                      >
+                        <Trash2 className={`h-4 w-4 ${isCurrentUser ? 'text-muted-foreground' : 'text-red-500'}`} />
+                      </Button>
+                    </div>
+                  )
+                })}
               </div>
             )}
           </CardContent>

@@ -87,6 +87,8 @@ Before Feb 7, 2026 Friday meeting:
 | BATCH-01 | 10-03 | Concurrent PDF generation approach | Promise.all for parallel generation | Browser handles 6-10 concurrent efficiently, 6-10x faster |
 | BATCH-02 | 10-03 | Progress tracking granularity | Update after each PDF completes | Simple, accurate, no performance impact with 19 businesses |
 | BATCH-03 | 10-03 | ZIP compression level | DEFLATE level 6 | Good balance for PDFs (already compressed internally) |
+| FILTER-01 | 10-04 | SubmittedFinancialsDisplay for consultants | Hide entirely | Simpler than partial data; consultants see score via BusinessScorecardView |
+| FILTER-02 | 10-04 | ComparisonColumns financial filtering | Filter metricRows array | Hide Financial section header and all four variance rows |
 | ROLE-05 | 10-05 | Role selector default | Default to consultant | Safer default; most new admins will be consultants |
 | ROLE-06 | 10-05 | Role editing approach | Inline dropdown in list | Quick access without modal; matches admin list pattern |
 
@@ -96,7 +98,7 @@ Before Feb 7, 2026 Friday meeting:
 **Current milestone:** v1.1 Friday Launch Ready - ALL FEATURES COMPLETE
 **Stopped at:** Completed 10-05-PLAN.md (Admin role management)
 **Resume file:** None
-**Next action:** v1.1 complete. Ready for deployment preparation and Feb 7 Friday meeting.
+**Next action:** Run `/gsd:audit-milestone` to verify cross-phase integration before archiving.
 
 ---
 *State updated: 2026-02-03 — Phase 10 complete (all 5 plans)*

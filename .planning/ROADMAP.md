@@ -76,13 +76,14 @@ Plans:
 
 **Goal:** Consultant role sees results without financials, improved portfolio management.
 
-**Plans:** 4 plans
+**Plans:** 5 plans
 
 Plans:
 - [x] 10-01-PLAN.md — Consultant role with filtered data access (DB migration + auth types)
 - [x] 10-02-PLAN.md — Portfolio-level action creation with business dropdown
 - [x] 10-03-PLAN.md — Batch PDF export (Print All button with ZIP download)
-- [ ] 10-04-PLAN.md — [GAP CLOSURE] Filter financial data from comparison & submission displays
+- [x] 10-04-PLAN.md — [GAP CLOSURE] Filter financial data from comparison & submission displays
+- [x] 10-05-PLAN.md — Role management UI (super admin can assign/change roles)
 
 **Requirements:**
 - AUTH-08: Consultant role sees qualitative + AI summaries, NO financials
@@ -112,4 +113,4 @@ Phase 10 ───────────────────────�
 
 ---
 *Roadmap created: 2026-02-03*
-*Last updated: 2026-02-03*
+*Last updated: 2026-02-03 — Phase 10 complete*
