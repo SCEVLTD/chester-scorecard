@@ -344,7 +344,7 @@ export function PortfolioPage() {
         </div>
 
         {/* Bulk Invitation Panel (Admin Only) */}
-        {(userRole === 'super_admin' || userRole === 'consultant' || userRole === 'admin') && (
+        {(userRole === 'super_admin' || userRole === 'consultant' ) && (
           <div className="mb-6">
             <BulkInvitationPanel />
           </div>
@@ -449,7 +449,7 @@ export function PortfolioPage() {
                             <Badge className={ragColors[item.ragStatus]}>
                               {item.latestScore}
                             </Badge>
-                            {(userRole === 'super_admin' || userRole === 'consultant' || userRole === 'admin') && business && (
+                            {(userRole === 'super_admin' || userRole === 'consultant' ) && business && (
                               <Button
                                 variant="ghost"
                                 size="icon"

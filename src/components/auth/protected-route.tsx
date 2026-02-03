@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/auth-context'
 
 interface ProtectedRouteProps {
   children: ReactNode
-  requiredRole?: 'admin' | 'business_user'
+  requiredRole?: 'admin' | 'super_admin' | 'consultant' | 'business_user'
   allowedBusinessId?: string
 }
 
@@ -31,7 +31,10 @@ export function ProtectedRoute({
     return <Redirect to={requiredRole === 'business_user' ? '/company/login' : '/login'} />
   }
 
-  if (requiredRole === 'admin' && userRole !== 'admin') {
+  // Check admin role (includes both super_admin and consultant)
+  const isAdminRole = userRole === 'super_admin' || userRole === 'consultant'
+
+  if (requiredRole === 'admin' && !isAdminRole) {
     // Business users trying to access admin pages go to their dashboard
     if (userRole === 'business_user' && businessId) {
       return <Redirect to="/company/dashboard" />
@@ -39,11 +42,19 @@ export function ProtectedRoute({
     return <Redirect to="/unauthorized" />
   }
 
-  if (requiredRole === 'business_user' && userRole !== 'business_user' && userRole !== 'admin') {
+  if (requiredRole === 'super_admin' && userRole !== 'super_admin') {
     return <Redirect to="/unauthorized" />
   }
 
-  if (allowedBusinessId && userRole !== 'admin' && businessId !== allowedBusinessId) {
+  if (requiredRole === 'consultant' && userRole !== 'consultant') {
+    return <Redirect to="/unauthorized" />
+  }
+
+  if (requiredRole === 'business_user' && userRole !== 'business_user' && !isAdminRole) {
+    return <Redirect to="/unauthorized" />
+  }
+
+  if (allowedBusinessId && !isAdminRole && businessId !== allowedBusinessId) {
     return <Redirect to="/unauthorized" />
   }
 

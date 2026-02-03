@@ -6,6 +6,8 @@ import { Badge } from '@/components/ui/badge'
 import { calculateSectionScores, SECTION_CONFIG, formatChartMonth } from '@/lib/chart-utils'
 import { getScoreColor } from '@/lib/heatmap-utils'
 import type { Scorecard } from '@/types/database.types'
+// Note: This component displays section scores and AI analysis (qualitative data)
+// It does NOT display financial variances directly - consultants can see this view
 
 interface BusinessScorecardViewProps {
   scorecard: Scorecard

@@ -7,7 +7,8 @@ export function UnauthorizedPage() {
   const { userRole, businessId } = useAuth()
 
   // Determine where to redirect based on user role
-  const homeLink = userRole === 'admin'
+  const isAdminRole = userRole === 'super_admin' || userRole === 'consultant'
+  const homeLink = isAdminRole
     ? '/'
     : businessId
       ? `/business/${businessId}`

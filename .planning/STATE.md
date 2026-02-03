@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-02-03)
 
 ## Current Position
 
-Phase: 9 (Invitations Form) of 10
-Plan: 3 of 3 complete
-Status: Phase complete
-Last activity: 2026-02-03 — Completed 09-03-PLAN.md
+Phase: 10 (Consultant View & Reporting) of 10
+Plan: 2 of 3 complete
+Status: In progress
+Last activity: 2026-02-03 — Completed 10-02-PLAN.md
 
-Progress: ███████████████████░ 100% (19/19 plans complete)
+Progress: ████████████████████ 105% (20/19 plans complete)
 
 ## Current Status
 
@@ -39,8 +39,8 @@ See: .planning/MILESTONES.md
 **WHILE BUSINESSES FILL FORMS:**
 4. ✓ Form fix — remove N/A except Leadership
 5. ✓ Invitation system — send emails to all businesses
-6. Consultant role — Dylan/Nick see results without financials
-7. Add actions from portfolio level
+6. ✓ Consultant role — Dylan/Nick see results without financials
+7. ✓ Add actions from portfolio level
 8. Print all scorecards
 
 ## Deployment Checklist (Pre-Meeting)
@@ -76,14 +76,16 @@ Before Feb 7, 2026 Friday meeting:
 | IMPORT-02 | 09-02 | Email setup | Create company_emails with is_primary: true | Automatic setup for invitation sending |
 | EMAIL-01 | 09-03 | Invitation expiry | 30 days for invitations, 7 days for reminders | Invitations are onboarding, need more time |
 | EMAIL-02 | 09-03 | Email selection | Primary email with fallback to first | Clear priority, automatic fallback |
+| ACTION-01 | 10-02 | Add Action button visibility | super_admin and consultant only | Friday meeting workflow for Dylan/Nick |
+| ACTION-02 | 10-02 | Business dropdown ordering | Alphabetical by name | Quick selection during multi-business meetings |
 
 ## Session Continuity
 
-**Last session:** 2026-02-03 12:12 UTC
+**Last session:** 2026-02-03 16:47 UTC
 **Current milestone:** v1.1 Friday Launch Ready
-**Stopped at:** Completed 09-03-PLAN.md (Bulk invitation system)
+**Stopped at:** Completed 10-02-PLAN.md (Portfolio-level action creation)
 **Resume file:** None
-**Next action:** Phase 9 complete. Ready for Phase 10 or deployment preparation.
+**Next action:** Phase 10 Plan 03 (Batch print all scorecards) - final plan in Phase 10
 
 ---
-*State updated: 2026-02-03 — Phase 09 complete (all 3 plans)*
+*State updated: 2026-02-03 — Phase 10 Plan 02 complete*
