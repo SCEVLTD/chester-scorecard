@@ -17,17 +17,55 @@ export function CompanyLoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isResetting, setIsResetting] = useState(false)
   const [isRecoveryMode, setIsRecoveryMode] = useState(false)
+  const [hashError, setHashError] = useState<string | null>(null)
   const [, navigate] = useLocation()
   const { signIn, resetPassword } = useAuth()
 
-  // Check if this is a password recovery or invite redirect
+  // Listen for PASSWORD_RECOVERY event from Supabase auth
   useEffect(() => {
-    const hash = window.location.hash
-    // Handle both recovery (forgot password) and invite (new user setup)
-    if (hash && (hash.includes('type=recovery') || hash.includes('type=invite'))) {
-      setIsRecoveryMode(true)
+    // First check URL hash for errors or recovery type
+    const hash = window.location.hash.substring(1)
+    if (hash) {
+      const params = new URLSearchParams(hash)
+
+      // Check for errors first (like expired OTP)
+      const error = params.get('error')
+      const errorDescription = params.get('error_description')
+      if (error) {
+        console.error('Auth error from URL:', error, errorDescription)
+        setHashError(errorDescription?.replace(/\+/g, ' ') || 'The link has expired or is invalid. Please request a new one.')
+        // Clear the error hash from URL
+        window.history.replaceState(null, '', window.location.pathname)
+        return
+      }
+
+      // Check for recovery/invite type in hash (fallback)
+      const type = params.get('type')
+      if (type === 'recovery' || type === 'invite') {
+        setIsRecoveryMode(true)
+      }
     }
-  }, [])
+
+    // Set up auth state change listener for PASSWORD_RECOVERY event
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('Auth state change:', event, session?.user?.email)
+        if (event === 'PASSWORD_RECOVERY') {
+          // Supabase has verified the token and we have a recovery session
+          setIsRecoveryMode(true)
+          setHashError(null)
+        } else if (event === 'SIGNED_IN' && session) {
+          // Check if this was a recovery that completed
+          // If we were in recovery mode and now signed in, redirect
+          if (isRecoveryMode) {
+            navigate('/company/dashboard')
+          }
+        }
+      }
+    )
+
+    return () => subscription?.unsubscribe()
+  }, [navigate, isRecoveryMode])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -176,6 +214,14 @@ export function CompanyLoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {hashError && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+              <p className="text-sm text-red-600">{hashError}</p>
+              <p className="text-xs text-red-500 mt-1">
+                Enter your email and click "Forgot password?" to get a new link.
+              </p>
+            </div>
+          )}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <Input
