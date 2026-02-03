@@ -1,6 +1,7 @@
 import { Badge } from '@/components/ui/badge'
 import type { Scorecard } from '@/types/database.types'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/contexts/auth-context'
 
 interface ComparisonColumnsProps {
   businessNames: string[]
@@ -94,10 +95,24 @@ export function ComparisonColumns({
   businessNames,
   scorecardData,
 }: ComparisonColumnsProps) {
+  const { userRole } = useAuth()
+
   // Get latest scorecard for each business
   const latestScorecards = scorecardData.map((data) =>
     data && data.length > 0 ? data[0] : null
   )
+
+  // Financial row keys that consultants should NOT see (AUTH-08)
+  const financialRowKeys = ['revenue_variance', 'gross_profit_variance', 'overheads_variance', 'net_profit_variance']
+
+  // Filter out financial data for consultant role
+  const filteredMetricRows = userRole === 'consultant'
+    ? metricRows.filter(row =>
+        row.type === 'section-header'
+          ? row.label !== 'Financial'  // Also hide Financial section header
+          : !financialRowKeys.includes(row.key as string)
+      )
+    : metricRows
 
   return (
     <div className="overflow-x-auto">
@@ -118,7 +133,7 @@ export function ComparisonColumns({
           </tr>
         </thead>
         <tbody>
-          {metricRows.map((row, index) => {
+          {filteredMetricRows.map((row, index) => {
             // Section header row
             if (row.type === 'section-header') {
               return (
