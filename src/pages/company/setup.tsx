@@ -38,15 +38,7 @@ export function CompanySetupPage() {
     // Validate the token via edge function
     const validateToken = async () => {
       try {
-        const { data, error } = await supabase.functions.invoke('complete-account-setup', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: null,
-        })
-
-        // The invoke method doesn't support GET with query params well, so we use fetch directly
+        // Use fetch directly since supabase.functions.invoke doesn't support GET with query params
         const response = await fetch(
           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/complete-account-setup?token=${token}`,
           {

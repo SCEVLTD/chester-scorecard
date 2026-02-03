@@ -9,7 +9,7 @@ import { Document, Page, View, Text, Image } from '@react-pdf/renderer'
 import { styles, ragColors } from './pdf-styles'
 import { mapScorecardToPdfData, type PdfScorecardData } from '@/lib/pdf-data-mapper'
 import type { Scorecard } from '@/types/database.types'
-import { velocityLogo } from './velocity-logo'
+import { velocityLogoBase64 } from './velocity-logo'
 
 interface ScorecardPdfProps {
   scorecard: Scorecard
@@ -187,7 +187,7 @@ export function ScorecardPdf({ scorecard, businessName }: ScorecardPdfProps) {
       <Page size="A4" style={styles.page}>
         {/* Header with logo, business name and overall score */}
         <View style={styles.header}>
-          <Image style={styles.headerLogo} src={velocityLogo} />
+          <Image style={styles.headerLogo} src={velocityLogoBase64} />
           <View style={styles.headerLeft}>
             <Text style={styles.headerTitle}>Chester Business Scorecard</Text>
             <Text style={{ fontSize: 7, color: '#666', marginTop: 2, fontStyle: 'italic' }}>Doing good by doing well</Text>
