@@ -22,6 +22,7 @@ import { MeetingSummaryCard } from '@/components/meeting-summary-card'
 import { PendingActionsBadge } from '@/components/pending-actions-badge'
 import { SubmissionStatusPanel } from '@/components/submission-status-panel'
 import { CompanyEditDialog } from '@/components/admin/company-edit-dialog'
+import { BulkInvitationPanel } from '@/components/admin/bulk-invitation-panel'
 import { usePortfolioSummary } from '@/hooks/use-portfolio-summary'
 import { useGeneratePortfolioAnalysis } from '@/hooks/use-portfolio-analysis'
 import { useGenerateMeetingSummary } from '@/hooks/use-meeting-summary'
@@ -288,6 +289,13 @@ export function PortfolioPage() {
         <div className="mb-6">
           <SubmissionStatusPanel month={displayMonth} />
         </div>
+
+        {/* Bulk Invitation Panel (Admin Only) */}
+        {userRole === 'admin' && (
+          <div className="mb-6">
+            <BulkInvitationPanel />
+          </div>
+        )}
 
         {/* Anomaly Alert Section */}
         {anomalies.length > 0 && (
