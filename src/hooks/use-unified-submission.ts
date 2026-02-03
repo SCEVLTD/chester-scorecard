@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
-import { calculateTotalScore } from '@/lib/scoring'
-import type { CompanySubmission, CompanySubmissionInsert, DataRequest } from '@/types/database.types'
+import { calculateTotalScore, getRagStatus } from '@/lib/scoring'
+import type { CompanySubmission, CompanySubmissionInsert, DataRequest, ScorecardInsert } from '@/types/database.types'
 import type { UnifiedSubmissionData } from '@/schemas/unified-submission'
 
 /**
@@ -134,11 +134,53 @@ export function useCreateUnifiedSubmission() {
         .update({ status: 'submitted' })
         .eq('id', dataRequestId)
 
+      // 7. Auto-create scorecard from submission data
+      const scorecardPayload: ScorecardInsert = {
+        business_id: businessId,
+        month: data.month,
+        consultant_name: null, // Self-assessment, no consultant
+        // Financial variances (calculated above)
+        revenue_variance: revenueVariance,
+        gross_profit_variance: grossProfitVariance,
+        overheads_variance: overheadsVariance,
+        net_profit_variance: netProfitVariance,
+        productivity_benchmark: data.productivityBenchmark,
+        productivity_actual: productivityActual,
+        // Qualitative from company submission
+        leadership: data.leadership ?? null,
+        market_demand: data.marketDemand ?? null,
+        marketing: data.marketing ?? null,
+        product_strength: data.productStrength ?? null,
+        supplier_strength: data.supplierStrength ?? null,
+        sales_execution: data.salesExecution ?? null,
+        // No consultant commentary for self-assessment
+        biggest_opportunity: null,
+        biggest_risk: null,
+        management_avoiding: null,
+        leadership_confidence: null,
+        consultant_gut_feel: null,
+        // Computed
+        total_score: score,
+        rag_status: getRagStatus(score),
+        company_submission_id: (result as CompanySubmission).id,
+      }
+
+      const { error: scorecardError } = await supabase
+        .from('scorecards')
+        .upsert(scorecardPayload, { onConflict: 'business_id,month' })
+
+      if (scorecardError) {
+        console.error('Failed to create scorecard:', scorecardError)
+        // Don't throw - submission succeeded, scorecard is secondary
+      }
+
       return { submission: result as CompanySubmission, score }
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['unified-submission', variables.businessId] })
       queryClient.invalidateQueries({ queryKey: ['company-submission'] })
+      // Invalidate scorecards so dashboard shows updated data
+      queryClient.invalidateQueries({ queryKey: ['business-scorecards', variables.businessId] })
     },
   })
 }
