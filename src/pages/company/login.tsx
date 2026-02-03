@@ -218,7 +218,8 @@ export function CompanyLoginPage() {
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
               <p className="text-sm text-red-600">{hashError}</p>
               <p className="text-xs text-red-500 mt-1">
-                Enter your email and click "Forgot password?" to get a new link.
+                If you have a verification code, <button onClick={() => navigate('/company/verify')} className="underline font-medium">enter it here</button>.
+                <br />Otherwise, enter your email and click "Forgot password?" to get a new code.
               </p>
             </div>
           )}
@@ -262,6 +263,14 @@ export function CompanyLoginPage() {
               disabled={isResetting}
             >
               {isResetting ? 'Sending...' : 'Forgot password?'}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              className="w-full text-sm text-muted-foreground"
+              onClick={() => navigate('/company/verify')}
+            >
+              Have a verification code?
             </Button>
           </form>
         </CardContent>

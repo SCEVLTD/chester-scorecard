@@ -66,53 +66,129 @@ function getSubject(actionType: string): string {
 
 /**
  * Get email content based on action type
+ * For invite/recovery, we use OTP codes instead of links to prevent email prefetching issues
  */
-function getEmailContent(actionType: string, confirmUrl: string): { heading: string; message: string; buttonText: string } {
+function getEmailContent(actionType: string): { heading: string; message: string; useOtp: boolean } {
   switch (actionType) {
     case 'signup':
       return {
         heading: 'Confirm Your Account',
-        message: 'Thank you for signing up for Chester Business Scorecard. Please click the button below to confirm your email address and activate your account.',
-        buttonText: 'Confirm Email',
+        message: 'Thank you for signing up for Chester Business Scorecard. Use the verification code below to confirm your email address and activate your account.',
+        useOtp: true,
       }
     case 'invite':
       return {
         heading: 'Set Up Your Account',
-        message: 'You\'ve been invited to access the Chester Business Scorecard portal. Click the button below to set your password and complete your account setup.',
-        buttonText: 'Set Your Password',
+        message: 'You\'ve been invited to access the Chester Business Scorecard portal. Use the verification code below to set your password and complete your account setup.',
+        useOtp: true,
       }
     case 'recovery':
       return {
         heading: 'Reset Your Password',
-        message: 'We received a request to reset your password for Chester Business Scorecard. Click the button below to choose a new password.',
-        buttonText: 'Reset Password',
+        message: 'We received a request to reset your password for Chester Business Scorecard. Use the verification code below to choose a new password.',
+        useOtp: true,
       }
     case 'magiclink':
       return {
         heading: 'Your Login Link',
         message: 'Click the button below to log in to your Chester Business Scorecard account.',
-        buttonText: 'Log In',
+        useOtp: false,
       }
     case 'email_change':
       return {
         heading: 'Confirm Email Change',
         message: 'Please confirm your new email address by clicking the button below.',
-        buttonText: 'Confirm Email',
+        useOtp: false,
       }
     default:
       return {
         heading: 'Chester Business Scorecard',
         message: 'Click the button below to continue.',
-        buttonText: 'Continue',
+        useOtp: false,
       }
   }
 }
 
 /**
- * Build branded HTML email
+ * Build branded HTML email with OTP code (prevents email prefetching issues)
  */
-function buildEmailHtml(actionType: string, confirmUrl: string): string {
-  const { heading, message, buttonText } = getEmailContent(actionType, confirmUrl)
+function buildEmailHtmlWithOtp(actionType: string, otpCode: string): string {
+  const { heading, message } = getEmailContent(actionType)
+  const verifyUrl = `${siteUrl}/company/verify`
+
+  return `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>${heading}</title>
+      </head>
+      <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
+        <div style="background-color: #ffffff; border-radius: 8px; padding: 40px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <!-- Header -->
+          <div style="text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #2563eb;">
+            <h1 style="color: #1a1a1a; margin: 0; font-size: 24px; font-weight: 700;">Chester Business Scorecard</h1>
+            <p style="color: #666; margin: 5px 0 0 0; font-size: 14px;">Chester Brethren Business Group</p>
+          </div>
+
+          <!-- Content -->
+          <h2 style="color: #1a1a1a; margin-top: 0; font-size: 20px;">${heading}</h2>
+          <p style="font-size: 16px; color: #555; margin-bottom: 20px;">
+            ${message}
+          </p>
+
+          <!-- OTP Code Box -->
+          <div style="text-align: center; margin: 30px 0;">
+            <div style="background-color: #f0f7ff; border: 2px solid #2563eb; border-radius: 12px; padding: 24px; display: inline-block;">
+              <p style="font-size: 14px; color: #666; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 1px;">Your Verification Code</p>
+              <p style="font-size: 36px; font-weight: 700; color: #1a1a1a; letter-spacing: 8px; margin: 0; font-family: monospace;">${otpCode}</p>
+            </div>
+          </div>
+
+          <!-- Instructions -->
+          <div style="background-color: #f9fafb; border-radius: 8px; padding: 20px; margin: 20px 0;">
+            <p style="font-size: 14px; color: #555; margin: 0 0 10px 0;"><strong>How to use this code:</strong></p>
+            <ol style="font-size: 14px; color: #555; margin: 0; padding-left: 20px;">
+              <li style="margin-bottom: 8px;">Go to <a href="${verifyUrl}" style="color: #2563eb;">${verifyUrl}</a></li>
+              <li style="margin-bottom: 8px;">Enter your email address</li>
+              <li style="margin-bottom: 8px;">Enter the 6-digit code shown above</li>
+              <li>Set your new password</li>
+            </ol>
+          </div>
+
+          <!-- Security notice -->
+          <p style="font-size: 14px; color: #888; margin-top: 30px;">
+            This code will expire in 24 hours. If you didn't request this email, you can safely ignore it.
+          </p>
+
+          <!-- Login reminder -->
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+            <p style="font-size: 14px; color: #666; margin: 0;">
+              Once you've set your password, you can log in at:<br>
+              <a href="${siteUrl}/company/login" style="color: #2563eb;">${siteUrl}/company/login</a>
+            </p>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="text-align: center; padding: 20px;">
+          <p style="color: #999; font-size: 12px; margin: 0;">
+            Chester Brethren Business Group<br>
+            Supporting business excellence in our community
+          </p>
+        </div>
+      </body>
+    </html>
+  `
+}
+
+/**
+ * Build branded HTML email with clickable link (for non-OTP flows)
+ */
+function buildEmailHtmlWithLink(actionType: string, confirmUrl: string): string {
+  const { heading, message } = getEmailContent(actionType)
+  const buttonText = actionType === 'magiclink' ? 'Log In' : 'Continue'
 
   return `
     <!DOCTYPE html>
@@ -198,12 +274,22 @@ Deno.serve(async (req) => {
 
     console.log(`Processing ${email_data.email_action_type} email for ${user.email}`)
 
-    // Build the confirmation URL
-    const confirmUrl = buildConfirmationUrl(email_data)
+    // Get email content config
+    const { useOtp } = getEmailContent(email_data.email_action_type)
 
-    // Build the email
+    // Build the email based on whether we use OTP or link
     const subject = getSubject(email_data.email_action_type)
-    const html = buildEmailHtml(email_data.email_action_type, confirmUrl)
+    let html: string
+
+    if (useOtp && email_data.token) {
+      // Use OTP code for invite/recovery to prevent email prefetching issues
+      console.log(`Using OTP code for ${email_data.email_action_type}`)
+      html = buildEmailHtmlWithOtp(email_data.email_action_type, email_data.token)
+    } else {
+      // Use clickable link for other email types
+      const confirmUrl = buildConfirmationUrl(email_data)
+      html = buildEmailHtmlWithLink(email_data.email_action_type, confirmUrl)
+    }
 
     // Send via Resend
     const emailResponse = await fetch('https://api.resend.com/emails', {
