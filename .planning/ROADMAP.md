@@ -23,9 +23,9 @@
 **Plans:** 3 plans
 
 Plans:
-- [ ] 08-01-PLAN.md — Fix magic link authentication (Dashboard config + verification)
-- [ ] 08-02-PLAN.md — Admin company edit UI (edit dialog for portfolio page)
-- [ ] 08-03-PLAN.md — Multiple emails per company (company_emails table + UI)
+- [x] 08-01-PLAN.md — Fix magic link authentication (Dashboard config + verification)
+- [x] 08-02-PLAN.md — Admin company edit UI (edit dialog for portfolio page)
+- [x] 08-03-PLAN.md — Multiple emails per company (company_emails table + UI)
 
 **Requirements:**
 - AUTH-06: Fix magic link authentication
@@ -48,6 +48,13 @@ Plans:
 ## Phase 9: Invitations & Form
 
 **Goal:** Get invitation emails out to all 19 businesses with working forms.
+
+**Plans:** 3 plans
+
+Plans:
+- [ ] 09-01-PLAN.md — Remove N/A from qualitative options (except Leadership)
+- [ ] 09-02-PLAN.md — Business import from spreadsheet
+- [ ] 09-03-PLAN.md — Bulk invitation emails to all businesses
 
 **Requirements:**
 - ADMIN-03: Bulk email invitations with personalized links

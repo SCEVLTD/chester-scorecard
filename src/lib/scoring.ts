@@ -196,7 +196,6 @@ export const MARKET_DEMAND_OPTIONS = [
   { value: 'flat', label: 'Flat / mixed signals', points: 5 },
   { value: 'softening', label: 'Softening / pressure on pricing', points: 2.5 },
   { value: 'decline', label: 'Clear decline', points: 0 },
-  { value: 'na', label: 'N/A - Not applicable to my business', points: 0 },
 ] as const
 
 export const MARKETING_OPTIONS = [
@@ -204,7 +203,6 @@ export const MARKETING_OPTIONS = [
   { value: 'activity', label: 'Activity but weak focus', points: 5 },
   { value: 'poor', label: 'Poor execution / no traction', points: 2.5 },
   { value: 'none', label: 'No meaningful marketing', points: 0 },
-  { value: 'na', label: 'N/A - Not applicable to my business', points: 0 },
 ] as const
 
 export const PRODUCT_OPTIONS = [
@@ -212,7 +210,6 @@ export const PRODUCT_OPTIONS = [
   { value: 'adequate', label: 'Adequate but undifferentiated', points: 6 },
   { value: 'weak', label: 'Weak / price-led / delivery issues', points: 3 },
   { value: 'broken', label: 'Fundamentally broken', points: 0 },
-  { value: 'na', label: 'N/A - Not applicable to my business', points: 0 },
 ] as const
 
 export const SUPPLIER_OPTIONS = [
@@ -220,7 +217,6 @@ export const SUPPLIER_OPTIONS = [
   { value: 'acceptable', label: 'Acceptable, no leverage', points: 3 },
   { value: 'weak', label: 'Weak suppliers / margin drag', points: 1 },
   { value: 'damaging', label: 'Actively damaging', points: 0 },
-  { value: 'na', label: 'N/A - Not applicable to my business', points: 0 },
 ] as const
 
 export const SALES_OPTIONS = [
@@ -228,7 +224,6 @@ export const SALES_OPTIONS = [
   { value: 'onTarget', label: 'On target / inconsistent performers', points: 6 },
   { value: 'underperforming', label: 'Underperforming / weak management', points: 3 },
   { value: 'none', label: 'No effective sales engine', points: 0 },
-  { value: 'na', label: 'N/A - Not applicable to my business', points: 0 },
 ] as const
 
 // ============================================================================
