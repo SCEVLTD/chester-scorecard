@@ -83,3 +83,49 @@ export function useSetPrimaryEmail() {
     },
   })
 }
+
+interface CreateAccountResponse {
+  success: boolean
+  message: string
+  user_id: string
+  email: string
+  error?: string
+}
+
+export function useCreateCompanyAccount() {
+  return useMutation({
+    mutationFn: async ({
+      email,
+      password,
+      businessId,
+    }: {
+      email: string
+      password: string
+      businessId: string
+    }): Promise<CreateAccountResponse> => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        throw new Error('Not authenticated')
+      }
+
+      const response = await supabase.functions.invoke('create-company-account', {
+        body: {
+          email,
+          password,
+          business_id: businessId,
+        },
+      })
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Failed to create account')
+      }
+
+      const data = response.data as CreateAccountResponse
+      if (data.error) {
+        throw new Error(data.error)
+      }
+
+      return data
+    },
+  })
+}
