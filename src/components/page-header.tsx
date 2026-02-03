@@ -1,4 +1,4 @@
-import { ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { useLocation } from 'wouter'
 import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'

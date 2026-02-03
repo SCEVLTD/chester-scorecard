@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useParams, useLocation } from 'wouter'
-import { BarChart3, History, Plus } from 'lucide-react'
+import { ArrowLeft, BarChart3, History, Plus } from 'lucide-react'
 import { PageHeader } from '@/components/page-header'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'

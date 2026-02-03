@@ -6,8 +6,7 @@
  */
 
 import { useState, useMemo } from 'react'
-import { useLocation, useSearch } from 'wouter'
-import { Button } from '@/components/ui/button'
+import { useSearch } from 'wouter'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { GitCompare } from 'lucide-react'
 import { PageHeader } from '@/components/page-header'
@@ -17,7 +16,6 @@ import { useBusinesses } from '@/hooks/use-businesses'
 import { useComparisonData } from '@/hooks/use-comparison-data'
 
 export function ComparePage() {
-  const [, navigate] = useLocation()
   const searchString = useSearch()
 
   // Parse initial selection from URL params

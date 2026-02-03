@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useParams, useLocation } from 'wouter'
-import { Calendar, Users, Loader2, Trash2 } from 'lucide-react'
+import { ArrowLeft, Calendar, Users, Loader2, Trash2 } from 'lucide-react'
 import { PageHeader } from '@/components/page-header'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
