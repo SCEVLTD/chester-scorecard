@@ -12,39 +12,39 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Mail, Loader2, AlertCircle, CheckCircle2, XCircle } from 'lucide-react'
 import { useSendInvitations } from '@/hooks/use-send-invitations'
-import { useBusinesses } from '@/hooks/use-businesses'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 
-interface CompanyEmail {
-  business_id: string
-  email: string
-  is_primary: boolean
-}
-
 export function BulkInvitationPanel() {
-  const { data: businesses } = useBusinesses()
   const sendInvitations = useSendInvitations()
   const [showResults, setShowResults] = useState(false)
 
-  // Query to count businesses with emails
+  // Query to count businesses with emails - fetch counts directly
   const { data: emailStats } = useQuery({
     queryKey: ['email-stats'],
     queryFn: async () => {
+      // Fetch total business count directly
+      const { count: totalCount, error: countError } = await supabase
+        .from('businesses')
+        .select('*', { count: 'exact', head: true })
+
+      if (countError) throw countError
+
+      // Fetch businesses with emails
       const { data, error } = await supabase
         .from('company_emails')
-        .select('business_id, email')
+        .select('business_id')
 
       if (error) throw error
 
-      const businessesWithEmails = new Set(data.map((e: CompanyEmail) => e.business_id))
+      const businessesWithEmails = new Set(data.map((e: { business_id: string }) => e.business_id))
+      const total = totalCount || 0
       return {
         withEmails: businessesWithEmails.size,
-        totalBusinesses: businesses?.length || 0,
-        withoutEmails: (businesses?.length || 0) - businessesWithEmails.size,
+        totalBusinesses: total,
+        withoutEmails: total - businessesWithEmails.size,
       }
     },
-    enabled: !!businesses,
   })
 
   const handleSendInvitations = async () => {
