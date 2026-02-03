@@ -1,10 +1,12 @@
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
-import { useUpdateBusiness } from '@/hooks/use-businesses'
+import { useUpdateBusiness, useUpdateBusinessSector } from '@/hooks/use-businesses'
 import type { Business } from '@/types/database.types'
+import { SectorSelect } from '@/components/sector-select'
 import {
   Dialog,
   DialogContent,
@@ -36,6 +38,15 @@ export function CompanyEditDialog({
   onOpenChange,
 }: CompanyEditDialogProps) {
   const updateBusiness = useUpdateBusiness()
+  const updateSector = useUpdateBusinessSector()
+  const [sectorId, setSectorId] = useState<string | null>(business.sector_id)
+
+  // Reset sector when dialog opens with new business
+  useEffect(() => {
+    if (open) {
+      setSectorId(business.sector_id)
+    }
+  }, [open, business.sector_id])
 
   const form = useForm<CompanyFormData>({
     resolver: zodResolver(companySchema),
@@ -47,6 +58,7 @@ export function CompanyEditDialog({
 
   const onSubmit = async (data: CompanyFormData) => {
     try {
+      // Update business details
       await updateBusiness.mutateAsync({
         businessId: business.id,
         updates: {
@@ -54,6 +66,13 @@ export function CompanyEditDialog({
           contact_name: data.contact_name || null,
         },
       })
+      // Update sector if changed
+      if (sectorId !== business.sector_id) {
+        await updateSector.mutateAsync({
+          businessId: business.id,
+          sectorId,
+        })
+      }
       toast.success('Company updated successfully')
       handleClose()
     } catch (error) {
@@ -106,6 +125,16 @@ export function CompanyEditDialog({
             )}
           </div>
 
+          <div className="space-y-2">
+            <Label>Sector</Label>
+            <SectorSelect
+              value={sectorId}
+              onChange={setSectorId}
+              placeholder="Select sector"
+              allowClear
+            />
+          </div>
+
           {/* Email addresses management */}
           <div className="pt-2 border-t">
             <CompanyEmailsManager businessId={business.id} />
@@ -115,8 +144,8 @@ export function CompanyEditDialog({
             <Button type="button" variant="outline" onClick={handleClose}>
               Cancel
             </Button>
-            <Button type="submit" disabled={updateBusiness.isPending}>
-              {updateBusiness.isPending ? (
+            <Button type="submit" disabled={updateBusiness.isPending || updateSector.isPending}>
+              {updateBusiness.isPending || updateSector.isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   Saving...

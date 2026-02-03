@@ -5,8 +5,10 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Pencil, Check, X, LayoutGrid, Upload, Link2, Mail, Trash2, LogOut, Shield } from 'lucide-react'
-import { useBusinesses, useCreateBusiness, useUpdateBusinessSector, useDeleteBusiness } from '@/hooks/use-businesses'
+import { Plus, Pencil, LayoutGrid, Upload, Link2, Mail, Trash2, LogOut, Shield } from 'lucide-react'
+import { useBusinesses, useCreateBusiness, useDeleteBusiness } from '@/hooks/use-businesses'
+import { CompanyEditDialog } from '@/components/admin/company-edit-dialog'
+import type { Business } from '@/types/database.types'
 import { useLatestScoresPerBusiness } from '@/hooks/use-scorecards'
 import { useSectors } from '@/hooks/use-sectors'
 import { SectorSelect } from '@/components/sector-select'
@@ -23,15 +25,13 @@ export function HomePage() {
   const [newBusinessName, setNewBusinessName] = useState('')
   const [newBusinessEmail, setNewBusinessEmail] = useState('')
   const [filterSectorId, setFilterSectorId] = useState<string | null>(null)
-  const [editingSectorId, setEditingSectorId] = useState<string | null>(null)
-  const [pendingSectorId, setPendingSectorId] = useState<string | null>(null)
+  const [editingBusiness, setEditingBusiness] = useState<Business | null>(null)
 
   const { signOut } = useAuth()
   const { data: businesses, isLoading } = useBusinesses()
   const { data: sectors } = useSectors()
   const { data: latestScores } = useLatestScoresPerBusiness()
   const createBusiness = useCreateBusiness()
-  const updateSector = useUpdateBusinessSector()
   const deleteBusiness = useDeleteBusiness()
 
   // Build a sector lookup map for displaying names
@@ -46,27 +46,6 @@ export function HomePage() {
     if (!filterSectorId) return businesses
     return businesses.filter((b) => b.sector_id === filterSectorId)
   }, [businesses, filterSectorId])
-
-  const handleSectorUpdate = async (businessId: string, sectorId: string | null) => {
-    try {
-      await updateSector.mutateAsync({ businessId, sectorId })
-      toast.success('Sector updated')
-      setEditingSectorId(null)
-    } catch (error) {
-      console.error('Failed to update sector:', error)
-      toast.error('Failed to update sector')
-    }
-  }
-
-  const startEditingSector = (businessId: string, currentSectorId: string | null) => {
-    setEditingSectorId(businessId)
-    setPendingSectorId(currentSectorId)
-  }
-
-  const cancelEditingSector = () => {
-    setEditingSectorId(null)
-    setPendingSectorId(null)
-  }
 
   const handleCreateBusiness = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -218,7 +197,6 @@ export function HomePage() {
                 {filteredBusinesses.map((business) => {
                   const latestScore = latestScores?.get(business.id)
                   const sectorName = business.sector_id ? sectorMap.get(business.sector_id) : null
-                  const isEditing = editingSectorId === business.id
 
                   return (
                     <div
@@ -233,11 +211,9 @@ export function HomePage() {
                       >
                         <div className="flex flex-col items-start gap-0.5">
                           <span className="font-medium">{business.name}</span>
-                          {!isEditing && (
-                            <span className="text-xs text-muted-foreground">
-                              {sectorName || 'No sector'}
-                            </span>
-                          )}
+                          <span className="text-xs text-muted-foreground">
+                            {sectorName || 'No sector'}
+                          </span>
                         </div>
                       </Button>
 
@@ -259,63 +235,33 @@ export function HomePage() {
                         )}
                       </Button>
 
-                      {/* Sector edit section */}
-                      {isEditing ? (
-                        <div className="flex items-center gap-1">
-                          <div className="w-40">
-                            <SectorSelect
-                              value={pendingSectorId}
-                              onChange={setPendingSectorId}
-                              placeholder="Select sector"
-                              allowClear
-                            />
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => handleSectorUpdate(business.id, pendingSectorId)}
-                            disabled={updateSector.isPending}
-                          >
-                            <Check className="h-4 w-4 text-green-600" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={cancelEditingSector}
-                          >
-                            <X className="h-4 w-4 text-red-600" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              startEditingSector(business.id, business.sector_id)
-                            }}
-                            title="Edit sector"
-                          >
-                            <Pencil className="h-4 w-4 text-muted-foreground" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleDeleteBusiness(business.id, business.name)
-                            }}
-                            title="Delete business"
-                          >
-                            <Trash2 className="h-4 w-4 text-red-500" />
-                          </Button>
-                        </>
-                      )}
+                      {/* Edit button - opens full edit dialog */}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setEditingBusiness(business)
+                        }}
+                        title="Edit company details"
+                      >
+                        <Pencil className="h-4 w-4 text-muted-foreground" />
+                      </Button>
+
+                      {/* Delete button */}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDeleteBusiness(business.id, business.name)
+                        }}
+                        title="Delete business"
+                      >
+                        <Trash2 className="h-4 w-4 text-red-500" />
+                      </Button>
 
                       {/* Score badge */}
                       {latestScore && (
@@ -343,6 +289,17 @@ export function HomePage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Edit dialog */}
+        {editingBusiness && (
+          <CompanyEditDialog
+            business={editingBusiness}
+            open={!!editingBusiness}
+            onOpenChange={(open) => {
+              if (!open) setEditingBusiness(null)
+            }}
+          />
+        )}
       </div>
     </div>
   )
