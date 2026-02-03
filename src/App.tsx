@@ -24,6 +24,7 @@ import { BusinessPage } from '@/pages/business'
 import { CompanyLoginPage } from '@/pages/company/login'
 import { CompanyVerifyPage } from '@/pages/company/verify'
 import { CompanySetupPage } from '@/pages/company/setup'
+import { AdminSetupPage } from '@/pages/admin/setup'
 import { CompanyDashboardPage } from '@/pages/company/dashboard'
 
 function App() {
@@ -38,6 +39,7 @@ function App() {
               <Route path="/login" component={LoginPage} />
               <Route path="/company/login" component={CompanyLoginPage} />
               <Route path="/company/setup" component={CompanySetupPage} />
+              <Route path="/admin/setup" component={AdminSetupPage} />
               <Route path="/company/verify" component={CompanyVerifyPage} />
               <Route path="/unauthorized" component={UnauthorizedPage} />
               <Route path="/submit/:token" component={CompanySubmitPage} />

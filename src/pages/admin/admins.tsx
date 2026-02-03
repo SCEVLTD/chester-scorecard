@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { ArrowLeft, Plus, Trash2, Shield } from 'lucide-react'
+import { ArrowLeft, Mail, Trash2, Shield } from 'lucide-react'
 
 interface Admin {
   id: string
@@ -54,24 +54,41 @@ export function AdminsPage() {
     },
   })
 
-  const addAdmin = useMutation({
+  const sendInvite = useMutation({
     mutationFn: async (email: string) => {
-      const { error } = await supabase
-        .from('admins' as never)
-        .insert({ email: email.toLowerCase().trim(), role: newRole } as never)
-      if (error) throw error
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) throw new Error('Not authenticated')
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-admin-invite`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify({ email: email.toLowerCase().trim(), role: newRole }),
+        }
+      )
+
+      const result = await response.json()
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to send invite')
+      }
+      return result
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admins'] })
-      toast.success('Admin added')
+      toast.success('Invitation sent! They will receive an email to set up their account.')
       setNewEmail('')
       setNewRole('consultant')
     },
     onError: (error: Error) => {
-      if (error.message.includes('duplicate')) {
+      if (error.message.includes('already an admin')) {
         toast.error('This email is already an admin')
       } else {
-        toast.error('Failed to add admin')
+        toast.error(error.message || 'Failed to send invite')
       }
     },
   })
@@ -110,14 +127,14 @@ export function AdminsPage() {
     },
   })
 
-  const handleAddAdmin = (e: React.FormEvent) => {
+  const handleSendInvite = (e: React.FormEvent) => {
     e.preventDefault()
     if (!newEmail.trim()) return
     if (!newEmail.includes('@')) {
       toast.error('Please enter a valid email')
       return
     }
-    addAdmin.mutate(newEmail)
+    sendInvite.mutate(newEmail)
   }
 
   const handleRemoveAdmin = (admin: Admin) => {
@@ -152,7 +169,7 @@ export function AdminsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleAddAdmin} className="space-y-4 mb-6">
+            <form onSubmit={handleSendInvite} className="space-y-4 mb-6">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -175,9 +192,9 @@ export function AdminsPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <Button type="submit" disabled={addAdmin.isPending} className="w-full">
-                <Plus className="mr-2 h-4 w-4" />
-                Add Admin
+              <Button type="submit" disabled={sendInvite.isPending} className="w-full">
+                <Mail className="mr-2 h-4 w-4" />
+                {sendInvite.isPending ? 'Sending...' : 'Send Invite'}
               </Button>
             </form>
 
