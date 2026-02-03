@@ -23,6 +23,7 @@ import { AdminsPage } from '@/pages/admin/admins'
 import { BusinessPage } from '@/pages/business'
 import { CompanyLoginPage } from '@/pages/company/login'
 import { CompanyVerifyPage } from '@/pages/company/verify'
+import { CompanySetupPage } from '@/pages/company/setup'
 import { CompanyDashboardPage } from '@/pages/company/dashboard'
 
 function App() {
@@ -36,6 +37,7 @@ function App() {
               {/* Public routes */}
               <Route path="/login" component={LoginPage} />
               <Route path="/company/login" component={CompanyLoginPage} />
+              <Route path="/company/setup" component={CompanySetupPage} />
               <Route path="/company/verify" component={CompanyVerifyPage} />
               <Route path="/unauthorized" component={UnauthorizedPage} />
               <Route path="/submit/:token" component={CompanySubmitPage} />

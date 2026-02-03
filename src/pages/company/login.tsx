@@ -11,61 +11,56 @@ import { supabase } from '@/lib/supabase'
 export function CompanyLoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [showNewPassword, setShowNewPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [isResetting, setIsResetting] = useState(false)
   const [isRecoveryMode, setIsRecoveryMode] = useState(false)
-  const [hashError, setHashError] = useState<string | null>(null)
   const [, navigate] = useLocation()
-  const { signIn, resetPassword } = useAuth()
+  const { signIn, resetPassword, session } = useAuth()
 
-  // Listen for PASSWORD_RECOVERY event from Supabase auth
+  // Check for password recovery session (for existing users resetting their password)
   useEffect(() => {
-    // First check URL hash for errors or recovery type
+    // Check URL hash for recovery type
     const hash = window.location.hash.substring(1)
     if (hash) {
       const params = new URLSearchParams(hash)
-
-      // Check for errors first (like expired OTP)
+      const type = params.get('type')
       const error = params.get('error')
       const errorDescription = params.get('error_description')
+
       if (error) {
-        console.error('Auth error from URL:', error, errorDescription)
-        setHashError(errorDescription?.replace(/\+/g, ' ') || 'The link has expired or is invalid. Please request a new one.')
-        // Clear the error hash from URL
+        // Handle errors like expired tokens
+        toast.error(errorDescription?.replace(/\+/g, ' ') || 'The link has expired or is invalid.')
         window.history.replaceState(null, '', window.location.pathname)
         return
       }
 
-      // Check for recovery/invite type in hash (fallback)
-      const type = params.get('type')
-      if (type === 'recovery' || type === 'invite') {
+      if (type === 'recovery') {
         setIsRecoveryMode(true)
       }
     }
 
-    // Set up auth state change listener for PASSWORD_RECOVERY event
+    // Listen for PASSWORD_RECOVERY event (for existing users)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state change:', event, session?.user?.email)
+      (event, _session) => {
         if (event === 'PASSWORD_RECOVERY') {
-          // Supabase has verified the token and we have a recovery session
           setIsRecoveryMode(true)
-          setHashError(null)
-        } else if (event === 'SIGNED_IN' && session) {
-          // Check if this was a recovery that completed
-          // If we were in recovery mode and now signed in, redirect
-          if (isRecoveryMode) {
-            navigate('/company/dashboard')
-          }
         }
       }
     )
 
     return () => subscription?.unsubscribe()
-  }, [navigate, isRecoveryMode])
+  }, [])
+
+  // Redirect if already logged in (but not in recovery mode)
+  useEffect(() => {
+    if (session && !isRecoveryMode) {
+      navigate('/company/dashboard')
+    }
+  }, [session, isRecoveryMode, navigate])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -79,7 +74,6 @@ export function CompanyLoginPage() {
       console.error('Login error:', error)
       toast.error('Invalid email or password')
     } else {
-      // Redirect to company dashboard
       navigate('/company/dashboard')
     }
   }
@@ -102,36 +96,35 @@ export function CompanyLoginPage() {
 
   const handleSetNewPassword = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!password || !confirmPassword) {
+    if (!newPassword || !confirmPassword) {
       toast.error('Please fill in both password fields')
       return
     }
-    if (password.length < 6) {
+    if (newPassword.length < 6) {
       toast.error('Password must be at least 6 characters')
       return
     }
-    if (password !== confirmPassword) {
+    if (newPassword !== confirmPassword) {
       toast.error('Passwords do not match')
       return
     }
 
     setIsLoading(true)
-    const { error } = await supabase.auth.updateUser({ password })
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
     setIsLoading(false)
 
     if (error) {
       console.error('Password update error:', error)
       toast.error('Failed to set password. Please try again.')
     } else {
-      toast.success('Password set successfully!')
+      toast.success('Password updated successfully!')
       setIsRecoveryMode(false)
-      // Clear the hash from URL
       window.history.replaceState(null, '', window.location.pathname)
       navigate('/company/dashboard')
     }
   }
 
-  // Recovery mode - Set new password form
+  // Recovery mode - Set new password form (for existing users)
   if (isRecoveryMode) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
@@ -142,19 +135,37 @@ export function CompanyLoginPage() {
               alt="Velocity"
               className="h-12 mx-auto mb-4"
             />
-            <CardTitle className="text-xl">Set Your Password</CardTitle>
+            <CardTitle className="text-xl">Reset Your Password</CardTitle>
             <CardDescription>
-              Create a password to access your business scorecard
+              Enter your new password below
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSetNewPassword} className="space-y-4">
               <div className="relative">
                 <Input
-                  type={showPassword ? 'text' : 'password'}
+                  type={showNewPassword ? 'text' : 'password'}
                   placeholder="New Password (min 6 characters)"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                  autoComplete="new-password"
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              <div className="relative">
+                <Input
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Confirm Password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
                   required
                   autoComplete="new-password"
                   className="pr-10"
@@ -167,29 +178,11 @@ export function CompanyLoginPage() {
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
-              <div className="relative">
-                <Input
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  placeholder="Confirm Password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  autoComplete="new-password"
-                  className="pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
-              {password && confirmPassword && password !== confirmPassword && (
+              {newPassword && confirmPassword && newPassword !== confirmPassword && (
                 <p className="text-sm text-red-500">Passwords do not match</p>
               )}
-              <Button type="submit" className="w-full" disabled={isLoading || password !== confirmPassword}>
-                {isLoading ? 'Setting Password...' : 'Set Password'}
+              <Button type="submit" className="w-full" disabled={isLoading || newPassword !== confirmPassword}>
+                {isLoading ? 'Updating Password...' : 'Update Password'}
               </Button>
             </form>
           </CardContent>
@@ -214,15 +207,6 @@ export function CompanyLoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {hashError && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
-              <p className="text-sm text-red-600">{hashError}</p>
-              <p className="text-xs text-red-500 mt-1">
-                If you have a verification code, <button onClick={() => navigate('/company/verify')} className="underline font-medium">enter it here</button>.
-                <br />Otherwise, enter your email and click "Forgot password?" to get a new code.
-              </p>
-            </div>
-          )}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <Input
@@ -263,14 +247,6 @@ export function CompanyLoginPage() {
               disabled={isResetting}
             >
               {isResetting ? 'Sending...' : 'Forgot password?'}
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              className="w-full text-sm text-muted-foreground"
-              onClick={() => navigate('/company/verify')}
-            >
-              Have a verification code?
             </Button>
           </form>
         </CardContent>
