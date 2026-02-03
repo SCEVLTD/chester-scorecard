@@ -1,61 +1,52 @@
 import { useState } from 'react'
+import { useLocation } from 'wouter'
+import { Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { useAuth } from '@/contexts/auth-context'
 import { toast } from 'sonner'
-import { Mail, CheckCircle } from 'lucide-react'
 
 export function CompanyLoginPage() {
   const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [emailSent, setEmailSent] = useState(false)
-  const { signInWithMagicLink } = useAuth()
+  const [isResetting, setIsResetting] = useState(false)
+  const [, navigate] = useLocation()
+  const { signIn, resetPassword } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!email.trim()) return
+    if (!email.trim() || !password) return
 
     setIsLoading(true)
-    const { error } = await signInWithMagicLink(email.trim())
+    const { error } = await signIn(email.trim(), password)
     setIsLoading(false)
 
     if (error) {
-      console.error('Magic link error:', error)
-      toast.error(`Failed to send login link: ${error.message || 'Unknown error'}`)
+      console.error('Login error:', error)
+      toast.error('Invalid email or password')
     } else {
-      setEmailSent(true)
-      toast.success('Check your email for the login link!')
+      // Redirect to company dashboard
+      navigate('/company/dashboard')
     }
   }
 
-  if (emailSent) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
-              <CheckCircle className="h-6 w-6 text-green-600" />
-            </div>
-            <CardTitle className="text-xl">Check your email</CardTitle>
-            <CardDescription>
-              We've sent a login link to <strong>{email}</strong>
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-center text-sm text-muted-foreground">
-            <p>Click the link in the email to sign in.</p>
-            <p className="mt-2">Didn't receive it? Check your spam folder.</p>
-            <Button
-              variant="link"
-              className="mt-4"
-              onClick={() => setEmailSent(false)}
-            >
-              Try a different email
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    )
+  const handleResetPassword = async () => {
+    if (!email.trim()) {
+      toast.error('Please enter your email address first')
+      return
+    }
+    setIsResetting(true)
+    const { error } = await resetPassword(email.trim())
+    setIsResetting(false)
+
+    if (error) {
+      toast.error('Failed to send reset email. Please try again.')
+    } else {
+      toast.success('Password reset email sent! Check your inbox.')
+    }
   }
 
   return (
@@ -69,7 +60,7 @@ export function CompanyLoginPage() {
           />
           <CardTitle className="text-xl">Company Login</CardTitle>
           <CardDescription>
-            Enter your email to receive a secure login link
+            Sign in to access your business scorecard
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -77,21 +68,44 @@ export function CompanyLoginPage() {
             <div>
               <Input
                 type="email"
-                placeholder="your@email.com"
+                placeholder="Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="email"
               />
             </div>
+            <div className="relative">
+              <Input
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+                className="pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              <Mail className="mr-2 h-4 w-4" />
-              {isLoading ? 'Sending...' : 'Send Login Link'}
+              {isLoading ? 'Signing in...' : 'Sign In'}
+            </Button>
+            <Button
+              type="button"
+              variant="link"
+              className="w-full text-sm"
+              onClick={handleResetPassword}
+              disabled={isResetting}
+            >
+              {isResetting ? 'Sending...' : 'Forgot password?'}
             </Button>
           </form>
-          <p className="mt-4 text-center text-xs text-muted-foreground">
-            No password required. We'll email you a secure link.
-          </p>
         </CardContent>
       </Card>
     </div>
