@@ -13,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { ArrowLeft, AlertTriangle, GitCompare, Sparkles, Loader2, X, FileText, Pencil } from 'lucide-react'
+import { ArrowLeft, AlertTriangle, GitCompare, Sparkles, Loader2, X, FileText, Pencil, Mail, Link2, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { TrendIndicator } from '@/components/trend-indicator'
 import { PortfolioHeatmap } from '@/components/portfolio/portfolio-heatmap'
@@ -26,7 +26,7 @@ import { BulkInvitationPanel } from '@/components/admin/bulk-invitation-panel'
 import { usePortfolioSummary } from '@/hooks/use-portfolio-summary'
 import { useGeneratePortfolioAnalysis } from '@/hooks/use-portfolio-analysis'
 import { useGenerateMeetingSummary } from '@/hooks/use-meeting-summary'
-import { useBusinesses } from '@/hooks/use-businesses'
+import { useBusinesses, useDeleteBusiness } from '@/hooks/use-businesses'
 import { useAuth } from '@/contexts/auth-context'
 import type { PortfolioAnalysis } from '@/schemas/portfolio-analysis'
 import type { MeetingSummary } from '@/schemas/meeting-summary'
@@ -54,6 +54,31 @@ export function PortfolioPage() {
   const [editingBusiness, setEditingBusiness] = useState<Business | null>(null)
   const generateAnalysis = useGeneratePortfolioAnalysis()
   const generateMeetingSummary = useGenerateMeetingSummary()
+  const deleteBusiness = useDeleteBusiness()
+
+  const sendLoginLink = (businessName: string, email: string | null) => {
+    const loginUrl = `${window.location.origin}/company/login`
+    if (email) {
+      const subject = encodeURIComponent(`Your Chester Business Scorecard Access - ${businessName}`)
+      const body = encodeURIComponent(`Hi,\n\nYou can access your ${businessName} business scorecard using the link below:\n\n${loginUrl}\n\nSimply enter your email address and we'll send you a secure login link.\n\nThanks`)
+      window.location.href = `mailto:${email}?subject=${subject}&body=${body}`
+      toast.success(`Opening email for ${businessName}`)
+    } else {
+      navigator.clipboard.writeText(loginUrl)
+      toast.success(`Login link copied`)
+    }
+  }
+
+  const handleDeleteBusiness = async (businessId: string, businessName: string) => {
+    if (!confirm(`Delete "${businessName}"? This cannot be undone.`)) return
+    try {
+      await deleteBusiness.mutateAsync(businessId)
+      toast.success(`${businessName} deleted`)
+    } catch (error) {
+      console.error('Failed to delete business:', error)
+      toast.error('Failed to delete business')
+    }
+  }
 
   // Calculate display month for submission status panel
   const displayMonth = useMemo(() => {
@@ -360,6 +385,7 @@ export function PortfolioPage() {
           <TabsList>
             <TabsTrigger value="cards">Cards</TabsTrigger>
             <TabsTrigger value="heatmap">Heatmap</TabsTrigger>
+            <TabsTrigger value="all">All Businesses ({allBusinesses?.length || 0})</TabsTrigger>
           </TabsList>
 
           <TabsContent value="cards">
@@ -435,6 +461,100 @@ export function PortfolioPage() {
                     businesses={businesses}
                     scorecards={latestScorecards ?? new Map()}
                   />
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="all">
+            <Card className="mt-4">
+              <CardContent className="pt-4">
+                <p className="text-sm text-muted-foreground mb-4">
+                  All businesses in the system. Click edit to manage details, emails, and sector.
+                </p>
+                {allBusinesses && allBusinesses.length > 0 ? (
+                  <div className="space-y-2">
+                    {allBusinesses.map((business) => {
+                      const sectorName = business.sector_id ? sectorMap.get(business.sector_id) : null
+                      const scorecard = latestScorecards?.get(business.id)
+
+                      return (
+                        <div
+                          key={business.id}
+                          className="flex items-center gap-2 rounded-md border border-input p-3"
+                        >
+                          {/* Main business button */}
+                          <Button
+                            variant="ghost"
+                            className="flex-1 justify-start text-left h-auto py-0 px-2 -ml-2"
+                            onClick={() => navigate(`/business/${business.id}`)}
+                          >
+                            <div className="flex flex-col items-start gap-0.5">
+                              <span className="font-medium">{business.name}</span>
+                              <span className="text-xs text-muted-foreground">
+                                {sectorName || 'No sector'}
+                              </span>
+                            </div>
+                          </Button>
+
+                          {/* Send/copy submission link */}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              sendLoginLink(business.name, business.contact_email)
+                            }}
+                            title={business.contact_email ? `Email link to ${business.contact_email}` : 'Copy submission link'}
+                          >
+                            {business.contact_email ? (
+                              <Mail className="h-4 w-4 text-green-600" />
+                            ) : (
+                              <Link2 className="h-4 w-4 text-blue-600" />
+                            )}
+                          </Button>
+
+                          {/* Edit button */}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setEditingBusiness(business)
+                            }}
+                            title="Edit company details"
+                          >
+                            <Pencil className="h-4 w-4 text-muted-foreground" />
+                          </Button>
+
+                          {/* Delete button */}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleDeleteBusiness(business.id, business.name)
+                            }}
+                            title="Delete business"
+                          >
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          </Button>
+
+                          {/* Score badge if they have one */}
+                          {scorecard && (
+                            <Badge className={ragColors[scorecard.rag_status]}>
+                              {scorecard.total_score}
+                            </Badge>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground">No businesses yet.</p>
                 )}
               </CardContent>
             </Card>
