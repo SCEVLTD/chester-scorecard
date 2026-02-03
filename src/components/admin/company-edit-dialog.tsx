@@ -25,7 +25,6 @@ interface CompanyEditDialogProps {
 
 const companySchema = z.object({
   name: z.string().min(1, 'Company name is required'),
-  contact_email: z.string().email('Invalid email format').nullable().or(z.literal('')),
   contact_name: z.string().nullable().or(z.literal('')),
 })
 
@@ -42,7 +41,6 @@ export function CompanyEditDialog({
     resolver: zodResolver(companySchema),
     defaultValues: {
       name: business.name,
-      contact_email: business.contact_email || '',
       contact_name: business.contact_name || '',
     },
   })
@@ -53,7 +51,6 @@ export function CompanyEditDialog({
         businessId: business.id,
         updates: {
           name: data.name,
-          contact_email: data.contact_email || null,
           contact_name: data.contact_name || null,
         },
       })
@@ -91,21 +88,6 @@ export function CompanyEditDialog({
             {form.formState.errors.name && (
               <p className="text-sm text-red-500">
                 {form.formState.errors.name.message}
-              </p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="contact_email">Contact Email</Label>
-            <Input
-              id="contact_email"
-              type="email"
-              placeholder="email@example.com"
-              {...form.register('contact_email')}
-            />
-            {form.formState.errors.contact_email && (
-              <p className="text-sm text-red-500">
-                {form.formState.errors.contact_email.message}
               </p>
             )}
           </div>
