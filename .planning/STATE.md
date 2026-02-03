@@ -9,17 +9,19 @@ See: .planning/PROJECT.md (updated 2026-02-03)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-02-03 — Milestone v1.1 started
+Phase: 8 (Access & Data Setup) of 10
+Plan: 2 of 3 complete
+Status: In progress
+Last activity: 2026-02-03 — Completed 08-02-PLAN.md
+
+Progress: ████████████████░░░░ 82% (16/19 plans complete)
 
 ## Current Status
 
 | Milestone | Phases | Plans | Status |
 |-----------|--------|-------|--------|
 | v1.0 MVP | 1-7 | 15/15 | SHIPPED |
-| v1.1 Friday Launch | TBD | TBD | DEFINING |
+| v1.1 Friday Launch | 8-10 | 2/4 | IN PROGRESS |
 
 ## Milestone History
 
@@ -58,16 +60,24 @@ Before Feb 7, 2026 Friday meeting:
 
 | Blocker | Impact | Resolution |
 |---------|--------|------------|
-| Magic Link broken | Companies can't log in | Fix in v1.1 Phase 1 |
-| Company management clunky | Can't add emails after creation | Fix in v1.1 Phase 1 |
+| Magic Link broken | Companies can't log in | RESOLVED (08-01) |
+| Company management clunky | Can't add emails after creation | RESOLVED (08-02) |
 | Edge Function deployment | Meeting Prep + Reminders fail | Deploy with Supabase credentials |
 | RESEND_API_KEY not set | Invitation/reminder emails fail | Set in Supabase Dashboard |
 
+## Decisions
+
+| Decision ID | Phase | What | Chosen | Why |
+|------------|-------|------|--------|-----|
+| ADMIN-UI-01 | 08-02 | Edit button placement | Icon button in card header | Minimal clutter, clear affordance |
+
 ## Session Continuity
 
-**Last session:** 2026-02-03
+**Last session:** 2026-02-03 10:41 UTC
 **Current milestone:** v1.1 Friday Launch Ready
-**Resume action:** `/gsd:plan-phase 8` after roadmap created
+**Stopped at:** Completed 08-02-PLAN.md (Company Edit UI)
+**Resume file:** None
+**Next action:** Execute 08-03 (Add All Companies from spreadsheet)
 
 ---
-*State updated: 2026-02-03 — v1.1 milestone started*
+*State updated: 2026-02-03 — Phase 08 Plan 02 complete*

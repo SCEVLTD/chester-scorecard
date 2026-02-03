@@ -21,7 +21,8 @@ export function CompanyLoginPage() {
     setIsLoading(false)
 
     if (error) {
-      toast.error('Failed to send login link. Please try again.')
+      console.error('Magic link error:', error)
+      toast.error(`Failed to send login link: ${error.message || 'Unknown error'}`)
     } else {
       setEmailSent(true)
       toast.success('Check your email for the login link!')
