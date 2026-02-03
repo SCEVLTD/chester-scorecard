@@ -24,6 +24,7 @@ import { SubmissionStatusPanel } from '@/components/submission-status-panel'
 import { CompanyEditDialog } from '@/components/admin/company-edit-dialog'
 import { BulkInvitationPanel } from '@/components/admin/bulk-invitation-panel'
 import { PortfolioActionModal } from '@/components/admin/portfolio-action-modal'
+import { BatchExportButton } from '@/components/batch-export-button'
 import { usePortfolioSummary } from '@/hooks/use-portfolio-summary'
 import { useGeneratePortfolioAnalysis } from '@/hooks/use-portfolio-analysis'
 import { useGenerateMeetingSummary } from '@/hooks/use-meeting-summary'
@@ -207,6 +208,17 @@ export function PortfolioPage() {
     return options
   }, [])
 
+  // Build data for batch export
+  const scorecardsForExport = useMemo(() => {
+    if (!latestScorecards) return []
+    return Array.from(latestScorecards.values())
+  }, [latestScorecards])
+
+  const businessNamesForExport = useMemo(() => {
+    if (!allBusinesses) return new Map<string, string>()
+    return new Map(allBusinesses.map(b => [b.id, b.name]))
+  }, [allBusinesses])
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background p-4 md:p-8">
@@ -263,6 +275,11 @@ export function PortfolioPage() {
             )}
             Meeting Prep
           </Button>
+          <BatchExportButton
+            scorecards={scorecardsForExport}
+            businessNames={businessNamesForExport}
+            disabled={!latestScorecards || latestScorecards.size === 0}
+          />
           <Button
             onClick={handleGenerateAnalysis}
             disabled={generateAnalysis.isPending || !portfolio?.length}
