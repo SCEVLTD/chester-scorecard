@@ -27,8 +27,8 @@ export function ProtectedRoute({
   }
 
   if (!session) {
-    // Redirect business users to company login, admins to regular login
-    return <Redirect to={requiredRole === 'business_user' ? '/company/login' : '/login'} />
+    // All users go to unified login
+    return <Redirect to="/login" />
   }
 
   // Check admin role (includes both super_admin and consultant)

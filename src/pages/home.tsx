@@ -65,7 +65,7 @@ export function HomePage() {
   }
 
   const sendLoginLink = (businessName: string, email: string | null) => {
-    const loginUrl = `${window.location.origin}/company/login`
+    const loginUrl = `${window.location.origin}/login`
     if (email) {
       const subject = encodeURIComponent(`Your Chester Business Scorecard Access - ${businessName}`)
       const body = encodeURIComponent(`Hi,\n\nYou can access your ${businessName} business scorecard using the link below:\n\n${loginUrl}\n\nSimply enter your email address and we'll send you a secure login link.\n\nThanks`)

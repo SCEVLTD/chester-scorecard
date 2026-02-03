@@ -191,7 +191,7 @@ export function CompanyVerifyPage() {
                 type="button"
                 variant="link"
                 className="text-sm"
-                onClick={() => navigate('/company/login')}
+                onClick={() => navigate('/login')}
               >
                 Back to login
               </Button>

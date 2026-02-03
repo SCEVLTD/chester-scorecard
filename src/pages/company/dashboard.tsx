@@ -54,7 +54,7 @@ export function CompanyDashboardPage() {
 
   const handleSignOut = async () => {
     await signOut()
-    navigate('/company/login')
+    navigate('/login')
   }
 
   if (!businessId) {

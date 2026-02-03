@@ -124,7 +124,7 @@ export function CompanySetupPage() {
 
       if (result.redirectToLogin) {
         toast.success('Account created! Please log in.')
-        navigate('/company/login')
+        navigate('/login')
         return
       }
 
@@ -208,7 +208,7 @@ export function CompanySetupPage() {
             {state === 'already_used' && (
               <Button
                 className="w-full"
-                onClick={() => navigate('/company/login')}
+                onClick={() => navigate('/login')}
               >
                 Go to Login
               </Button>
@@ -217,7 +217,7 @@ export function CompanySetupPage() {
               <Button
                 variant="outline"
                 className="w-full"
-                onClick={() => navigate('/company/login')}
+                onClick={() => navigate('/login')}
               >
                 Back to Login
               </Button>
@@ -332,7 +332,7 @@ export function CompanySetupPage() {
               Already have an account?{' '}
               <button
                 type="button"
-                onClick={() => navigate('/company/login')}
+                onClick={() => navigate('/login')}
                 className="text-blue-600 hover:underline"
               >
                 Log in here

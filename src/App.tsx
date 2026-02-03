@@ -21,7 +21,7 @@ import { AdminImportPage } from '@/pages/admin/import'
 import { ImportBusinessesPage } from '@/pages/admin/import-businesses'
 import { AdminsPage } from '@/pages/admin/admins'
 import { BusinessPage } from '@/pages/business'
-import { CompanyLoginPage } from '@/pages/company/login'
+// CompanyLoginPage removed - unified login at /login
 import { CompanyVerifyPage } from '@/pages/company/verify'
 import { CompanySetupPage } from '@/pages/company/setup'
 import { AdminSetupPage } from '@/pages/admin/setup'
@@ -39,7 +39,10 @@ function App() {
             <Switch>
               {/* Public routes */}
               <Route path="/login" component={LoginPage} />
-              <Route path="/company/login" component={CompanyLoginPage} />
+              {/* Redirect old /company/login to unified /login */}
+              <Route path="/company/login">
+                {() => { window.location.replace('/login'); return null; }}
+              </Route>
               <Route path="/company/setup" component={CompanySetupPage} />
               <Route path="/admin/setup" component={AdminSetupPage} />
               <Route path="/company/verify" component={CompanyVerifyPage} />

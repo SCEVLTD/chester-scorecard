@@ -290,7 +290,7 @@ export function CompanyEmailsManager({ businessId, businessName }: CompanyEmails
           <DialogHeader>
             <DialogTitle>Set Login Password</DialogTitle>
             <DialogDescription>
-              Set a password for <strong>{selectedEmail}</strong> to log in at /company/login.
+              Set a password for <strong>{selectedEmail}</strong> to log in at /login.
               This will create or update the login account.
             </DialogDescription>
           </DialogHeader>
