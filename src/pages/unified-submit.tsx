@@ -4,7 +4,8 @@ import { useForm, useWatch, Controller, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { format, subMonths, startOfMonth } from 'date-fns'
 import { toast } from 'sonner'
-import { Loader2, Calculator, Pencil, CheckCircle, ArrowLeft } from 'lucide-react'
+import { Loader2, Calculator, Pencil, CheckCircle } from 'lucide-react'
+import { PageHeader } from '@/components/page-header'
 import { useAuth } from '@/contexts/auth-context'
 import { useBusinesses } from '@/hooks/use-businesses'
 import { useCreateUnifiedSubmission, useUnifiedSubmission } from '@/hooks/use-unified-submission'
@@ -220,16 +221,11 @@ export function UnifiedSubmitPage() {
     <div className="min-h-screen bg-slate-50 py-8 px-4">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <Button
-            variant="ghost"
-            onClick={() => navigate(`/business/${businessId}`)}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
-          </Button>
-          <img src="/velocity-logo.png" alt="Velocity" className="h-8" />
-        </div>
+        <PageHeader
+          backTo={`/business/${businessId}`}
+          backText="Back"
+          showTagline={false}
+        />
 
         <Card>
           <CardHeader className="text-center">

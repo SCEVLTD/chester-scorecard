@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useLocation } from 'wouter'
-import { ArrowLeft, Search, Calendar, FileText, Lock, Filter } from 'lucide-react'
+import { Search, Calendar, FileText, Lock, Filter } from 'lucide-react'
+import { PageHeader } from '@/components/page-header'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -77,13 +78,7 @@ export function MeetingsPage() {
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="mx-auto max-w-4xl">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <Button variant="ghost" onClick={() => navigate('/portfolio')}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Portfolio
-          </Button>
-          <img src="/velocity-logo.png" alt="Velocity" className="h-8" />
-        </div>
+        <PageHeader backTo="/portfolio" backText="Back to Portfolio" showTagline={false} />
 
         <Card>
           <CardHeader>

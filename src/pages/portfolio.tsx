@@ -13,7 +13,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { ArrowLeft, AlertTriangle, GitCompare, Sparkles, Loader2, X, FileText, Pencil, Mail, Link2, Trash2, Plus, Calendar } from 'lucide-react'
+import { AlertTriangle, GitCompare, Sparkles, Loader2, X, FileText, Pencil, Mail, Link2, Trash2, Plus, Calendar } from 'lucide-react'
+import { PageHeader } from '@/components/page-header'
 import { toast } from 'sonner'
 import { TrendIndicator } from '@/components/trend-indicator'
 import { PortfolioHeatmap } from '@/components/portfolio/portfolio-heatmap'
@@ -239,72 +240,64 @@ export function PortfolioPage() {
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="mx-auto max-w-6xl">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate('/')}
-            title="Back to home"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div className="flex flex-col items-center flex-1">
-            <img src="/velocity-logo.png" alt="Velocity" className="h-8 mb-1" />
-            <p className="text-xs text-muted-foreground">Doing good by doing well</p>
-          </div>
-          <div className="flex-1" />
-          {(userRole === 'super_admin' || userRole === 'consultant') && (
-            <Button
-              variant="outline"
-              onClick={() => setActionModalOpen(true)}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Action
-            </Button>
-          )}
-          <Button
-            variant="outline"
-            onClick={() => navigate('/compare')}
-          >
-            <GitCompare className="h-4 w-4 mr-2" />
-            Compare
-          </Button>
-          <Button
-            variant="outline"
-            onClick={handleGenerateMeetingSummary}
-            disabled={generateMeetingSummary.isPending || !portfolio?.length}
-          >
-            {generateMeetingSummary.isPending ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <FileText className="h-4 w-4 mr-2" />
-            )}
-            Meeting Prep
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => navigate('/meetings')}
-          >
-            <Calendar className="h-4 w-4 mr-2" />
-            Meeting History
-          </Button>
-          <BatchExportButton
-            scorecards={scorecardsForExport}
-            businessNames={businessNamesForExport}
-            disabled={!latestScorecards || latestScorecards.size === 0}
-          />
-          <Button
-            onClick={handleGenerateAnalysis}
-            disabled={generateAnalysis.isPending || !portfolio?.length}
-          >
-            {generateAnalysis.isPending ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <Sparkles className="h-4 w-4 mr-2" />
-            )}
-            Generate AI Analysis
-          </Button>
-        </div>
+        <PageHeader
+          backTo="/"
+          actions={
+            <>
+              {(userRole === 'super_admin' || userRole === 'consultant') && (
+                <Button
+                  variant="outline"
+                  onClick={() => setActionModalOpen(true)}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Action
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                onClick={() => navigate('/compare')}
+              >
+                <GitCompare className="h-4 w-4 mr-2" />
+                Compare
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleGenerateMeetingSummary}
+                disabled={generateMeetingSummary.isPending || !portfolio?.length}
+              >
+                {generateMeetingSummary.isPending ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <FileText className="h-4 w-4 mr-2" />
+                )}
+                Meeting Prep
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => navigate('/meetings')}
+              >
+                <Calendar className="h-4 w-4 mr-2" />
+                Meeting History
+              </Button>
+              <BatchExportButton
+                scorecards={scorecardsForExport}
+                businessNames={businessNamesForExport}
+                disabled={!latestScorecards || latestScorecards.size === 0}
+              />
+              <Button
+                onClick={handleGenerateAnalysis}
+                disabled={generateAnalysis.isPending || !portfolio?.length}
+              >
+                {generateAnalysis.isPending ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Sparkles className="h-4 w-4 mr-2" />
+                )}
+                Generate AI Analysis
+              </Button>
+            </>
+          }
+        />
         <div className="flex items-center justify-center gap-2 mb-4">
           <h1 className="text-2xl font-bold">Chester Portfolio Overview</h1>
           <PendingActionsBadge />

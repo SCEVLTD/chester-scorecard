@@ -4,7 +4,7 @@ import { useForm, Controller, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { format, subMonths, startOfMonth } from 'date-fns'
 import { toast } from 'sonner'
-import { ArrowLeft } from 'lucide-react'
+import { PageHeader } from '@/components/page-header'
 import { useBusinesses } from '@/hooks/use-businesses'
 import { useCreateScorecard, useScorecard, useUpdateScorecard, useBusinessScorecards } from '@/hooks/use-scorecards'
 import { useSubmissionForBusinessMonth } from '@/hooks/use-company-submissions'
@@ -262,16 +262,11 @@ export function ScorecardPage() {
 
   return (
     <div className="p-4 md:p-8 max-w-2xl mx-auto">
-      <div className="flex items-center justify-between mb-4">
-        <Button
-          variant="ghost"
-          onClick={() => navigate(`/business/${params.businessId}`)}
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back
-        </Button>
-        <img src="/velocity-logo.png" alt="Velocity" className="h-8" />
-      </div>
+      <PageHeader
+        backTo={`/business/${params.businessId}`}
+        backText="Back"
+        showTagline={false}
+      />
 
       <h1 className="text-2xl md:text-3xl font-bold mb-2">{business.name}</h1>
       <p className="text-muted-foreground mb-6">

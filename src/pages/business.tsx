@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useParams, useLocation } from 'wouter'
-import { ArrowLeft, BarChart3, History, Plus } from 'lucide-react'
+import { BarChart3, History, Plus } from 'lucide-react'
+import { PageHeader } from '@/components/page-header'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { useBusinesses } from '@/hooks/use-businesses'
@@ -73,16 +74,11 @@ export function BusinessPage() {
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="mx-auto max-w-4xl">
         {/* Header navigation */}
-        <div className="flex items-center justify-between mb-6">
-          <Button
-            variant="ghost"
-            onClick={() => navigate(`/business/${businessId}`)}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to History
-          </Button>
-          <img src="/velocity-logo.png" alt="Velocity" className="h-8" />
-        </div>
+        <PageHeader
+          backTo={`/business/${businessId}`}
+          backText="Back to History"
+          showTagline={false}
+        />
 
         {/* Business name header */}
         <Card className="mb-6">

@@ -6,8 +6,8 @@
  */
 
 import { useParams, useLocation } from 'wouter'
-import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { PageHeader } from '@/components/page-header'
 import {
   Card,
   CardContent,
@@ -96,20 +96,11 @@ export function ChartsPage() {
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="mx-auto max-w-4xl space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <Button
-            variant="ghost"
-            onClick={() => navigate(`/business/${businessId}`)}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to History
-          </Button>
-          <img
-            src="/velocity-logo.png"
-            alt="Velocity"
-            className="h-8"
-          />
-        </div>
+        <PageHeader
+          backTo={`/business/${businessId}`}
+          backText="Back to History"
+          showTagline={false}
+        />
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>

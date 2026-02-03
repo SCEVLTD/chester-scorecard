@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useParams, useLocation } from 'wouter'
-import { ArrowLeft, Calendar, Users, Loader2, Trash2 } from 'lucide-react'
+import { Calendar, Users, Loader2, Trash2 } from 'lucide-react'
+import { PageHeader } from '@/components/page-header'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -114,13 +115,7 @@ export function MeetingPage() {
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="mx-auto max-w-3xl">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <Button variant="ghost" onClick={() => navigate('/meetings')}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Meetings
-          </Button>
-          <img src="/velocity-logo.png" alt="Velocity" className="h-8" />
-        </div>
+        <PageHeader backTo="/meetings" backText="Back to Meetings" showTagline={false} />
 
         {/* Meeting Info Card */}
         <Card className="mb-6">

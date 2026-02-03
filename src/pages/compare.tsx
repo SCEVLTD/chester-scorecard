@@ -9,7 +9,8 @@ import { useState, useMemo } from 'react'
 import { useLocation, useSearch } from 'wouter'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ArrowLeft, GitCompare } from 'lucide-react'
+import { GitCompare } from 'lucide-react'
+import { PageHeader } from '@/components/page-header'
 import { BusinessSelector } from '@/components/compare/business-selector'
 import { ComparisonColumns } from '@/components/compare/comparison-columns'
 import { useBusinesses } from '@/hooks/use-businesses'
@@ -69,20 +70,10 @@ export function ComparePage() {
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="mx-auto max-w-6xl">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate('/portfolio')}
-            title="Back to portfolio"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <img src="/velocity-logo.png" alt="Velocity" className="h-8" />
-          <div className="flex items-center gap-2">
-            <GitCompare className="h-6 w-6 text-muted-foreground" />
-            <h1 className="text-2xl font-bold">Compare Businesses</h1>
-          </div>
+        <PageHeader backTo="/portfolio" showTagline={false} />
+        <div className="flex items-center gap-2 mb-6">
+          <GitCompare className="h-6 w-6 text-muted-foreground" />
+          <h1 className="text-2xl font-bold">Compare Businesses</h1>
         </div>
 
         {/* Business Selector */}
