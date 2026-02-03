@@ -15,6 +15,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { CompanyEmailsManager } from './company-emails-manager'
 
 interface CompanyEditDialogProps {
   business: Business
@@ -121,6 +122,11 @@ export function CompanyEditDialog({
                 {form.formState.errors.contact_name.message}
               </p>
             )}
+          </div>
+
+          {/* Email addresses management */}
+          <div className="pt-2 border-t">
+            <CompanyEmailsManager businessId={business.id} />
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
