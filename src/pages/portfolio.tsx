@@ -235,7 +235,7 @@ export function PortfolioPage() {
             <p className="text-xs text-muted-foreground">Doing good by doing well</p>
           </div>
           <div className="flex-1" />
-          {(userRole === 'super_admin' || userRole === 'consultant' || userRole === 'admin') && (
+          {(userRole === 'super_admin' || userRole === 'consultant') && (
             <Button
               variant="outline"
               onClick={() => setActionModalOpen(true)}
@@ -327,7 +327,7 @@ export function PortfolioPage() {
         </div>
 
         {/* Bulk Invitation Panel (Admin Only) */}
-        {userRole === 'admin' && (
+        {(userRole === 'super_admin' || userRole === 'consultant' || userRole === 'admin') && (
           <div className="mb-6">
             <BulkInvitationPanel />
           </div>
@@ -432,7 +432,7 @@ export function PortfolioPage() {
                             <Badge className={ragColors[item.ragStatus]}>
                               {item.latestScore}
                             </Badge>
-                            {userRole === 'admin' && business && (
+                            {(userRole === 'super_admin' || userRole === 'consultant' || userRole === 'admin') && business && (
                               <Button
                                 variant="ghost"
                                 size="icon"
