@@ -1,6 +1,5 @@
-import { useState } from 'react'
 import { useParams, useLocation } from 'wouter'
-import { Plus, Send, ChevronDown, ChevronUp, BarChart3 } from 'lucide-react'
+import { BarChart3 } from 'lucide-react'
 import { PageHeader } from '@/components/page-header'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -8,21 +7,20 @@ import { useBusinesses } from '@/hooks/use-businesses'
 import { useBusinessScorecards } from '@/hooks/use-scorecards'
 import { calculateTrend } from '@/lib/scoring'
 import { ScorecardHistoryItem } from '@/components/scorecard-history-item'
-import { RequestDataModal } from '@/components/request-data-modal'
-import { DataRequestList } from '@/components/data-request-list'
 import { ExcelExportButton } from '@/components/excel-export-button'
 
 /**
- * Business scorecard history page
- * Lists all scorecards for a business with trend indicators
+ * Business scorecard history page (Simplified Version)
+ *
+ * Lists all scorecards for a business with trend indicators.
+ * Companies submit their own data monthly - no consultant scorecard creation.
+ * Click on a scorecard to see the submitted data with scores.
  */
 export function HistoryPage() {
   const { businessId } = useParams<{ businessId: string }>()
   const [, navigate] = useLocation()
   const { data: businesses } = useBusinesses()
   const { data: scorecards, isLoading } = useBusinessScorecards(businessId!)
-  const [showRequestModal, setShowRequestModal] = useState(false)
-  const [showRequests, setShowRequests] = useState(false)
 
   const business = businesses?.find(b => b.id === businessId)
 
@@ -50,44 +48,16 @@ export function HistoryPage() {
               {scorecards && scorecards.length > 0 && business && (
                 <ExcelExportButton scorecards={scorecards} businessName={business.name} size="sm" />
               )}
-              <Button variant="outline" size="sm" onClick={() => setShowRequestModal(true)}>
-                <Send className="mr-2 h-4 w-4" />
-                Request Data
-              </Button>
-              <Button size="sm" onClick={() => navigate(`/business/${businessId}/scorecard`)}>
-                <Plus className="mr-2 h-4 w-4" />
-                New Scorecard
-              </Button>
             </div>
           </CardHeader>
           <CardContent>
-            {/* Data Requests Section */}
-            <div className="mb-6 border-b pb-4">
-              <button
-                className="flex items-center justify-between w-full text-left"
-                onClick={() => setShowRequests(!showRequests)}
-              >
-                <span className="text-sm font-medium text-slate-700">Company Data Requests</span>
-                {showRequests ? (
-                  <ChevronUp className="h-4 w-4 text-slate-500" />
-                ) : (
-                  <ChevronDown className="h-4 w-4 text-slate-500" />
-                )}
-              </button>
-              {showRequests && (
-                <div className="mt-3">
-                  <DataRequestList businessId={businessId!} />
-                </div>
-              )}
-            </div>
-
             {isLoading && (
               <p className="text-muted-foreground">Loading scorecards...</p>
             )}
 
             {!isLoading && (!scorecards || scorecards.length === 0) && (
               <p className="text-muted-foreground">
-                No scorecards yet. Create the first one!
+                No submissions yet. Companies can submit monthly data from their portal.
               </p>
             )}
 
@@ -105,15 +75,6 @@ export function HistoryPage() {
             )}
           </CardContent>
         </Card>
-
-        {business && (
-          <RequestDataModal
-            businessId={businessId!}
-            businessName={business.name}
-            open={showRequestModal}
-            onOpenChange={setShowRequestModal}
-          />
-        )}
       </div>
     </div>
   )
