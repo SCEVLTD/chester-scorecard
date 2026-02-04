@@ -1,4 +1,5 @@
 import Anthropic from 'npm:@anthropic-ai/sdk'
+import { createClient } from 'npm:@supabase/supabase-js'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -7,26 +8,26 @@ const corsHeaders = {
 
 interface ScorecardData {
   month: string
-  consultant_name: string
+  company_submission_id: string | null
   revenue_variance: number | null
-  gross_profit_variance: number | null
-  overheads_variance: number | null
   net_profit_variance: number | null
-  productivity_benchmark: number | null
-  productivity_actual: number | null
   leadership: string | null
   market_demand: string | null
   marketing: string | null
   product_strength: string | null
   supplier_strength: string | null
   sales_execution: string | null
-  biggest_opportunity: string
-  biggest_risk: string
-  management_avoiding: string
-  leadership_confidence: string
-  consultant_gut_feel: string
   total_score: number
   rag_status: string
+}
+
+interface CompanySubmission {
+  outbound_calls: number | null
+  first_orders: number | null
+  company_biggest_opportunity: string | null
+  company_biggest_risk: string | null
+  company_wins: string | null
+  company_challenges: string | null
 }
 
 interface RequestBody {
@@ -38,17 +39,44 @@ interface RequestBody {
 function formatVariance(value: number | null): string {
   if (value === null) return 'N/A'
   const sign = value >= 0 ? '+' : ''
-  return `${sign}${value}%`
+  return `${sign}${value.toFixed(1)}%`
 }
 
 function formatQualitative(value: string | null): string {
-  if (value === null) return 'Not rated'
+  if (!value) return 'Not rated'
+  // Map the selection values to readable labels
   const labels: Record<string, string> = {
-    '1': '1 - Very Poor',
-    '2': '2 - Poor',
-    '3': '3 - Average',
-    '4': '4 - Good',
-    '5': '5 - Excellent',
+    // Leadership
+    'aligned': 'Fully aligned, accountable leadership',
+    'minor_issues': 'Minor issues, not performance limiting',
+    'misaligned': 'Clear misalignment affecting output',
+    'toxic': 'Toxic / blocking progress',
+    'na': 'N/A',
+    // Market demand
+    'strong': 'Strong demand / positive momentum',
+    'flat': 'Flat / mixed signals',
+    'softening': 'Softening / pressure on pricing',
+    'declining': 'Declining / losing share',
+    // Marketing
+    'generating': 'Consistently generating quality leads',
+    'some_results': 'Some results, room for improvement',
+    'minimal': 'Minimal impact on pipeline',
+    'none': 'No marketing activity',
+    // Product
+    'differentiated': 'Market-leading, differentiated product',
+    'competitive': 'Competitive, meets market needs',
+    'catching_up': 'Falling behind, catching up',
+    'commodity': 'Commodity, no differentiation',
+    // Suppliers
+    'strategic': 'Strategic partnerships, preferential terms',
+    'reliable': 'Reliable supply, good relationships',
+    'adequate': 'Adequate but nothing special',
+    'problematic': 'Problematic, supply issues',
+    // Sales
+    'exceeding': 'Exceeding targets, strong pipeline',
+    'on_track': 'On track, consistent execution',
+    'underperforming': 'Underperforming, pipeline concerns',
+    'no_engine': 'No effective sales engine',
   }
   return labels[value] || value
 }
@@ -56,47 +84,38 @@ function formatQualitative(value: string | null): string {
 function buildPrompt(
   scorecard: ScorecardData,
   previousScorecard: ScorecardData | null,
-  businessName: string
+  businessName: string,
+  submission: CompanySubmission | null
 ): string {
-  const productivityDiff = scorecard.productivity_benchmark !== null && scorecard.productivity_actual !== null
-    ? ((scorecard.productivity_actual - scorecard.productivity_benchmark) / scorecard.productivity_benchmark * 100).toFixed(1)
-    : null
-
-  // Check if this is a self-assessment (no consultant commentary)
-  const isSelfAssessment = !scorecard.consultant_name && !scorecard.biggest_opportunity
-
   return `You are a business performance advisor providing insights for a monthly business scorecard review.
 
 BUSINESS: ${businessName}
 MONTH: ${scorecard.month}
-TYPE: ${isSelfAssessment ? 'Self-Assessment' : 'Consultant Review'}
+TYPE: Company Self-Assessment
 
 OVERALL SCORE: ${scorecard.total_score}/100 (${scorecard.rag_status.toUpperCase()})
 
-=== FINANCIAL PERFORMANCE ===
+=== FINANCIAL PERFORMANCE (20 pts max) ===
 Revenue vs Target: ${formatVariance(scorecard.revenue_variance)}
-Gross Profit vs Target: ${formatVariance(scorecard.gross_profit_variance)}
-Overheads vs Budget: ${formatVariance(scorecard.overheads_variance)}
-Net Profit vs Target: ${formatVariance(scorecard.net_profit_variance)}
+EBITDA vs Target: ${formatVariance(scorecard.net_profit_variance)}
 
-=== PEOPLE & HR ===
-Productivity Benchmark: ${scorecard.productivity_benchmark !== null ? `${scorecard.productivity_benchmark}K` : 'N/A'}
-Productivity Actual: ${scorecard.productivity_actual !== null ? `${scorecard.productivity_actual}K` : 'N/A'}
-Productivity vs Benchmark: ${productivityDiff !== null ? `${productivityDiff}%` : 'N/A'}
-Leadership Assessment: ${formatQualitative(scorecard.leadership)}
+=== LEAD KPIs ===
+Outbound Calls: ${submission?.outbound_calls ?? 'Not reported'}
+First Orders: ${submission?.first_orders ?? 'Not reported'}
 
-=== MARKET ===
+=== QUALITATIVE ASSESSMENTS ===
+Leadership/Alignment: ${formatQualitative(scorecard.leadership)}
 Market Demand: ${formatQualitative(scorecard.market_demand)}
 Marketing Effectiveness: ${formatQualitative(scorecard.marketing)}
-
-=== PRODUCT ===
 Product Strength: ${formatQualitative(scorecard.product_strength)}
-
-=== SUPPLIERS ===
 Supplier Strength: ${formatQualitative(scorecard.supplier_strength)}
-
-=== SALES ===
 Sales Execution: ${formatQualitative(scorecard.sales_execution)}
+
+=== COMPANY INSIGHTS ===
+Biggest Opportunity: ${submission?.company_biggest_opportunity || 'Not provided'}
+Biggest Risk: ${submission?.company_biggest_risk || 'Not provided'}
+Recent Wins: ${submission?.company_wins || 'Not provided'}
+Current Challenges: ${submission?.company_challenges || 'Not provided'}
 
 ${previousScorecard ? `
 === PREVIOUS MONTH (${previousScorecard.month}) ===
@@ -108,20 +127,20 @@ Score Change: ${scorecard.total_score - previousScorecard.total_score} points
 
 INCONSISTENCY DETECTION:
 Flag these specific contradictions if present:
-1. Strong market_demand (4-5) BUT negative revenue_variance - Note: "Strong market demand reported, yet revenue is below target. Consider what's blocking conversion."
-2. Strong sales_execution (4-5) BUT low productivity scores (actual < benchmark) - Note: "Sales execution rated highly but productivity lags benchmark. Team may be stretched thin."
-3. High leadership rating (4-5) BUT poor financial_performance (multiple negative variances) - Note: "Leadership rated confident despite financial headwinds. Review the basis for optimism."
-4. Product rated as differentiated (4-5) BUT GP margins compressed (negative gross_profit_variance) - Note: "Product rated strong but GP margin under pressure. May indicate pricing power issue."
-5. Positive revenue trend BUT negative net_profit_variance - Note: "Revenue growing but net profit declining. Review cost structure and overhead efficiency."
+1. Strong market_demand BUT negative revenue_variance - Note: "Strong market demand reported, yet revenue is below target. Consider what's blocking conversion."
+2. Strong sales_execution BUT low lead KPIs (few calls/orders) - Note: "Sales execution rated highly but lead activity is low. Team may need to increase prospecting."
+3. High leadership rating BUT poor financial performance (negative variances) - Note: "Leadership rated confident despite financial headwinds. Review the basis for optimism."
+4. Product rated as differentiated BUT revenue declining - Note: "Product rated strong but revenue under pressure. May indicate market positioning issue."
+5. Strong marketing rating BUT low first orders - Note: "Marketing rated effective but first orders are low. Review lead quality and conversion."
 
 Only include an inconsistency if the data clearly shows the contradiction. Be specific about which data points conflict.
 
 ---
 
 REQUIRED OUTPUT:
-1. Executive Summary (150-250 words): Synthesize the scorecard into a clear narrative. Reference specific numbers and ratings. Highlight what's going well and what needs attention. Write in second person ("Your business...") for self-assessment context.
+1. Executive Summary (150-250 words): Synthesize the scorecard into a clear narrative. Reference specific numbers and ratings. Highlight what's going well and what needs attention. Write in second person ("Your business...") for self-assessment context. If the company provided insights about opportunities, risks, wins, or challenges, incorporate them into your analysis.
 
-2. 5 Focus Points for Next Month: Key areas to monitor and improve based on this month's data. Each point should be specific, actionable, and grounded in the metrics. Focus on progress opportunities and areas needing attention. These should help the business owner know what to track and prioritize.
+2. 5 Focus Points for Next Month: Key areas to monitor and improve based on this month's data. Each point should be specific, actionable, and grounded in the metrics. Focus on progress opportunities and areas needing attention.
 
 3. 30-Day Action Items: Prioritized list of concrete actions. Each action must have a priority (high/medium/low). Focus on quick wins and urgent issues first.
 
@@ -139,11 +158,27 @@ Deno.serve(async (req) => {
   try {
     const { scorecard, previousScorecard, businessName } = await req.json() as RequestBody
 
+    // Fetch company submission if available
+    let submission: CompanySubmission | null = null
+    if (scorecard.company_submission_id) {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+      const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+      const supabase = createClient(supabaseUrl, supabaseKey)
+
+      const { data } = await supabase
+        .from('company_submissions')
+        .select('outbound_calls, first_orders, company_biggest_opportunity, company_biggest_risk, company_wins, company_challenges')
+        .eq('id', scorecard.company_submission_id)
+        .single()
+
+      submission = data as CompanySubmission | null
+    }
+
     const anthropic = new Anthropic({
       apiKey: Deno.env.get('ANTHROPIC_API_KEY'),
     })
 
-    const prompt = buildPrompt(scorecard, previousScorecard, businessName)
+    const prompt = buildPrompt(scorecard, previousScorecard, businessName, submission)
 
     const analysisTool = {
       name: 'submit_analysis',
