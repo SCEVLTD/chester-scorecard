@@ -1,8 +1,8 @@
-# Roadmap: Chester Business Scorecard v1.1
+# Roadmap: Chester Business Scorecard v1.2
 
-**Milestone:** v1.1 Friday Launch Ready
-**Goal:** Get all 19 businesses submitting forms before Friday meeting
-**Phases:** 8-10 (continues from v1.0)
+**Current Milestone:** v1.2 Meeting Persistence
+**Previous Milestones:** v1.0 MVP (shipped), v1.1 Friday Launch (complete)
+**Phases:** 8-11
 
 ## Overview
 
@@ -11,8 +11,9 @@
 | 8 | Access & Data Setup | Unblock company login and data upload | AUTH-06, AUTH-07, ADMIN-01, ADMIN-02 | 4 |
 | 9 | Invitations & Form | Send emails, businesses can submit | ADMIN-03, ADMIN-04, FORM-08 | 3 |
 | 10 | Consultant View & Reporting | Role-based views, portfolio actions | AUTH-08, ACTION-04, REPORT-07 | 3 |
+| 11 | Meeting Persistence | Searchable meeting history with AI notes | MEETING-01 | 1 |
 
-**Total:** 3 phases, 10 requirements
+**Total:** 4 phases, 11 requirements
 
 ---
 
@@ -101,6 +102,31 @@ Plans:
 
 ---
 
+## Phase 11: Meeting Persistence
+
+**Goal:** Transform ephemeral meeting prep into persistent, searchable knowledge system.
+
+**Plans:** 1 plan
+
+Plans:
+- [x] 11-01-PLAN.md — Meeting persistence (Granola-style UX, full-text search)
+
+**Requirements:**
+- MEETING-01: Persistent meeting records with AI summaries and user notes
+
+**Success Criteria:**
+1. Admin generates Meeting Prep → auto-saved with portfolio snapshot
+2. User notes editable with debounced auto-save
+3. Actions created from meeting linked via meeting_id FK
+4. Search across all meetings via full-text search
+5. Finalize meeting locks editing
+
+**Dependencies:** Phase 10 (Meeting Prep feature exists)
+
+**Priority:** MEDIUM — enhances existing feature
+
+---
+
 ## Execution Order
 
 ```
@@ -109,8 +135,10 @@ Phase 8 ────────────────────────
 Phase 9 ──────────────────────────────────┴──► [Emails sent, businesses fill forms]
                                                         │
 Phase 10 ───────────────────────────────────────────────┴──► [Consultant view ready for Friday]
+                                                                      │
+Phase 11 ─────────────────────────────────────────────────────────────┴──► [Meeting history searchable]
 ```
 
 ---
 *Roadmap created: 2026-02-03*
-*Last updated: 2026-02-03 — Phase 10 complete*
+*Last updated: 2026-02-04 — Phase 11 complete (Meeting Persistence)*

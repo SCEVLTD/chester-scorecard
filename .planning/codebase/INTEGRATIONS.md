@@ -9,8 +9,9 @@
   - SDK: `@anthropic-ai/sdk` (via npm: in Deno Edge Functions)
   - Auth: `ANTHROPIC_API_KEY` (Supabase Edge Function secret)
   - Models used:
-    - `claude-sonnet-4-5-20250514` - Individual scorecard analysis (structured outputs)
+    - `claude-sonnet-4-5-20250929` - Individual scorecard analysis (structured outputs via tool_use)
     - `claude-sonnet-4-20250514` - Portfolio-level analysis
+  - **Note:** Model version updated 2026-02-03 from `20250514` to `20250929` (old model deprecated)
   - Edge Functions:
     - `supabase/functions/generate-analysis/index.ts` - Single scorecard AI analysis
     - `supabase/functions/generate-portfolio-analysis/index.ts` - Portfolio-wide analysis
@@ -38,7 +39,11 @@
 
 **Row Level Security:**
 - RLS enabled on all tables
-- Current policy: Full public access (MVP mode)
+- Policies by table:
+  - `scorecards`: Admin full access; Business users can SELECT/INSERT/UPDATE own (by business_id)
+  - `businesses`: Admin full access; Business users can SELECT own
+  - `company_submissions`: Admin full access; Business users can INSERT/UPDATE own
+- **Note:** Business user UPDATE policy on scorecards added 2026-02-03 (required for AI analysis save)
 
 **File Storage:**
 - None - No file uploads

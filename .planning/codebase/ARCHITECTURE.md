@@ -98,6 +98,17 @@
 4. Response validated and saved to `scorecards.ai_analysis` column
 5. UI displays formatted analysis
 
+**Meeting Prep Generation Flow:**
+
+1. Admin clicks "Meeting Prep" on portfolio page
+2. `useMeetingSummary()` hook aggregates portfolio data via `usePortfolioAggregate()`
+3. Hook invokes `generate-meeting-summary` edge function with `persist: true`
+4. Edge function generates AI summary via Claude, saves to `meetings` table
+5. Returns `meetingId`, user redirected or modal shown with AI notes
+6. User adds notes in textarea (debounced auto-save via `useSaveMeetingNotes`)
+7. User clicks "Create Action" on suggestions → `ActionModal` with `meeting_id` FK
+8. User clicks "Finalize" → status locked, notes become read-only
+
 **State Management:**
 - Server state: TanStack Query with 5-minute stale time
 - Form state: react-hook-form with Zod validation
@@ -126,6 +137,14 @@
 - Examples: `src/lib/scoring.ts`
 - Pattern: Pure functions with lookup tables for qualitative scores
 
+**Meeting:**
+- Purpose: Persistent record of Friday meetings with AI summaries and user notes
+- Examples: `src/hooks/use-meetings.ts`, `src/pages/meetings.tsx`, `src/pages/meeting.tsx`
+- Pattern: Granola-style UX — AI notes + user notes side-by-side with debounced auto-save
+- Data: `meetings` table with portfolio_snapshot (JSONB), ai_summary (JSONB), user_notes (text)
+- Workflow: draft → finalized (locks editing), supports full-text search via GIN index
+- Actions: Can link actions to meetings via `actions.meeting_id` FK
+
 ## Entry Points
 
 **Client Entry:**
@@ -147,6 +166,16 @@
 - Location: `supabase/functions/generate-portfolio-analysis/index.ts`
 - Triggers: `supabase.functions.invoke('generate-portfolio-analysis')`
 - Responsibilities: Multi-business analysis, trend detection across portfolio
+
+**Edge Function - Meeting Summary:**
+- Location: `supabase/functions/generate-meeting-summary/index.ts`
+- Triggers: `supabase.functions.invoke('generate-meeting-summary')`
+- Responsibilities: AI meeting prep generation, optional persistence to meetings table
+
+**Edge Function - Update Meeting:**
+- Location: `supabase/functions/update-meeting/index.ts`
+- Triggers: `supabase.functions.invoke('update-meeting')`
+- Responsibilities: Save user notes, update attendees, finalize meetings
 
 ## Error Handling
 
@@ -175,3 +204,4 @@
 ---
 
 *Architecture analysis: 2026-02-02*
+*Updated: 2026-02-04 — Added meetings system*

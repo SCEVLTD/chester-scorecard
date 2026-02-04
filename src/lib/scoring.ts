@@ -60,15 +60,49 @@ export function scoreOverheads(variancePercent: number): number {
 }
 
 /**
- * Calculate the financial subtotal from all four variance values
+ * Calculate the financial subtotal from variance values
+ * Handles null/undefined values for N/A fields
  *
- * @param revenue Revenue variance percentage
- * @param grossProfit Gross profit variance percentage
- * @param overheads Overheads variance percentage
- * @param netProfit Net profit variance percentage
- * @returns Total financial score (0-40)
+ * @param revenue Revenue variance percentage (null if N/A)
+ * @param grossProfit Gross profit variance percentage (null if N/A)
+ * @param overheads Overheads variance percentage (null if N/A)
+ * @param netProfit Net profit variance percentage (null if N/A)
+ * @returns Object with score and max possible score
  */
 export function calculateFinancialSubtotal(
+  revenue: number | null | undefined,
+  grossProfit: number | null | undefined,
+  overheads: number | null | undefined,
+  netProfit: number | null | undefined
+): { score: number; maxScore: number } {
+  let score = 0
+  let maxScore = 0
+
+  if (revenue != null) {
+    score += scoreFinancialMetric(revenue)
+    maxScore += 10
+  }
+  if (grossProfit != null) {
+    score += scoreFinancialMetric(grossProfit)
+    maxScore += 10
+  }
+  if (overheads != null) {
+    score += scoreOverheads(overheads)
+    maxScore += 10
+  }
+  if (netProfit != null) {
+    score += scoreFinancialMetric(netProfit)
+    maxScore += 10
+  }
+
+  return { score, maxScore }
+}
+
+/**
+ * Legacy function for backwards compatibility
+ * Returns just the score (not max) for existing code that expects a number
+ */
+export function calculateFinancialSubtotalLegacy(
   revenue: number,
   grossProfit: number,
   overheads: number,
@@ -230,29 +264,37 @@ export const SALES_OPTIONS = [
 // TOTAL SCORE & RAG STATUS
 // ============================================================================
 
+export interface ScoreResult {
+  score: number
+  maxScore: number
+  percentage: number
+}
+
 /**
- * Calculate total score from all sections
+ * Calculate total score from all sections with N/A handling
  *
- * Section breakdown (100 points max):
- * - Financial: 40 points
+ * Section breakdown (100 points max when all fields present):
+ * - Financial: 40 points (Revenue 10, GP 10, Overheads 10, EBITDA 10)
  * - People/HR: 20 points (productivity 10 + leadership 10)
  * - Market: 15 points (demand 7.5 + marketing 7.5)
  * - Product: 10 points
  * - Suppliers: 5 points
  * - Sales: 10 points
  *
+ * When fields are N/A, max score is reduced proportionally
+ *
  * @param data Scorecard form data
- * @returns Total score (0-100)
+ * @returns Score result with actual score, max possible, and percentage
  */
-export function calculateTotalScore(data: {
-  // Financial (from Phase 2)
-  revenueVariance?: number
-  grossProfitVariance?: number
-  overheadsVariance?: number
-  netProfitVariance?: number
+export function calculateTotalScoreWithMax(data: {
+  // Financial (from Phase 2) - null means N/A
+  revenueVariance?: number | null
+  grossProfitVariance?: number | null
+  overheadsVariance?: number | null
+  netProfitVariance?: number | null
   // People/HR
-  productivityBenchmark?: number
-  productivityActual?: number
+  productivityBenchmark?: number | null
+  productivityActual?: number | null
   leadership?: string
   // Market
   marketDemand?: string
@@ -263,56 +305,112 @@ export function calculateTotalScore(data: {
   supplierStrength?: string
   // Sales
   salesExecution?: string
-}): number {
-  // Financial subtotal (40 max)
+}): ScoreResult {
+  let totalScore = 0
+  let totalMaxScore = 0
+
+  // Financial subtotal (up to 40 max)
   const financial = calculateFinancialSubtotal(
-    Number(data.revenueVariance) || 0,
-    Number(data.grossProfitVariance) || 0,
-    Number(data.overheadsVariance) || 0,
-    Number(data.netProfitVariance) || 0
+    data.revenueVariance,
+    data.grossProfitVariance,
+    data.overheadsVariance,
+    data.netProfitVariance
   )
+  totalScore += financial.score
+  totalMaxScore += financial.maxScore
 
-  // People/HR subtotal (20 max)
-  const productivityVariance = calculateProductivityVariance(
-    Number(data.productivityBenchmark) || 0,
-    Number(data.productivityActual) || 0
-  )
-  const people =
-    scoreProductivity(productivityVariance) +
-    (LEADERSHIP_SCORES[data.leadership || ''] ?? 0)
+  // People/HR subtotal (up to 20 max)
+  // Productivity (10 max) - only if benchmark and actual are provided
+  if (data.productivityBenchmark != null && data.productivityActual != null) {
+    const productivityVariance = calculateProductivityVariance(
+      data.productivityBenchmark,
+      data.productivityActual
+    )
+    totalScore += scoreProductivity(productivityVariance)
+    totalMaxScore += 10
+  }
+  // Leadership (10 max) - always included
+  totalScore += LEADERSHIP_SCORES[data.leadership || ''] ?? 0
+  totalMaxScore += 10
 
-  // Market subtotal (15 max)
-  const market =
-    (MARKET_DEMAND_SCORES[data.marketDemand || ''] ?? 0) +
-    (MARKETING_SCORES[data.marketing || ''] ?? 0)
+  // Market subtotal (15 max) - always included
+  totalScore += MARKET_DEMAND_SCORES[data.marketDemand || ''] ?? 0
+  totalMaxScore += 7.5
+  totalScore += MARKETING_SCORES[data.marketing || ''] ?? 0
+  totalMaxScore += 7.5
 
-  // Product (10 max)
-  const product = PRODUCT_SCORES[data.productStrength || ''] ?? 0
+  // Product (10 max) - always included
+  totalScore += PRODUCT_SCORES[data.productStrength || ''] ?? 0
+  totalMaxScore += 10
 
-  // Suppliers (5 max)
-  const suppliers = SUPPLIER_SCORES[data.supplierStrength || ''] ?? 0
+  // Suppliers (5 max) - always included
+  totalScore += SUPPLIER_SCORES[data.supplierStrength || ''] ?? 0
+  totalMaxScore += 5
 
-  // Sales (10 max)
-  const sales = SALES_SCORES[data.salesExecution || ''] ?? 0
+  // Sales (10 max) - always included
+  totalScore += SALES_SCORES[data.salesExecution || ''] ?? 0
+  totalMaxScore += 10
 
-  return financial + people + market + product + suppliers + sales
+  const percentage = totalMaxScore > 0 ? (totalScore / totalMaxScore) * 100 : 0
+
+  return { score: totalScore, maxScore: totalMaxScore, percentage }
 }
 
 /**
- * Get RAG (Red/Amber/Green) status from total score
+ * Legacy calculateTotalScore for backwards compatibility
+ * Returns just the raw score (not percentage-based)
+ */
+export function calculateTotalScore(data: {
+  revenueVariance?: number | null
+  grossProfitVariance?: number | null
+  overheadsVariance?: number | null
+  netProfitVariance?: number | null
+  productivityBenchmark?: number | null
+  productivityActual?: number | null
+  leadership?: string
+  marketDemand?: string
+  marketing?: string
+  productStrength?: string
+  supplierStrength?: string
+  salesExecution?: string
+}): number {
+  const result = calculateTotalScoreWithMax(data)
+  // Return the percentage as the "score" for display purposes
+  // This ensures N/A fields don't unfairly lower the score
+  return Math.round(result.percentage)
+}
+
+/**
+ * Get RAG (Red/Amber/Green) status from percentage score
  *
- * Thresholds from Nick's specification:
- * - Green: >= 75
- * - Amber: >= 60
- * - Red: < 60
+ * Thresholds (percentage-based):
+ * - Green: >= 75%
+ * - Amber: >= 60%
+ * - Red: < 60%
  *
- * @param score Total score (0-100)
+ * @param score Percentage score (0-100)
  * @returns RAG status color
  */
 export function getRagStatus(score: number): 'green' | 'amber' | 'red' {
   if (score >= 75) return 'green'
   if (score >= 60) return 'amber'
   return 'red'
+}
+
+/**
+ * Get detailed RAG status with score breakdown
+ */
+export function getRagStatusWithDetails(data: Parameters<typeof calculateTotalScoreWithMax>[0]): {
+  status: 'green' | 'amber' | 'red'
+  score: number
+  maxScore: number
+  percentage: number
+} {
+  const result = calculateTotalScoreWithMax(data)
+  return {
+    status: getRagStatus(result.percentage),
+    ...result,
+  }
 }
 
 // ============================================================================

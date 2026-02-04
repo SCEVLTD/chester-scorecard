@@ -44,30 +44,43 @@ export function calculateProductivityVariance(actualRatio: number, benchmarkRati
  * Convert company submission to scorecard variances
  * This is the main function that bridges company-submitted raw data
  * to the variance percentages used by the scorecard scoring system
+ *
+ * Returns null for fields marked as N/A so they can be excluded from scoring
  */
 export function submissionToVariances(submission: CompanySubmission): {
-  revenueVariance: number
-  grossProfitVariance: number
-  overheadsVariance: number
-  netProfitVariance: number
-  productivityBenchmark: number
-  productivityActual: number
+  revenueVariance: number | null
+  grossProfitVariance: number | null
+  overheadsVariance: number | null
+  netProfitVariance: number | null
+  productivityBenchmark: number | null
+  productivityActual: number | null
+  // N/A flags for scoring system
+  revenueNa: boolean
+  grossProfitNa: boolean
+  overheadsNa: boolean
+  wagesNa: boolean
 } {
-  const productivityActual = calculateProductivityActual(
+  // Check N/A flags - if set, return null for that metric
+  const revenueNa = submission.revenue_na ?? false
+  const grossProfitNa = submission.gross_profit_na ?? false
+  const overheadsNa = submission.overheads_na ?? false
+  const wagesNa = submission.wages_na ?? false
+
+  const productivityActual = wagesNa || grossProfitNa ? null : calculateProductivityActual(
     submission.gross_profit_actual ?? 0,
     submission.total_wages ?? 0
   )
 
   return {
-    revenueVariance: calculateVariance(
+    revenueVariance: revenueNa ? null : calculateVariance(
       submission.revenue_actual ?? 0,
       submission.revenue_target ?? 0
     ),
-    grossProfitVariance: calculateVariance(
+    grossProfitVariance: grossProfitNa ? null : calculateVariance(
       submission.gross_profit_actual ?? 0,
       submission.gross_profit_target ?? 0
     ),
-    overheadsVariance: calculateOverheadVariance(
+    overheadsVariance: overheadsNa ? null : calculateOverheadVariance(
       submission.overheads_actual ?? 0,
       submission.overheads_budget ?? 0
     ),
@@ -75,8 +88,13 @@ export function submissionToVariances(submission: CompanySubmission): {
       submission.net_profit_actual ?? 0,
       submission.net_profit_target ?? 0
     ),
-    productivityBenchmark: submission.productivity_benchmark ?? 0,
+    productivityBenchmark: wagesNa ? null : (submission.productivity_benchmark ?? 0),
     productivityActual: productivityActual,
+    // Pass through N/A flags for scoring
+    revenueNa,
+    grossProfitNa,
+    overheadsNa,
+    wagesNa,
   }
 }
 

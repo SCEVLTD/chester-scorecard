@@ -106,7 +106,7 @@ export function FinancialSection() {
     netProfit: scoreFinancialMetric(Number(netProfitVariance) || 0),
   }
 
-  // Calculate subtotal
+  // Calculate subtotal - returns { score, maxScore }
   const subtotal = calculateFinancialSubtotal(
     Number(revenueVariance) || 0,
     Number(grossProfitVariance) || 0,
@@ -120,8 +120,8 @@ export function FinancialSection() {
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg">Financial Performance</CardTitle>
           <div className="text-right">
-            <span className="text-xl font-bold">{subtotal}</span>
-            <span className="text-muted-foreground"> / 40</span>
+            <span className="text-xl font-bold">{subtotal.score}</span>
+            <span className="text-muted-foreground"> / {subtotal.maxScore}</span>
           </div>
         </div>
       </CardHeader>
