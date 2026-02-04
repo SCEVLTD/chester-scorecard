@@ -1,10 +1,10 @@
-import { useMemo, useEffect, useState } from 'react'
+import { useMemo, useEffect } from 'react'
 import { useParams, useLocation } from 'wouter'
-import { useForm, useWatch, Controller, type Resolver } from 'react-hook-form'
+import { useForm, Controller, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { format, subMonths, startOfMonth } from 'date-fns'
 import { toast } from 'sonner'
-import { Loader2, Calculator, Pencil, CheckCircle } from 'lucide-react'
+import { Loader2, CheckCircle } from 'lucide-react'
 import { PageHeader } from '@/components/page-header'
 import { useAuth } from '@/contexts/auth-context'
 import { useBusinesses } from '@/hooks/use-businesses'
@@ -52,9 +52,6 @@ export function UnifiedSubmitPage() {
     selectedMonth || undefined
   )
 
-  // Track if user is overriding auto-calculated net profit
-  const [netProfitOverride, setNetProfitOverride] = useState(false)
-
   const form = useForm<UnifiedSubmissionData>({
     resolver: zodResolver(unifiedSubmissionSchema) as Resolver<UnifiedSubmissionData>,
     defaultValues: {
@@ -85,35 +82,9 @@ export function UnifiedSubmitPage() {
     },
   })
 
-  // Watch values for auto-calculation
-  const grossProfitActual = useWatch({ control: form.control, name: 'grossProfitActual' })
-  const grossProfitTarget = useWatch({ control: form.control, name: 'grossProfitTarget' })
-  const overheadsActual = useWatch({ control: form.control, name: 'overheadsActual' })
-  const overheadsBudget = useWatch({ control: form.control, name: 'overheadsBudget' })
-  const totalWages = useWatch({ control: form.control, name: 'totalWages' })
-
-  // Calculate productivity actual (GP / Wages)
-  const productivityActual = totalWages > 0
-    ? (Number(grossProfitActual) / Number(totalWages)).toFixed(2)
-    : '0.00'
-
-  // Auto-calculate Net Profit when not overridden
-  useEffect(() => {
-    if (!netProfitOverride) {
-      const gpActual = Number(grossProfitActual) || 0
-      const ohActual = Number(overheadsActual) || 0
-      const gpTarget = Number(grossProfitTarget) || 0
-      const ohBudget = Number(overheadsBudget) || 0
-
-      form.setValue('netProfitActual', gpActual - ohActual)
-      form.setValue('netProfitTarget', gpTarget - ohBudget)
-    }
-  }, [grossProfitActual, overheadsActual, grossProfitTarget, overheadsBudget, netProfitOverride, form])
-
   // Update form when existing submission loads
   useEffect(() => {
     if (existingSubmission && !form.formState.isDirty) {
-      setNetProfitOverride(existingSubmission.net_profit_override || false)
       form.reset({
         month: selectedMonth,
         revenueActual: existingSubmission.revenue_actual ?? undefined,
@@ -154,12 +125,6 @@ export function UnifiedSubmitPage() {
     })
   }, [])
 
-  // Handler for enabling manual net profit override
-  const enableNetProfitOverride = () => {
-    setNetProfitOverride(true)
-    form.setValue('netProfitOverride', true)
-  }
-
   const onSubmit = async (data: UnifiedSubmissionData) => {
     if (!businessId) {
       toast.error('Business ID not found')
@@ -171,7 +136,8 @@ export function UnifiedSubmitPage() {
         businessId,
         data: {
           ...data,
-          netProfitOverride,
+          // Always manual entry in simplified form
+          netProfitOverride: true,
         },
       })
       toast.success(`Submission saved! Score: ${result.score}`)
@@ -294,9 +260,9 @@ export function UnifiedSubmitPage() {
                 </div>
               )}
 
-              {/* Financial Section */}
+              {/* Financial Section - Simplified to Revenue + EBITDA only */}
               <div className="space-y-4 pt-4 border-t">
-                <h3 className="font-semibold text-lg text-slate-900">Financial Performance (40 pts)</h3>
+                <h3 className="font-semibold text-lg text-slate-900">Financial Performance (20 pts)</h3>
 
                 {/* Revenue */}
                 <div className="space-y-3">
@@ -337,110 +303,13 @@ export function UnifiedSubmitPage() {
                   </div>
                 </div>
 
-                {/* Gross Profit */}
-                <div className="space-y-3">
-                  <h4 className="font-medium text-slate-900">Gross Profit</h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-sm text-slate-600">Actual</Label>
-                      <div className="relative mt-1">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">£</span>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          className="pl-7"
-                          placeholder="0"
-                          {...form.register('grossProfitActual')}
-                        />
-                      </div>
-                      {form.formState.errors.grossProfitActual && (
-                        <p className="text-sm text-red-500 mt-1">{form.formState.errors.grossProfitActual.message}</p>
-                      )}
-                    </div>
-                    <div>
-                      <Label className="text-sm text-slate-600">Target</Label>
-                      <div className="relative mt-1">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">£</span>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          className="pl-7"
-                          placeholder="0"
-                          {...form.register('grossProfitTarget')}
-                        />
-                      </div>
-                      {form.formState.errors.grossProfitTarget && (
-                        <p className="text-sm text-red-500 mt-1">{form.formState.errors.grossProfitTarget.message}</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                {/* Gross Profit - Hidden from simplified form */}
 
-                {/* Overheads */}
-                <div className="space-y-3">
-                  <h4 className="font-medium text-slate-900">Overheads</h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-sm text-slate-600">Actual</Label>
-                      <div className="relative mt-1">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">£</span>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          className="pl-7"
-                          placeholder="0"
-                          {...form.register('overheadsActual')}
-                        />
-                      </div>
-                      {form.formState.errors.overheadsActual && (
-                        <p className="text-sm text-red-500 mt-1">{form.formState.errors.overheadsActual.message}</p>
-                      )}
-                    </div>
-                    <div>
-                      <Label className="text-sm text-slate-600">Budget</Label>
-                      <div className="relative mt-1">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">£</span>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          className="pl-7"
-                          placeholder="0"
-                          {...form.register('overheadsBudget')}
-                        />
-                      </div>
-                      {form.formState.errors.overheadsBudget && (
-                        <p className="text-sm text-red-500 mt-1">{form.formState.errors.overheadsBudget.message}</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                {/* Overheads - Hidden from simplified form */}
 
-                {/* EBITDA - Auto-calculated or Override */}
+                {/* EBITDA - Manual entry only in simplified form */}
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-medium text-slate-900">EBITDA</h4>
-                    {!netProfitOverride ? (
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-green-600 flex items-center gap-1">
-                          <Calculator className="h-3 w-3" />
-                          Auto-calculated (GP - Overheads)
-                        </span>
-                        <button
-                          type="button"
-                          onClick={enableNetProfitOverride}
-                          className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1"
-                        >
-                          <Pencil className="h-3 w-3" />
-                          Override
-                        </button>
-                      </div>
-                    ) : (
-                      <span className="text-xs text-amber-600 flex items-center gap-1">
-                        <Pencil className="h-3 w-3" />
-                        Manual entry
-                      </span>
-                    )}
-                  </div>
+                  <h4 className="font-medium text-slate-900">EBITDA</h4>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label className="text-sm text-slate-600">Actual</Label>
@@ -449,9 +318,8 @@ export function UnifiedSubmitPage() {
                         <Input
                           type="number"
                           step="0.01"
-                          className={`pl-7 ${!netProfitOverride ? 'bg-slate-50' : ''}`}
+                          className="pl-7"
                           placeholder="0"
-                          readOnly={!netProfitOverride}
                           {...form.register('netProfitActual')}
                         />
                       </div>
@@ -466,9 +334,8 @@ export function UnifiedSubmitPage() {
                         <Input
                           type="number"
                           step="0.01"
-                          className={`pl-7 ${!netProfitOverride ? 'bg-slate-50' : ''}`}
+                          className="pl-7"
                           placeholder="0"
-                          readOnly={!netProfitOverride}
                           {...form.register('netProfitTarget')}
                         />
                       </div>
@@ -479,54 +346,7 @@ export function UnifiedSubmitPage() {
                   </div>
                 </div>
 
-                {/* Wages & Productivity */}
-                <div className="space-y-3">
-                  <h4 className="font-medium text-slate-900">Wages & Productivity</h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-sm text-slate-600">Total Wages</Label>
-                      <div className="relative mt-1">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">£</span>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          className="pl-7"
-                          placeholder="0"
-                          {...form.register('totalWages')}
-                        />
-                      </div>
-                      {form.formState.errors.totalWages && (
-                        <p className="text-sm text-red-500 mt-1">{form.formState.errors.totalWages.message}</p>
-                      )}
-                    </div>
-                    <div>
-                      <Label className="text-sm text-slate-600">Productivity Benchmark (Target)</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        className="mt-1"
-                        placeholder="e.g., 2.5"
-                        {...form.register('productivityBenchmark')}
-                      />
-                      <p className="text-xs text-slate-500 mt-1">GP/Wages ratio target (typically 1.5-4.0)</p>
-                      {form.formState.errors.productivityBenchmark && (
-                        <p className="text-sm text-red-500 mt-1">{form.formState.errors.productivityBenchmark.message}</p>
-                      )}
-                    </div>
-                  </div>
-                  {/* Calculated Productivity Actual */}
-                  {Number(totalWages) > 0 && (
-                    <div className="p-3 bg-slate-50 rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-slate-600 flex items-center gap-1">
-                          <Calculator className="h-3 w-3" />
-                          Productivity Actual (GP/Wages)
-                        </span>
-                        <span className="font-semibold text-slate-900">{productivityActual}</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                {/* Wages & Productivity - Hidden from simplified form */}
               </div>
 
               {/* Lead KPIs Section */}
