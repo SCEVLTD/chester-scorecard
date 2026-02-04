@@ -1,23 +1,17 @@
 /**
- * Chart Utilities for Chester Business Scorecard (Simplified Version)
+ * Chart Utilities for Chester Business Scorecard
  *
  * Provides section score calculation and chart configuration for Recharts.
  * Section scores are NOT stored in the database - they must be calculated
  * from individual scorecard fields using the scoring functions.
- *
- * Simplified scoring (70 max, displayed as percentage):
- * - Financial: 20 (Revenue + EBITDA only)
- * - People: 10 (Leadership only)
- * - Market: 15
- * - Product: 10
- * - Suppliers: 5
- * - Sales: 10
  */
 
 import type { ChartConfig } from '@/components/ui/chart'
 import type { Scorecard } from '@/types/database.types'
 import {
   calculateFinancialSubtotal,
+  calculateProductivityVariance,
+  scoreProductivity,
   LEADERSHIP_SCORES,
   MARKET_DEMAND_SCORES,
   MARKETING_SCORES,
@@ -27,11 +21,11 @@ import {
 } from '@/lib/scoring'
 
 /**
- * Section configuration with colors and labels for charts (Simplified)
+ * Section configuration with colors and labels for charts.
  *
  * Max scores per section:
- * - Financial: 20 (Revenue 10 + EBITDA 10) - GP & Overheads removed
- * - People: 10 (Leadership only) - Productivity removed
+ * - Financial: 40 (4 x 10 point metrics)
+ * - People: 20 (productivity 10 + leadership 10)
  * - Market: 15 (demand 7.5 + marketing 7.5)
  * - Product: 10
  * - Suppliers: 5
@@ -41,12 +35,12 @@ export const SECTION_CONFIG = {
   financial: {
     label: 'Financial',
     color: 'hsl(var(--chart-1))',
-    maxScore: 20,
+    maxScore: 40,
   },
   people: {
     label: 'People',
     color: 'hsl(var(--chart-2))',
-    maxScore: 10,
+    maxScore: 20,
   },
   market: {
     label: 'Market',
@@ -83,27 +77,31 @@ export interface SectionScores {
 }
 
 /**
- * Calculate section scores from a scorecard (Simplified Version)
+ * Calculate section scores from a scorecard.
  *
  * Uses the same scoring logic as calculateTotalScore in scoring.ts,
  * but returns individual section subtotals for charting.
- *
- * Simplified: Financial uses Revenue + EBITDA only, People uses Leadership only
  *
  * @param scorecard The scorecard to calculate section scores from
  * @returns Object with scores for each of the 6 sections
  */
 export function calculateSectionScores(scorecard: Scorecard): SectionScores {
-  // Financial subtotal (20 max) - Revenue + EBITDA only
+  // Financial subtotal (40 max)
   const financial = calculateFinancialSubtotal(
     Number(scorecard.revenue_variance) || 0,
-    null, // GP not used
-    null, // Overheads not used
+    Number(scorecard.gross_profit_variance) || 0,
+    Number(scorecard.overheads_variance) || 0,
     Number(scorecard.net_profit_variance) || 0
   )
 
-  // People/HR subtotal (10 max) - Leadership only
-  const people = LEADERSHIP_SCORES[scorecard.leadership || ''] ?? 0
+  // People/HR subtotal (20 max)
+  const productivityVariance = calculateProductivityVariance(
+    Number(scorecard.productivity_benchmark) || 0,
+    Number(scorecard.productivity_actual) || 0
+  )
+  const people =
+    scoreProductivity(productivityVariance) +
+    (LEADERSHIP_SCORES[scorecard.leadership || ''] ?? 0)
 
   // Market subtotal (15 max)
   const market =

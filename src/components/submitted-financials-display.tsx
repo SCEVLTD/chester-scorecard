@@ -1,6 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { scoreFinancialMetric } from '@/lib/scoring'
+import {
+  scoreFinancialMetric,
+  scoreOverheads,
+  calculateFinancialSubtotal,
+} from '@/lib/scoring'
 import { submissionToVariances, formatVariance, formatCurrency } from '@/lib/variance-calculator'
 import type { CompanySubmission } from '@/types/database.types'
 import { FileCheck } from 'lucide-react'
@@ -16,6 +20,7 @@ interface MetricDisplayRowProps {
   target: number
   variance: number
   score: number
+  invertedLabel?: boolean
 }
 
 function MetricDisplayRow({
@@ -24,8 +29,11 @@ function MetricDisplayRow({
   target,
   variance,
   score,
+  invertedLabel = false,
 }: MetricDisplayRowProps) {
-  const varianceColor = variance >= 0 ? 'text-green-600' : 'text-red-600'
+  const varianceColor = variance >= 0
+    ? (invertedLabel ? 'text-red-600' : 'text-green-600')
+    : (invertedLabel ? 'text-green-600' : 'text-red-600')
 
   return (
     <div className="grid grid-cols-12 gap-2 md:gap-4 items-center py-2 border-b border-slate-100 last:border-0">
@@ -60,9 +68,8 @@ function MetricDisplayRow({
 }
 
 /**
- * Read-only display of submitted financial data from company portal (Simplified)
- * Shows Revenue and EBITDA only - GP, Overheads, Productivity removed from this version
- * Maximum: 20 points (10 per metric)
+ * Read-only display of submitted financial data from company portal
+ * Shows all financial metrics with raw values, calculated variances, and scores
  */
 export function SubmittedFinancialsDisplay({ submission }: SubmittedFinancialsDisplayProps) {
   const { userRole } = useAuth()
@@ -74,15 +81,21 @@ export function SubmittedFinancialsDisplay({ submission }: SubmittedFinancialsDi
 
   const variances = submissionToVariances(submission)
 
-  // Calculate scores for Revenue and EBITDA only
+  // Calculate scores for all metrics (handle null values)
   const scores = {
     revenue: variances.revenueVariance != null ? scoreFinancialMetric(variances.revenueVariance) : 0,
+    grossProfit: variances.grossProfitVariance != null ? scoreFinancialMetric(variances.grossProfitVariance) : 0,
+    overheads: variances.overheadsVariance != null ? scoreOverheads(variances.overheadsVariance) : 0,
     netProfit: variances.netProfitVariance != null ? scoreFinancialMetric(variances.netProfitVariance) : 0,
   }
 
-  // Subtotal = Revenue + EBITDA (20 max)
-  const subtotal = scores.revenue + scores.netProfit
-  const maxScore = 20
+  // Calculate subtotal with proper N/A handling
+  const subtotal = calculateFinancialSubtotal(
+    variances.revenueVariance,
+    variances.grossProfitVariance,
+    variances.overheadsVariance,
+    variances.netProfitVariance
+  )
 
   return (
     <Card className="border-green-200 bg-green-50/30">
@@ -96,8 +109,8 @@ export function SubmittedFinancialsDisplay({ submission }: SubmittedFinancialsDi
             </Badge>
           </div>
           <div className="text-right">
-            <span className="text-xl font-bold">{subtotal}</span>
-            <span className="text-muted-foreground"> / {maxScore}</span>
+            <span className="text-xl font-bold">{subtotal.score}</span>
+            <span className="text-muted-foreground"> / {subtotal.maxScore}</span>
           </div>
         </div>
         {submission.submitted_by_name && (
@@ -124,15 +137,56 @@ export function SubmittedFinancialsDisplay({ submission }: SubmittedFinancialsDi
             score={scores.revenue}
           />
         )}
+        {variances.grossProfitVariance != null && (
+          <MetricDisplayRow
+            label="Gross Profit"
+            actual={submission.gross_profit_actual ?? 0}
+            target={submission.gross_profit_target ?? 0}
+            variance={variances.grossProfitVariance}
+            score={scores.grossProfit}
+          />
+        )}
+        {variances.overheadsVariance != null && (
+          <MetricDisplayRow
+            label="Overheads"
+            actual={submission.overheads_actual ?? 0}
+            target={submission.overheads_budget ?? 0}
+            variance={variances.overheadsVariance}
+            score={scores.overheads}
+            invertedLabel
+          />
+        )}
         {variances.netProfitVariance != null && (
           <MetricDisplayRow
-            label="EBITDA"
+            label="Net Profit"
             actual={submission.net_profit_actual ?? 0}
             target={submission.net_profit_target ?? 0}
             variance={variances.netProfitVariance}
             score={scores.netProfit}
           />
         )}
+
+        {/* Productivity info */}
+        <div className="mt-4 pt-4 border-t">
+          <div className="grid grid-cols-12 gap-2 md:gap-4 items-center">
+            <div className="col-span-6 md:col-span-3">
+              <span className="text-sm font-medium">Productivity Data</span>
+            </div>
+            <div className="col-span-6 md:col-span-9 text-sm">
+              <span className="text-slate-600">
+                Wages: {formatCurrency(submission.total_wages ?? 0)}
+              </span>
+              <span className="mx-2 text-slate-300">|</span>
+              <span className="text-slate-600">
+                Benchmark: {(submission.productivity_benchmark ?? 0).toFixed(2)}
+              </span>
+              <span className="mx-2 text-slate-300">|</span>
+              <span className="text-slate-600">
+                Actual: {submission.total_wages ? ((submission.gross_profit_actual ?? 0) / submission.total_wages).toFixed(2) : 'N/A'}
+              </span>
+            </div>
+          </div>
+        </div>
       </CardContent>
     </Card>
   )

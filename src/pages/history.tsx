@@ -1,5 +1,5 @@
 import { useParams, useLocation } from 'wouter'
-import { BarChart3 } from 'lucide-react'
+import { BarChart3, Plus } from 'lucide-react'
 import { PageHeader } from '@/components/page-header'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -10,11 +10,10 @@ import { ScorecardHistoryItem } from '@/components/scorecard-history-item'
 import { ExcelExportButton } from '@/components/excel-export-button'
 
 /**
- * Business scorecard history page (Simplified Version)
+ * Business scorecard history page
  *
  * Lists all scorecards for a business with trend indicators.
- * Companies submit their own data monthly - no consultant scorecard creation.
- * Click on a scorecard to see the submitted data with scores.
+ * Click on a scorecard to view/edit the submitted data with scores.
  */
 export function HistoryPage() {
   const { businessId } = useParams<{ businessId: string }>()
@@ -48,6 +47,10 @@ export function HistoryPage() {
               {scorecards && scorecards.length > 0 && business && (
                 <ExcelExportButton scorecards={scorecards} businessName={business.name} size="sm" />
               )}
+              <Button size="sm" onClick={() => navigate(`/business/${businessId}/scorecard`)}>
+                <Plus className="mr-2 h-4 w-4" />
+                New Scorecard
+              </Button>
             </div>
           </CardHeader>
           <CardContent>
@@ -57,7 +60,7 @@ export function HistoryPage() {
 
             {!isLoading && (!scorecards || scorecards.length === 0) && (
               <p className="text-muted-foreground">
-                No submissions yet. Companies can submit monthly data from their portal.
+                No scorecards yet. Create the first one!
               </p>
             )}
 
