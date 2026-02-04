@@ -81,11 +81,12 @@ export function SubmittedFinancialsDisplay({ submission }: SubmittedFinancialsDi
 
   const variances = submissionToVariances(submission)
 
+  // Handle null values (N/A fields) - score as 0
   const scores = {
-    revenue: scoreFinancialMetric(variances.revenueVariance),
-    grossProfit: scoreFinancialMetric(variances.grossProfitVariance),
-    overheads: scoreOverheads(variances.overheadsVariance),
-    netProfit: scoreFinancialMetric(variances.netProfitVariance),
+    revenue: variances.revenueVariance != null ? scoreFinancialMetric(variances.revenueVariance) : 0,
+    grossProfit: variances.grossProfitVariance != null ? scoreFinancialMetric(variances.grossProfitVariance) : 0,
+    overheads: variances.overheadsVariance != null ? scoreOverheads(variances.overheadsVariance) : 0,
+    netProfit: variances.netProfitVariance != null ? scoreFinancialMetric(variances.netProfitVariance) : 0,
   }
 
   const subtotal = calculateFinancialSubtotal(
@@ -107,8 +108,8 @@ export function SubmittedFinancialsDisplay({ submission }: SubmittedFinancialsDi
             </Badge>
           </div>
           <div className="text-right">
-            <span className="text-xl font-bold">{subtotal}</span>
-            <span className="text-muted-foreground"> / 40</span>
+            <span className="text-xl font-bold">{subtotal.score}</span>
+            <span className="text-muted-foreground"> / {subtotal.maxScore}</span>
           </div>
         </div>
         {submission.submitted_by_name && (
@@ -126,35 +127,43 @@ export function SubmittedFinancialsDisplay({ submission }: SubmittedFinancialsDi
           <div className="col-span-3 md:col-span-3 text-right">Score</div>
         </div>
 
-        <MetricDisplayRow
-          label="Revenue"
-          actual={submission.revenue_actual ?? 0}
-          target={submission.revenue_target ?? 0}
-          variance={variances.revenueVariance}
-          score={scores.revenue}
-        />
-        <MetricDisplayRow
-          label="Gross Profit"
-          actual={submission.gross_profit_actual ?? 0}
-          target={submission.gross_profit_target ?? 0}
-          variance={variances.grossProfitVariance}
-          score={scores.grossProfit}
-        />
-        <MetricDisplayRow
-          label="Overheads"
-          actual={submission.overheads_actual ?? 0}
-          target={submission.overheads_budget ?? 0}
-          variance={variances.overheadsVariance}
-          score={scores.overheads}
-          invertedLabel
-        />
-        <MetricDisplayRow
-          label="EBITDA"
-          actual={submission.net_profit_actual ?? 0}
-          target={submission.net_profit_target ?? 0}
-          variance={variances.netProfitVariance}
-          score={scores.netProfit}
-        />
+        {variances.revenueVariance != null && (
+          <MetricDisplayRow
+            label="Revenue"
+            actual={submission.revenue_actual ?? 0}
+            target={submission.revenue_target ?? 0}
+            variance={variances.revenueVariance}
+            score={scores.revenue}
+          />
+        )}
+        {variances.grossProfitVariance != null && (
+          <MetricDisplayRow
+            label="Gross Profit"
+            actual={submission.gross_profit_actual ?? 0}
+            target={submission.gross_profit_target ?? 0}
+            variance={variances.grossProfitVariance}
+            score={scores.grossProfit}
+          />
+        )}
+        {variances.overheadsVariance != null && (
+          <MetricDisplayRow
+            label="Overheads"
+            actual={submission.overheads_actual ?? 0}
+            target={submission.overheads_budget ?? 0}
+            variance={variances.overheadsVariance}
+            score={scores.overheads}
+            invertedLabel
+          />
+        )}
+        {variances.netProfitVariance != null && (
+          <MetricDisplayRow
+            label="EBITDA"
+            actual={submission.net_profit_actual ?? 0}
+            target={submission.net_profit_target ?? 0}
+            variance={variances.netProfitVariance}
+            score={scores.netProfit}
+          />
+        )}
 
         {/* Productivity info */}
         <div className="mt-4 pt-4 border-t">

@@ -117,7 +117,7 @@ export function calculateSectionScores(scorecard: Scorecard): SectionScores {
   // Sales (10 max)
   const sales = SALES_SCORES[scorecard.sales_execution || ''] ?? 0
 
-  return { financial, people, market, product, suppliers, sales }
+  return { financial: financial.score, people, market, product, suppliers, sales }
 }
 
 /**

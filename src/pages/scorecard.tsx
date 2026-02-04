@@ -153,12 +153,13 @@ export function ScorecardPage() {
     if (companySubmission && !isEditMode) {
       const variances = submissionToVariances(companySubmission)
       // Update financial variances and productivity from submission
-      form.setValue('revenueVariance', variances.revenueVariance)
-      form.setValue('grossProfitVariance', variances.grossProfitVariance)
-      form.setValue('overheadsVariance', variances.overheadsVariance)
-      form.setValue('netProfitVariance', variances.netProfitVariance)
-      form.setValue('productivityBenchmark', variances.productivityBenchmark)
-      form.setValue('productivityActual', variances.productivityActual)
+      // Convert null to undefined for form compatibility
+      form.setValue('revenueVariance', variances.revenueVariance ?? undefined)
+      form.setValue('grossProfitVariance', variances.grossProfitVariance ?? undefined)
+      form.setValue('overheadsVariance', variances.overheadsVariance ?? undefined)
+      form.setValue('netProfitVariance', variances.netProfitVariance ?? undefined)
+      form.setValue('productivityBenchmark', variances.productivityBenchmark ?? undefined)
+      form.setValue('productivityActual', variances.productivityActual ?? undefined)
     }
   }, [companySubmission, isEditMode, form])
 
