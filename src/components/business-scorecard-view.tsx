@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useLocation } from 'wouter'
 import { ScoreHeader } from '@/components/score-header'
 import { AIAnalysisPanel } from '@/components/ai-analysis-panel'
 import { PdfExportButton } from '@/components/pdf-export-button'
@@ -52,8 +53,14 @@ export function BusinessScorecardView({
   businessName,
 }: BusinessScorecardViewProps) {
   const [showData, setShowData] = useState(false)
+  const [, navigate] = useLocation()
   const { data: submission } = useSubmissionById(scorecard.company_submission_id)
   const sectionScores = calculateSectionScores(scorecard)
+
+  // Handle edit - navigate to submission form with month pre-selected
+  const handleEdit = () => {
+    navigate(`/business/${scorecard.business_id}/scorecard?month=${scorecard.month}`)
+  }
 
   // Calculate financial scores
   const revenueScore = scorecard.revenue_variance != null ? scoreFinancialMetric(scorecard.revenue_variance) : 0
@@ -97,7 +104,7 @@ export function BusinessScorecardView({
 
       {/* Data View - Shows submitted financial data */}
       {showData && submission && (
-        <SubmittedFinancialsDisplay submission={submission} />
+        <SubmittedFinancialsDisplay submission={submission} onEdit={handleEdit} />
       )}
 
       {/* Section scores overview - quick glance at 6 sections */}

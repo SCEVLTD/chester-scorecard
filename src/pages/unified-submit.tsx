@@ -1,5 +1,5 @@
 import { useMemo, useEffect, useState } from 'react'
-import { useParams, useLocation } from 'wouter'
+import { useParams, useLocation, useSearch } from 'wouter'
 import { useForm, Controller, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { format, subMonths, startOfMonth } from 'date-fns'
@@ -35,16 +35,21 @@ import {
 export function UnifiedSubmitPage() {
   const params = useParams<{ businessId: string }>()
   const [, navigate] = useLocation()
+  const searchString = useSearch()
   const { businessId: authBusinessId } = useAuth()
 
   // Use URL param or fallback to auth context businessId
   const businessId = params.businessId || authBusinessId
 
+  // Get month from query param if provided (for editing)
+  const queryParams = new URLSearchParams(searchString)
+  const monthFromQuery = queryParams.get('month')
+
   const { data: businesses, isLoading: loadingBusinesses } = useBusinesses()
   const createSubmission = useCreateUnifiedSubmission()
 
   // Track selected month for existing submission lookup
-  const [selectedMonth, setSelectedMonth] = useState<string>('')
+  const [selectedMonth, setSelectedMonth] = useState<string>(monthFromQuery || '')
 
   // Query for existing submission
   const { data: existingSubmission, isLoading: loadingSubmission } = useUnifiedSubmission(
@@ -113,6 +118,14 @@ export function UnifiedSubmitPage() {
       })
     }
   }, [existingSubmission, selectedMonth, form])
+
+  // Set month from query param on mount
+  useEffect(() => {
+    if (monthFromQuery && !selectedMonth) {
+      setSelectedMonth(monthFromQuery)
+      form.setValue('month', monthFromQuery)
+    }
+  }, [monthFromQuery, selectedMonth, form])
 
   // Generate last 12 months for selection
   const months = useMemo(() => {
