@@ -60,7 +60,7 @@ export function UnifiedSubmitPage() {
   const form = useForm<UnifiedSubmissionData>({
     resolver: zodResolver(unifiedSubmissionSchema) as Resolver<UnifiedSubmissionData>,
     defaultValues: {
-      month: '',
+      month: monthFromQuery || '',
       revenueActual: 0,
       revenueTarget: 0,
       grossProfitActual: 0,
@@ -87,13 +87,13 @@ export function UnifiedSubmitPage() {
     },
   })
 
-  // Set month from query param on mount
+  // Set month from query param on mount or when it changes
   useEffect(() => {
-    if (monthFromQuery) {
+    if (monthFromQuery && monthFromQuery !== selectedMonth) {
       setSelectedMonth(monthFromQuery)
-      form.setValue('month', monthFromQuery)
+      form.setValue('month', monthFromQuery, { shouldValidate: true })
     }
-  }, [monthFromQuery, form])
+  }, [monthFromQuery, selectedMonth, form])
 
   // Update form when existing submission loads (always reset to show stored values)
   useEffect(() => {

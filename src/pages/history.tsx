@@ -1,5 +1,5 @@
 import { useParams, useLocation } from 'wouter'
-import { BarChart3, Plus } from 'lucide-react'
+import { BarChart3 } from 'lucide-react'
 import { PageHeader } from '@/components/page-header'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -47,10 +47,6 @@ export function HistoryPage() {
               {scorecards && scorecards.length > 0 && business && (
                 <ExcelExportButton scorecards={scorecards} businessName={business.name} size="sm" />
               )}
-              <Button size="sm" onClick={() => navigate(`/business/${businessId}/scorecard`)}>
-                <Plus className="mr-2 h-4 w-4" />
-                New Scorecard
-              </Button>
             </div>
           </CardHeader>
           <CardContent>
@@ -60,7 +56,7 @@ export function HistoryPage() {
 
             {!isLoading && (!scorecards || scorecards.length === 0) && (
               <p className="text-muted-foreground">
-                No scorecards yet. Create the first one!
+                No scorecards yet. Submit monthly data to see scorecards here.
               </p>
             )}
 
