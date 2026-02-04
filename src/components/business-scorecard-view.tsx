@@ -1,8 +1,11 @@
+import { useState } from 'react'
 import { ScoreHeader } from '@/components/score-header'
 import { AIAnalysisPanel } from '@/components/ai-analysis-panel'
 import { PdfExportButton } from '@/components/pdf-export-button'
+import { SubmittedFinancialsDisplay } from '@/components/submitted-financials-display'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { calculateSectionScores, SECTION_CONFIG, formatChartMonth } from '@/lib/chart-utils'
 import { getScoreColor } from '@/lib/heatmap-utils'
 import {
@@ -14,7 +17,9 @@ import {
   SUPPLIER_OPTIONS,
   SALES_OPTIONS,
 } from '@/lib/scoring'
+import { useSubmissionById } from '@/hooks/use-company-submissions'
 import type { Scorecard } from '@/types/database.types'
+import { Database, ChartBar } from 'lucide-react'
 
 interface BusinessScorecardViewProps {
   scorecard: Scorecard
@@ -46,6 +51,8 @@ export function BusinessScorecardView({
   previousScorecard,
   businessName,
 }: BusinessScorecardViewProps) {
+  const [showData, setShowData] = useState(false)
+  const { data: submission } = useSubmissionById(scorecard.company_submission_id)
   const sectionScores = calculateSectionScores(scorecard)
 
   // Calculate financial scores
@@ -54,7 +61,7 @@ export function BusinessScorecardView({
 
   return (
     <div className="space-y-6">
-      {/* Top section: Score + Month + PDF Export */}
+      {/* Top section: Score + Month + Actions */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1">
           <div className="mb-2">
@@ -64,181 +71,212 @@ export function BusinessScorecardView({
             Scorecard for {formatChartMonth(scorecard.month)}
           </div>
         </div>
-        <div className="shrink-0">
+        <div className="shrink-0 flex gap-2">
+          {submission && (
+            <Button
+              variant={showData ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setShowData(!showData)}
+            >
+              {showData ? (
+                <>
+                  <ChartBar className="mr-2 h-4 w-4" />
+                  See Scores
+                </>
+              ) : (
+                <>
+                  <Database className="mr-2 h-4 w-4" />
+                  See Data
+                </>
+              )}
+            </Button>
+          )}
           <PdfExportButton scorecard={scorecard} businessName={businessName} />
         </div>
       </div>
 
+      {/* Data View - Shows submitted financial data */}
+      {showData && submission && (
+        <SubmittedFinancialsDisplay submission={submission} />
+      )}
+
       {/* Section scores overview - quick glance at 6 sections */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-3 gap-4 md:grid-cols-6">
-            {Object.entries(SECTION_CONFIG).map(([key, config]) => {
-              const score = sectionScores[key as keyof typeof sectionScores]
-              const { bg, text } = getScoreColor(score, config.maxScore)
-              const percentage = config.maxScore > 0 ? Math.round((score / config.maxScore) * 100) : 0
-
-              return (
-                <div key={key} className="flex flex-col items-center gap-2">
-                  <span className="text-xs text-muted-foreground">{config.label}</span>
-                  <Badge className={`${bg} ${text} font-semibold`}>
-                    {score}/{config.maxScore}
-                  </Badge>
-                  <span className="text-xs text-muted-foreground">{percentage}%</span>
-                </div>
-              )
-            })}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Financial Performance Detail */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg">Financial Performance</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex items-center justify-between py-2 border-b">
-            <div>
-              <p className="font-medium">Revenue vs Target</p>
-              <p className="text-sm text-muted-foreground">
-                {scorecard.revenue_variance != null ? `${scorecard.revenue_variance >= 0 ? '+' : ''}${scorecard.revenue_variance.toFixed(1)}%` : 'Not set'}
-              </p>
-            </div>
-            <Badge variant="outline">{revenueScore}/10</Badge>
-          </div>
-          <div className="flex items-center justify-between py-2">
-            <div>
-              <p className="font-medium">EBITDA vs Target</p>
-              <p className="text-sm text-muted-foreground">
-                {scorecard.net_profit_variance != null ? `${scorecard.net_profit_variance >= 0 ? '+' : ''}${scorecard.net_profit_variance.toFixed(1)}%` : 'Not set'}
-              </p>
-            </div>
-            <Badge variant="outline">{ebitdaScore}/10</Badge>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* People / HR Detail */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg">People / HR</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between py-2">
-            <div>
-              <p className="font-medium">Leadership / Alignment</p>
-              <p className="text-sm text-muted-foreground">{getOptionLabel(LEADERSHIP_OPTIONS, scorecard.leadership)}</p>
-            </div>
-            <Badge variant="outline">{getOptionPoints(LEADERSHIP_OPTIONS, scorecard.leadership)}/10</Badge>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Market & Demand Detail */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg">Market & Demand</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex items-center justify-between py-2 border-b">
-            <div>
-              <p className="font-medium">Market Demand</p>
-              <p className="text-sm text-muted-foreground">{getOptionLabel(MARKET_DEMAND_OPTIONS, scorecard.market_demand)}</p>
-            </div>
-            <Badge variant="outline">{getOptionPoints(MARKET_DEMAND_OPTIONS, scorecard.market_demand)}/7.5</Badge>
-          </div>
-          <div className="flex items-center justify-between py-2">
-            <div>
-              <p className="font-medium">Marketing Effectiveness</p>
-              <p className="text-sm text-muted-foreground">{getOptionLabel(MARKETING_OPTIONS, scorecard.marketing)}</p>
-            </div>
-            <Badge variant="outline">{getOptionPoints(MARKETING_OPTIONS, scorecard.marketing)}/7.5</Badge>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Product/Service Detail */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg">Product / Service</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between py-2">
-            <div>
-              <p className="font-medium">Product Strength</p>
-              <p className="text-sm text-muted-foreground">{getOptionLabel(PRODUCT_OPTIONS, scorecard.product_strength)}</p>
-            </div>
-            <Badge variant="outline">{getOptionPoints(PRODUCT_OPTIONS, scorecard.product_strength)}/10</Badge>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Suppliers Detail */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg">Suppliers / Purchasing</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between py-2">
-            <div>
-              <p className="font-medium">Supplier Strength</p>
-              <p className="text-sm text-muted-foreground">{getOptionLabel(SUPPLIER_OPTIONS, scorecard.supplier_strength)}</p>
-            </div>
-            <Badge variant="outline">{getOptionPoints(SUPPLIER_OPTIONS, scorecard.supplier_strength)}/5</Badge>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Sales Detail */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg">Sales</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between py-2">
-            <div>
-              <p className="font-medium">Sales Execution</p>
-              <p className="text-sm text-muted-foreground">{getOptionLabel(SALES_OPTIONS, scorecard.sales_execution)}</p>
-            </div>
-            <Badge variant="outline">{getOptionPoints(SALES_OPTIONS, scorecard.sales_execution)}/10</Badge>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Commentary Section */}
-      {(scorecard.biggest_opportunity || scorecard.biggest_risk || scorecard.management_avoiding || scorecard.consultant_gut_feel) && (
+      {!showData && (
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg">Commentary</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {scorecard.biggest_opportunity && (
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Biggest Opportunity</p>
-                <p className="mt-1">{scorecard.biggest_opportunity}</p>
-              </div>
-            )}
-            {scorecard.biggest_risk && (
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Biggest Risk</p>
-                <p className="mt-1">{scorecard.biggest_risk}</p>
-              </div>
-            )}
-            {scorecard.management_avoiding && (
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">What Management is Avoiding</p>
-                <p className="mt-1">{scorecard.management_avoiding}</p>
-              </div>
-            )}
-            {scorecard.consultant_gut_feel && (
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Notes</p>
-                <p className="mt-1">{scorecard.consultant_gut_feel}</p>
-              </div>
-            )}
+          <CardContent className="pt-6">
+            <div className="grid grid-cols-3 gap-4 md:grid-cols-6">
+              {Object.entries(SECTION_CONFIG).map(([key, config]) => {
+                const score = sectionScores[key as keyof typeof sectionScores]
+                const { bg, text } = getScoreColor(score, config.maxScore)
+                const percentage = config.maxScore > 0 ? Math.round((score / config.maxScore) * 100) : 0
+
+                return (
+                  <div key={key} className="flex flex-col items-center gap-2">
+                    <span className="text-xs text-muted-foreground">{config.label}</span>
+                    <Badge className={`${bg} ${text} font-semibold`}>
+                      {score}/{config.maxScore}
+                    </Badge>
+                    <span className="text-xs text-muted-foreground">{percentage}%</span>
+                  </div>
+                )
+              })}
+            </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Detailed scores view - only show when not viewing data */}
+      {!showData && (
+        <>
+          {/* Financial Performance Detail */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Financial Performance</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-center justify-between py-2 border-b">
+                <div>
+                  <p className="font-medium">Revenue vs Target</p>
+                  <p className="text-sm text-muted-foreground">
+                    {scorecard.revenue_variance != null ? `${scorecard.revenue_variance >= 0 ? '+' : ''}${scorecard.revenue_variance.toFixed(1)}%` : 'Not set'}
+                  </p>
+                </div>
+                <Badge variant="outline">{revenueScore}/10</Badge>
+              </div>
+              <div className="flex items-center justify-between py-2">
+                <div>
+                  <p className="font-medium">EBITDA vs Target</p>
+                  <p className="text-sm text-muted-foreground">
+                    {scorecard.net_profit_variance != null ? `${scorecard.net_profit_variance >= 0 ? '+' : ''}${scorecard.net_profit_variance.toFixed(1)}%` : 'Not set'}
+                  </p>
+                </div>
+                <Badge variant="outline">{ebitdaScore}/10</Badge>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* People / HR Detail */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">People / HR</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between py-2">
+                <div>
+                  <p className="font-medium">Leadership / Alignment</p>
+                  <p className="text-sm text-muted-foreground">{getOptionLabel(LEADERSHIP_OPTIONS, scorecard.leadership)}</p>
+                </div>
+                <Badge variant="outline">{getOptionPoints(LEADERSHIP_OPTIONS, scorecard.leadership)}/10</Badge>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Market & Demand Detail */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Market & Demand</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-center justify-between py-2 border-b">
+                <div>
+                  <p className="font-medium">Market Demand</p>
+                  <p className="text-sm text-muted-foreground">{getOptionLabel(MARKET_DEMAND_OPTIONS, scorecard.market_demand)}</p>
+                </div>
+                <Badge variant="outline">{getOptionPoints(MARKET_DEMAND_OPTIONS, scorecard.market_demand)}/7.5</Badge>
+              </div>
+              <div className="flex items-center justify-between py-2">
+                <div>
+                  <p className="font-medium">Marketing Effectiveness</p>
+                  <p className="text-sm text-muted-foreground">{getOptionLabel(MARKETING_OPTIONS, scorecard.marketing)}</p>
+                </div>
+                <Badge variant="outline">{getOptionPoints(MARKETING_OPTIONS, scorecard.marketing)}/7.5</Badge>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Product/Service Detail */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Product / Service</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between py-2">
+                <div>
+                  <p className="font-medium">Product Strength</p>
+                  <p className="text-sm text-muted-foreground">{getOptionLabel(PRODUCT_OPTIONS, scorecard.product_strength)}</p>
+                </div>
+                <Badge variant="outline">{getOptionPoints(PRODUCT_OPTIONS, scorecard.product_strength)}/10</Badge>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Suppliers Detail */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Suppliers / Purchasing</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between py-2">
+                <div>
+                  <p className="font-medium">Supplier Strength</p>
+                  <p className="text-sm text-muted-foreground">{getOptionLabel(SUPPLIER_OPTIONS, scorecard.supplier_strength)}</p>
+                </div>
+                <Badge variant="outline">{getOptionPoints(SUPPLIER_OPTIONS, scorecard.supplier_strength)}/5</Badge>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Sales Detail */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Sales</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between py-2">
+                <div>
+                  <p className="font-medium">Sales Execution</p>
+                  <p className="text-sm text-muted-foreground">{getOptionLabel(SALES_OPTIONS, scorecard.sales_execution)}</p>
+                </div>
+                <Badge variant="outline">{getOptionPoints(SALES_OPTIONS, scorecard.sales_execution)}/10</Badge>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Commentary Section */}
+          {(scorecard.biggest_opportunity || scorecard.biggest_risk || scorecard.management_avoiding || scorecard.consultant_gut_feel) && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">Commentary</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {scorecard.biggest_opportunity && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Biggest Opportunity</p>
+                    <p className="mt-1">{scorecard.biggest_opportunity}</p>
+                  </div>
+                )}
+                {scorecard.biggest_risk && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Biggest Risk</p>
+                    <p className="mt-1">{scorecard.biggest_risk}</p>
+                  </div>
+                )}
+                {scorecard.management_avoiding && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">What Management is Avoiding</p>
+                    <p className="mt-1">{scorecard.management_avoiding}</p>
+                  </div>
+                )}
+                {scorecard.consultant_gut_feel && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Notes</p>
+                    <p className="mt-1">{scorecard.consultant_gut_feel}</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </>
       )}
 
       {/* AI Analysis Panel - auto-generates if missing */}

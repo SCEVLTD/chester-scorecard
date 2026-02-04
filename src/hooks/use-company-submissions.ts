@@ -123,6 +123,27 @@ export function useSubmissionByToken(token: string) {
 }
 
 /**
+ * Get submission by ID
+ * Used when viewing a scorecard to show the linked submission data
+ */
+export function useSubmissionById(submissionId: string | null | undefined) {
+  return useQuery({
+    queryKey: ['company-submission', 'id', submissionId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('company_submissions')
+        .select('*')
+        .eq('id', submissionId!)
+        .single()
+
+      if (error && error.code !== 'PGRST116') throw error
+      return data as CompanySubmission | null
+    },
+    enabled: !!submissionId,
+  })
+}
+
+/**
  * Get submission for a business+month combination
  * Used when consultant creates scorecard to check for pending submission
  */
