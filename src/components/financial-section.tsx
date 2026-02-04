@@ -2,11 +2,7 @@ import { useFormContext } from 'react-hook-form'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-  scoreFinancialMetric,
-  scoreOverheads,
-  calculateFinancialSubtotal,
-} from '@/lib/scoring'
+import { scoreFinancialMetric } from '@/lib/scoring'
 import type { ScorecardData } from '@/schemas/scorecard'
 
 interface MetricRowProps {
@@ -78,41 +74,30 @@ function MetricRow({ label, name, score, helpText }: MetricRowProps) {
 }
 
 /**
- * Financial Performance section component
+ * Financial Performance section component (Simplified Version)
  *
- * Displays 4 financial metrics with real-time score calculation:
- * - Revenue vs Target
- * - Gross Profit vs Target
- * - Overheads vs Budget (inverted scoring)
- * - EBITDA vs Target
+ * Displays 2 financial metrics with real-time score calculation:
+ * - Revenue vs Target (10 points)
+ * - EBITDA vs Target (10 points)
  *
- * Uses useFormContext to watch values and calculate scores on every change.
- * Maximum subtotal: 40 points (10 per metric)
+ * GP and Overheads removed from this version for simplicity.
+ * Maximum subtotal: 20 points (10 per metric)
  */
 export function FinancialSection() {
   const { watch } = useFormContext<ScorecardData>()
 
-  // Watch all four variance fields for real-time score updates
+  // Watch revenue and EBITDA variance fields for real-time score updates
   const revenueVariance = watch('revenueVariance')
-  const grossProfitVariance = watch('grossProfitVariance')
-  const overheadsVariance = watch('overheadsVariance')
   const netProfitVariance = watch('netProfitVariance')
 
   // Calculate individual scores, handling undefined/NaN
   const scores = {
     revenue: scoreFinancialMetric(Number(revenueVariance) || 0),
-    grossProfit: scoreFinancialMetric(Number(grossProfitVariance) || 0),
-    overheads: scoreOverheads(Number(overheadsVariance) || 0),
     netProfit: scoreFinancialMetric(Number(netProfitVariance) || 0),
   }
 
-  // Calculate subtotal - returns { score, maxScore }
-  const subtotal = calculateFinancialSubtotal(
-    Number(revenueVariance) || 0,
-    Number(grossProfitVariance) || 0,
-    Number(overheadsVariance) || 0,
-    Number(netProfitVariance) || 0
-  )
+  // Calculate subtotal (Revenue + EBITDA only = 20 max)
+  const subtotal = scores.revenue + scores.netProfit
 
   return (
     <Card>
@@ -120,8 +105,8 @@ export function FinancialSection() {
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg">Financial Performance</CardTitle>
           <div className="text-right">
-            <span className="text-xl font-bold">{subtotal.score}</span>
-            <span className="text-muted-foreground"> / {subtotal.maxScore}</span>
+            <span className="text-xl font-bold">{subtotal}</span>
+            <span className="text-muted-foreground"> / 20</span>
           </div>
         </div>
       </CardHeader>
@@ -131,18 +116,6 @@ export function FinancialSection() {
           name="revenueVariance"
           score={scores.revenue}
           helpText="Positive = above target"
-        />
-        <MetricRow
-          label="Gross Profit vs Target"
-          name="grossProfitVariance"
-          score={scores.grossProfit}
-          helpText="Positive = above target"
-        />
-        <MetricRow
-          label="Overheads vs Budget"
-          name="overheadsVariance"
-          score={scores.overheads}
-          helpText="Negative = under budget (good)"
         />
         <MetricRow
           label="EBITDA vs Target"

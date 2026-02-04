@@ -1,14 +1,16 @@
 /**
- * Scoring Functions for Chester Business Scorecard
+ * Scoring Functions for Chester Business Scorecard (Simplified Version)
  *
  * These functions implement Nick's predefined scoring formulas for financial metrics.
  * Source: PROJECT.md scoring specification
  *
- * Financial Performance Section (40 points max):
- * - Revenue vs Target: 0-10 points
- * - Gross Profit vs Target: 0-10 points
- * - Overheads vs Budget: 0-10 points (inverted - under budget is good)
- * - Net Profit vs Target: 0-10 points
+ * SIMPLIFIED SCORING (70 points raw, displayed as percentage out of 100):
+ * - Financial: 20 points (Revenue 10, EBITDA 10) - GP & Overheads removed
+ * - People/HR: 10 points (Leadership only) - Productivity removed
+ * - Market: 15 points (demand 7.5 + marketing 7.5)
+ * - Product: 10 points
+ * - Suppliers: 5 points
+ * - Sales: 10 points
  */
 
 /**
@@ -60,19 +62,19 @@ export function scoreOverheads(variancePercent: number): number {
 }
 
 /**
- * Calculate the financial subtotal from variance values
- * Handles null/undefined values for N/A fields
+ * Calculate the financial subtotal from variance values (Simplified Version)
+ * Only uses Revenue and EBITDA - GP and Overheads removed from this version
  *
  * @param revenue Revenue variance percentage (null if N/A)
- * @param grossProfit Gross profit variance percentage (null if N/A)
- * @param overheads Overheads variance percentage (null if N/A)
- * @param netProfit Net profit variance percentage (null if N/A)
- * @returns Object with score and max possible score
+ * @param _grossProfit Unused - kept for backwards compatibility
+ * @param _overheads Unused - kept for backwards compatibility
+ * @param netProfit Net profit/EBITDA variance percentage (null if N/A)
+ * @returns Object with score and max possible score (20 max)
  */
 export function calculateFinancialSubtotal(
   revenue: number | null | undefined,
-  grossProfit: number | null | undefined,
-  overheads: number | null | undefined,
+  _grossProfit: number | null | undefined,
+  _overheads: number | null | undefined,
   netProfit: number | null | undefined
 ): { score: number; maxScore: number } {
   let score = 0
@@ -82,14 +84,7 @@ export function calculateFinancialSubtotal(
     score += scoreFinancialMetric(revenue)
     maxScore += 10
   }
-  if (grossProfit != null) {
-    score += scoreFinancialMetric(grossProfit)
-    maxScore += 10
-  }
-  if (overheads != null) {
-    score += scoreOverheads(overheads)
-    maxScore += 10
-  }
+  // GP and Overheads removed from this version
   if (netProfit != null) {
     score += scoreFinancialMetric(netProfit)
     maxScore += 10
@@ -99,21 +94,17 @@ export function calculateFinancialSubtotal(
 }
 
 /**
- * Legacy function for backwards compatibility
+ * Legacy function for backwards compatibility (Simplified)
  * Returns just the score (not max) for existing code that expects a number
+ * Only uses Revenue + EBITDA (20 max)
  */
 export function calculateFinancialSubtotalLegacy(
   revenue: number,
-  grossProfit: number,
-  overheads: number,
+  _grossProfit: number,
+  _overheads: number,
   netProfit: number
 ): number {
-  return (
-    scoreFinancialMetric(revenue) +
-    scoreFinancialMetric(grossProfit) +
-    scoreOverheads(overheads) +
-    scoreFinancialMetric(netProfit)
-  )
+  return scoreFinancialMetric(revenue) + scoreFinancialMetric(netProfit)
 }
 
 // ============================================================================
@@ -271,30 +262,30 @@ export interface ScoreResult {
 }
 
 /**
- * Calculate total score from all sections with N/A handling
+ * Calculate total score from all sections (Simplified Version)
  *
- * Section breakdown (100 points max when all fields present):
- * - Financial: 40 points (Revenue 10, GP 10, Overheads 10, EBITDA 10)
- * - People/HR: 20 points (productivity 10 + leadership 10)
+ * Section breakdown (70 points max, displayed as percentage out of 100):
+ * - Financial: 20 points (Revenue 10, EBITDA 10) - GP & Overheads removed
+ * - People/HR: 10 points (Leadership only) - Productivity removed
  * - Market: 15 points (demand 7.5 + marketing 7.5)
  * - Product: 10 points
  * - Suppliers: 5 points
  * - Sales: 10 points
  *
- * When fields are N/A, max score is reduced proportionally
+ * Score is converted to percentage for display as X/100
  *
  * @param data Scorecard form data
  * @returns Score result with actual score, max possible, and percentage
  */
 export function calculateTotalScoreWithMax(data: {
-  // Financial (from Phase 2) - null means N/A
+  // Financial (from Phase 2) - only Revenue and EBITDA used
   revenueVariance?: number | null
-  grossProfitVariance?: number | null
-  overheadsVariance?: number | null
+  grossProfitVariance?: number | null  // Kept for backwards compat, not used
+  overheadsVariance?: number | null     // Kept for backwards compat, not used
   netProfitVariance?: number | null
-  // People/HR
-  productivityBenchmark?: number | null
-  productivityActual?: number | null
+  // People/HR - only Leadership used
+  productivityBenchmark?: number | null // Kept for backwards compat, not used
+  productivityActual?: number | null    // Kept for backwards compat, not used
   leadership?: string
   // Market
   marketDemand?: string
@@ -309,27 +300,18 @@ export function calculateTotalScoreWithMax(data: {
   let totalScore = 0
   let totalMaxScore = 0
 
-  // Financial subtotal (up to 40 max)
+  // Financial subtotal (up to 20 max) - Revenue + EBITDA only
   const financial = calculateFinancialSubtotal(
     data.revenueVariance,
-    data.grossProfitVariance,
-    data.overheadsVariance,
+    null, // GP not used
+    null, // Overheads not used
     data.netProfitVariance
   )
   totalScore += financial.score
   totalMaxScore += financial.maxScore
 
-  // People/HR subtotal (up to 20 max)
-  // Productivity (10 max) - only if benchmark and actual are provided
-  if (data.productivityBenchmark != null && data.productivityActual != null) {
-    const productivityVariance = calculateProductivityVariance(
-      data.productivityBenchmark,
-      data.productivityActual
-    )
-    totalScore += scoreProductivity(productivityVariance)
-    totalMaxScore += 10
-  }
-  // Leadership (10 max) - always included
+  // People/HR subtotal (10 max) - Leadership only
+  // Productivity removed from this version
   totalScore += LEADERSHIP_SCORES[data.leadership || ''] ?? 0
   totalMaxScore += 10
 
