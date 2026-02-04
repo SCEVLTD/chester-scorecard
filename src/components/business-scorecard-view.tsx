@@ -57,9 +57,9 @@ export function BusinessScorecardView({
   const { data: submission } = useSubmissionById(scorecard.company_submission_id)
   const sectionScores = calculateSectionScores(scorecard)
 
-  // Handle edit - navigate to submission form with month pre-selected
+  // Handle edit - navigate to unified submit form with month pre-selected
   const handleEdit = () => {
-    navigate(`/business/${scorecard.business_id}/scorecard?month=${scorecard.month}`)
+    navigate(`/company/${scorecard.business_id}/submit?month=${scorecard.month}`)
   }
 
   // Calculate financial scores

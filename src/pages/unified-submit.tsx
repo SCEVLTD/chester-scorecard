@@ -87,22 +87,30 @@ export function UnifiedSubmitPage() {
     },
   })
 
-  // Update form when existing submission loads
+  // Set month from query param on mount
   useEffect(() => {
-    if (existingSubmission && !form.formState.isDirty) {
+    if (monthFromQuery) {
+      setSelectedMonth(monthFromQuery)
+      form.setValue('month', monthFromQuery)
+    }
+  }, [monthFromQuery, form])
+
+  // Update form when existing submission loads (always reset to show stored values)
+  useEffect(() => {
+    if (existingSubmission) {
       form.reset({
         month: selectedMonth,
-        revenueActual: existingSubmission.revenue_actual ?? undefined,
-        revenueTarget: existingSubmission.revenue_target ?? undefined,
-        grossProfitActual: existingSubmission.gross_profit_actual ?? undefined,
-        grossProfitTarget: existingSubmission.gross_profit_target ?? undefined,
-        overheadsActual: existingSubmission.overheads_actual ?? undefined,
-        overheadsBudget: existingSubmission.overheads_budget ?? undefined,
-        netProfitActual: existingSubmission.net_profit_actual ?? undefined,
-        netProfitTarget: existingSubmission.net_profit_target ?? undefined,
-        netProfitOverride: existingSubmission.net_profit_override ?? undefined,
-        totalWages: existingSubmission.total_wages ?? undefined,
-        productivityBenchmark: existingSubmission.productivity_benchmark ?? undefined,
+        revenueActual: existingSubmission.revenue_actual ?? 0,
+        revenueTarget: existingSubmission.revenue_target ?? 0,
+        grossProfitActual: existingSubmission.gross_profit_actual ?? 0,
+        grossProfitTarget: existingSubmission.gross_profit_target ?? 0,
+        overheadsActual: existingSubmission.overheads_actual ?? 0,
+        overheadsBudget: existingSubmission.overheads_budget ?? 0,
+        netProfitActual: existingSubmission.net_profit_actual ?? 0,
+        netProfitTarget: existingSubmission.net_profit_target ?? 0,
+        netProfitOverride: existingSubmission.net_profit_override ?? false,
+        totalWages: existingSubmission.total_wages ?? 0,
+        productivityBenchmark: existingSubmission.productivity_benchmark ?? 2.0,
         outboundCalls: existingSubmission.outbound_calls ?? undefined,
         firstOrders: existingSubmission.first_orders ?? undefined,
         leadership: existingSubmission.leadership as UnifiedSubmissionData['leadership'] ?? undefined,
@@ -118,14 +126,6 @@ export function UnifiedSubmitPage() {
       })
     }
   }, [existingSubmission, selectedMonth, form])
-
-  // Set month from query param on mount
-  useEffect(() => {
-    if (monthFromQuery && !selectedMonth) {
-      setSelectedMonth(monthFromQuery)
-      form.setValue('month', monthFromQuery)
-    }
-  }, [monthFromQuery, selectedMonth, form])
 
   // Generate last 12 months for selection
   const months = useMemo(() => {
