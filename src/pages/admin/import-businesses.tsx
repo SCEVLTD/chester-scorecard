@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react'
 import { toast } from 'sonner'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Upload, CheckCircle2, AlertCircle } from 'lucide-react'
+import { ArrowLeft, Home, Upload, CheckCircle2, AlertCircle } from 'lucide-react'
 import { useLocation } from 'wouter'
 import {
   Table,
@@ -188,6 +188,9 @@ export function ImportBusinessesPage() {
       <div className="flex items-center gap-4">
         <Button variant="outline" size="icon" onClick={() => navigate('/portfolio')}>
           <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <Button variant="outline" size="icon" onClick={() => navigate('/')} title="Go to home">
+          <Home className="h-4 w-4" />
         </Button>
         <div>
           <h1 className="text-3xl font-bold">Import Businesses</h1>

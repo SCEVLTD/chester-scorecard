@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react'
 import { toast } from 'sonner'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Upload, Download } from 'lucide-react'
+import { ArrowLeft, Home, Upload, Download } from 'lucide-react'
 import { useLocation } from 'wouter'
 
 import { ExcelImportDropzone } from '@/components/admin/excel-import-dropzone'
@@ -114,14 +114,23 @@ export function AdminImportPage() {
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="mx-auto max-w-4xl">
-        <Button
-          variant="ghost"
-          className="mb-4"
-          onClick={() => navigate('/')}
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Dashboard
-        </Button>
+        <div className="flex items-center gap-2 mb-4">
+          <Button
+            variant="ghost"
+            onClick={() => navigate('/')}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Dashboard
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate('/')}
+            title="Go to home"
+          >
+            <Home className="h-5 w-5" />
+          </Button>
+        </div>
 
         <Card>
           <CardHeader>
