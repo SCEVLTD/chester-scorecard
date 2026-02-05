@@ -166,17 +166,19 @@ export function EProfileReportPage() {
       })
   }, [eprofileData, selectedProfiles])
 
-  // Get businesses grouped by E-Profile
+  // Get businesses grouped by E-Profile (excluding test businesses)
   const businessesByProfile = useMemo(() => {
     if (!businesses) return new Map<EProfile, typeof businesses>()
     const grouped = new Map<EProfile, typeof businesses>()
-    businesses.forEach((b) => {
-      if (b.e_profile) {
-        const list = grouped.get(b.e_profile as EProfile) || []
-        list.push(b)
-        grouped.set(b.e_profile as EProfile, list)
-      }
-    })
+    businesses
+      .filter((b) => !b.is_test) // Exclude test businesses
+      .forEach((b) => {
+        if (b.e_profile) {
+          const list = grouped.get(b.e_profile as EProfile) || []
+          list.push(b)
+          grouped.set(b.e_profile as EProfile, list)
+        }
+      })
     return grouped
   }, [businesses])
 

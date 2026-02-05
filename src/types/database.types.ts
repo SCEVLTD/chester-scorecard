@@ -318,6 +318,7 @@ export interface Database {
           contact_email: string | null
           contact_name: string | null
           e_profile: EProfile | null
+          is_test: boolean | null
           created_at: string
         }
         Insert: {
@@ -327,6 +328,7 @@ export interface Database {
           contact_email?: string | null
           contact_name?: string | null
           e_profile?: EProfile | null
+          is_test?: boolean | null
           created_at?: string
         }
         Update: {
@@ -336,6 +338,7 @@ export interface Database {
           contact_email?: string | null
           contact_name?: string | null
           e_profile?: EProfile | null
+          is_test?: boolean | null
           created_at?: string
         }
         Relationships: [
