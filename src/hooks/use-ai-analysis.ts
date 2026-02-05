@@ -61,12 +61,19 @@ export function useGenerateAnalysis() {
       // Validate response structure with Zod schema
       const analysis = parseAIAnalysis(data)
 
+      // Add isConsultantView flag to persisted analysis so we can check later
+      // if cached analysis matches the viewer's role
+      const analysisWithRole = {
+        ...analysis,
+        isConsultantView: isConsultant,
+      }
+
       // Persist analysis to database
       const { error: saveError } = await supabase
         .from('scorecards')
         .update({
-          ai_analysis: analysis,
-          ai_analysis_generated_at: analysis.generatedAt,
+          ai_analysis: analysisWithRole,
+          ai_analysis_generated_at: analysisWithRole.generatedAt,
         })
         .eq('id', scorecardId)
 
@@ -74,7 +81,7 @@ export function useGenerateAnalysis() {
         throw new Error(saveError.message || 'Failed to save AI analysis')
       }
 
-      return analysis
+      return analysisWithRole
     },
     onSuccess: (_, variables) => {
       // Invalidate scorecard query to refresh cached data

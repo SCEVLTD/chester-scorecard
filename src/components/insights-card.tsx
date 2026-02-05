@@ -1,14 +1,10 @@
-import { useState } from 'react'
 import {
   Lightbulb,
   AlertTriangle,
   HelpCircle,
   Trophy,
-  ChevronDown,
-  ChevronRight,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import type { CompanySubmission } from '@/types/database.types'
 
 interface InsightsCardProps {
@@ -19,37 +15,29 @@ interface InsightSectionProps {
   title: string
   icon: React.ReactNode
   content: string | null
-  defaultOpen?: boolean
 }
 
 /**
- * Individual insight section with collapsible content
+ * Individual insight section - always visible (not collapsible)
  */
-function InsightSection({ title, icon, content, defaultOpen = false }: InsightSectionProps) {
-  const [isOpen, setIsOpen] = useState(defaultOpen)
-
+function InsightSection({ title, icon, content }: InsightSectionProps) {
   // Don't render if no content
   if (!content || content.trim() === '') {
     return null
   }
 
   return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <CollapsibleTrigger className="flex items-center gap-2 w-full py-2 px-3 hover:bg-muted/50 rounded-md transition-colors">
-        <span className="text-muted-foreground">
-          {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-        </span>
+    <div className="py-2 px-3">
+      <div className="flex items-center gap-2 mb-1">
         {icon}
-        <span className="font-medium text-sm flex-1 text-left">{title}</span>
-      </CollapsibleTrigger>
-      <CollapsibleContent>
-        <div className="pl-9 pr-3 pb-3">
-          <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-            {content}
-          </p>
-        </div>
-      </CollapsibleContent>
-    </Collapsible>
+        <span className="font-medium text-sm">{title}</span>
+      </div>
+      <div className="pl-6">
+        <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+          {content}
+        </p>
+      </div>
+    </div>
   )
 }
 
@@ -62,7 +50,7 @@ function InsightSection({ title, icon, content, defaultOpen = false }: InsightSe
  * - Current Challenges
  * - Recent Wins / Positive Developments
  *
- * Each section is collapsible with an icon indicator.
+ * All sections are always visible with icon indicators.
  * Gracefully handles empty/null values by not rendering those sections.
  */
 export function InsightsCard({ submission }: InsightsCardProps) {
@@ -91,7 +79,6 @@ export function InsightsCard({ submission }: InsightsCardProps) {
           title="Biggest Opportunity"
           icon={<Lightbulb className="h-4 w-4 text-amber-500" />}
           content={submission.company_biggest_opportunity}
-          defaultOpen={true}
         />
         <InsightSection
           title="Biggest Risk"

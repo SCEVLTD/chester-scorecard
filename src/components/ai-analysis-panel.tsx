@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useGenerateAnalysis } from '@/hooks/use-ai-analysis'
+import { useAuth } from '@/contexts/auth-context'
 import type { AIAnalysis } from '@/types/ai-analysis.types'
 import type { Scorecard } from '@/types/database.types'
 
@@ -95,12 +96,35 @@ export function AIAnalysisPanel({
 }: AIAnalysisPanelProps) {
   const [analysis, setAnalysis] = useState<AIAnalysis | null>(null)
   const generateAnalysis = useGenerateAnalysis()
+  const { userRole } = useAuth()
+
+  // Check if current user is a consultant
+  const isConsultant = userRole === 'consultant'
 
   // On mount, check for existing analysis or trigger generation
+  // If a consultant is viewing analysis that was generated for super_admin (with full financial figures),
+  // automatically regenerate to get the consultant-appropriate version
   useEffect(() => {
     if (scorecard.ai_analysis) {
-      // Analysis already exists in database
-      setAnalysis(scorecard.ai_analysis as unknown as AIAnalysis)
+      const existingAnalysis = scorecard.ai_analysis as unknown as AIAnalysis
+
+      // Check if consultant is viewing a non-consultant analysis (cached super_admin version)
+      // isConsultantView will be undefined for legacy analyses or false for admin analyses
+      const needsConsultantRegeneration = isConsultant && existingAnalysis.isConsultantView !== true
+
+      if (needsConsultantRegeneration && !generateAnalysis.isPending && !generateAnalysis.isSuccess) {
+        // Consultant viewing admin analysis - regenerate with consultant view
+        console.log('[AIAnalysisPanel] Consultant viewing non-consultant analysis, regenerating...')
+        generateAnalysis.mutate({
+          scorecardId: scorecard.id,
+          scorecard,
+          previousScorecard,
+          businessName,
+        })
+      } else if (!needsConsultantRegeneration) {
+        // Analysis exists and matches viewer's role (or viewer is admin)
+        setAnalysis(existingAnalysis)
+      }
     } else if (!generateAnalysis.isPending && !generateAnalysis.isSuccess) {
       // No analysis yet, trigger generation
       generateAnalysis.mutate({
@@ -110,7 +134,7 @@ export function AIAnalysisPanel({
         businessName,
       })
     }
-  }, [scorecard.id]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [scorecard.id, isConsultant]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Update local state when mutation succeeds
   useEffect(() => {

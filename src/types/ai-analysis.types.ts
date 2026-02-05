@@ -11,4 +11,5 @@ export interface AIAnalysis {
   trendBreaks: string[]
   generatedAt: string  // ISO timestamp
   modelUsed: string    // e.g., 'claude-sonnet-4-5'
+  isConsultantView?: boolean  // true if generated for consultant role (no specific financial figures)
 }

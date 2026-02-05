@@ -35,6 +35,7 @@ import {
 import { useCompanyPerformance, useCompanyYtdSummary } from '@/hooks/use-company-performance'
 import { useBusinesses } from '@/hooks/use-businesses'
 import { E_PROFILE_LABELS, type EProfile } from '@/types/database.types'
+import { useAuth } from '@/contexts/auth-context'
 
 // Format currency for display
 function formatCurrency(value: number | null | undefined, compact = false): string {
@@ -69,6 +70,8 @@ export function CompanyPerformancePage() {
   const businessId = params.businessId
   const currentYear = new Date().getFullYear()
   const [timeRange, setTimeRange] = useState<TimeRange>('12m')
+  const { userRole } = useAuth()
+  const isConsultant = userRole === 'consultant'
 
   // Calculate date range based on selection
   const dateRange = useMemo(() => {
@@ -159,10 +162,10 @@ export function CompanyPerformancePage() {
               <div className="space-y-2">
                 <div className="flex justify-between items-end">
                   <span className="text-2xl font-bold">
-                    {formatCurrency(ytdSummary.revenue_actual)}
+                    {isConsultant ? '—' : formatCurrency(ytdSummary.revenue_actual)}
                   </span>
                   <span className="text-sm text-muted-foreground">
-                    of {formatCurrency(ytdSummary.revenue_target)}
+                    {isConsultant ? '' : `of ${formatCurrency(ytdSummary.revenue_target)}`}
                   </span>
                 </div>
                 <Progress
@@ -173,7 +176,7 @@ export function CompanyPerformancePage() {
                   }
                   className="h-2"
                 />
-                {ytdSummary.revenue_variance_pct !== null && (
+                {!isConsultant && ytdSummary.revenue_variance_pct !== null && (
                   <Badge
                     variant={ytdSummary.revenue_variance_pct >= 0 ? 'default' : 'destructive'}
                     className="text-xs"
@@ -200,10 +203,10 @@ export function CompanyPerformancePage() {
               <div className="space-y-2">
                 <div className="flex justify-between items-end">
                   <span className="text-2xl font-bold">
-                    {formatCurrency(ytdSummary.ebitda_actual)}
+                    {isConsultant ? '—' : formatCurrency(ytdSummary.ebitda_actual)}
                   </span>
                   <span className="text-sm text-muted-foreground">
-                    of {formatCurrency(ytdSummary.ebitda_target)}
+                    {isConsultant ? '' : `of ${formatCurrency(ytdSummary.ebitda_target)}`}
                   </span>
                 </div>
                 <Progress
@@ -215,7 +218,7 @@ export function CompanyPerformancePage() {
                   className="h-2"
                 />
                 <div className="flex items-center gap-2">
-                  {ytdSummary.ebitda_variance_pct !== null && (
+                  {!isConsultant && ytdSummary.ebitda_variance_pct !== null && (
                     <Badge
                       variant={ytdSummary.ebitda_variance_pct >= 0 ? 'default' : 'destructive'}
                       className="text-xs"
@@ -228,7 +231,7 @@ export function CompanyPerformancePage() {
                       {formatPercent(ytdSummary.ebitda_variance_pct)} vs target
                     </Badge>
                   )}
-                  {ytdSummary.ebitda_pct !== null && (
+                  {!isConsultant && ytdSummary.ebitda_pct !== null && (
                     <Badge variant="secondary" className="text-xs">
                       {ytdSummary.ebitda_pct.toFixed(1)}% margin
                     </Badge>
@@ -253,12 +256,15 @@ export function CompanyPerformancePage() {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis
+                  tick={isConsultant ? false : { fontSize: 12, fill: '#6b7280' }}
                   tickFormatter={(value) => formatCurrency(value, true)}
                 />
-                <Tooltip
-                  formatter={(value) => formatCurrency(value as number)}
-                  labelFormatter={(label) => `Month: ${label}`}
-                />
+                {!isConsultant && (
+                  <Tooltip
+                    formatter={(value) => formatCurrency(value as number)}
+                    labelFormatter={(label) => `Month: ${label}`}
+                  />
+                )}
                 <Legend />
                 <Line
                   type="monotone"
@@ -296,12 +302,15 @@ export function CompanyPerformancePage() {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis
+                  tick={isConsultant ? false : { fontSize: 12, fill: '#6b7280' }}
                   tickFormatter={(value) => formatCurrency(value, true)}
                 />
-                <Tooltip
-                  formatter={(value) => formatCurrency(value as number)}
-                  labelFormatter={(label) => `Month: ${label}`}
-                />
+                {!isConsultant && (
+                  <Tooltip
+                    formatter={(value) => formatCurrency(value as number)}
+                    labelFormatter={(label) => `Month: ${label}`}
+                  />
+                )}
                 <Legend />
                 <Line
                   type="monotone"
@@ -326,82 +335,84 @@ export function CompanyPerformancePage() {
         </CardContent>
       </Card>
 
-      {/* Monthly Detail Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Monthly Detail</CardTitle>
-          <CardDescription>Detailed breakdown of monthly performance</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Month</TableHead>
-                  <TableHead className="text-right">Rev Target</TableHead>
-                  <TableHead className="text-right">Rev Actual</TableHead>
-                  <TableHead className="text-right">Variance</TableHead>
-                  <TableHead className="text-right">EBITDA Target</TableHead>
-                  <TableHead className="text-right">EBITDA Actual</TableHead>
-                  <TableHead className="text-right">Variance</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {performanceData?.map((row) => {
-                  const revVariance =
-                    row.revenue_target && row.revenue_target > 0
-                      ? ((row.revenue_actual || 0) - row.revenue_target) / row.revenue_target * 100
-                      : null
-                  const ebitdaVariance =
-                    row.ebitda_target && row.ebitda_target > 0
-                      ? ((row.ebitda_actual || 0) - row.ebitda_target) / row.ebitda_target * 100
-                      : null
-                  return (
-                    <TableRow key={row.month}>
-                      <TableCell className="font-medium">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-muted-foreground" />
-                          {getMonthName(row.month)}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {formatCurrency(row.revenue_target)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {formatCurrency(row.revenue_actual)}
-                      </TableCell>
-                      <TableCell
-                        className={`text-right ${
-                          revVariance !== null && revVariance >= 0
-                            ? 'text-green-600'
-                            : 'text-red-600'
-                        }`}
-                      >
-                        {revVariance !== null ? formatPercent(revVariance) : '-'}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {formatCurrency(row.ebitda_target)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {formatCurrency(row.ebitda_actual)}
-                      </TableCell>
-                      <TableCell
-                        className={`text-right ${
-                          ebitdaVariance !== null && ebitdaVariance >= 0
-                            ? 'text-green-600'
-                            : 'text-red-600'
-                        }`}
-                      >
-                        {ebitdaVariance !== null ? formatPercent(ebitdaVariance) : '-'}
-                      </TableCell>
-                    </TableRow>
-                  )
-                })}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Monthly Detail Table - hidden for consultants */}
+      {!isConsultant && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Monthly Detail</CardTitle>
+            <CardDescription>Detailed breakdown of monthly performance</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Month</TableHead>
+                    <TableHead className="text-right">Rev Target</TableHead>
+                    <TableHead className="text-right">Rev Actual</TableHead>
+                    <TableHead className="text-right">Variance</TableHead>
+                    <TableHead className="text-right">EBITDA Target</TableHead>
+                    <TableHead className="text-right">EBITDA Actual</TableHead>
+                    <TableHead className="text-right">Variance</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {performanceData?.map((row) => {
+                    const revVariance =
+                      row.revenue_target && row.revenue_target > 0
+                        ? ((row.revenue_actual || 0) - row.revenue_target) / row.revenue_target * 100
+                        : null
+                    const ebitdaVariance =
+                      row.ebitda_target && row.ebitda_target > 0
+                        ? ((row.ebitda_actual || 0) - row.ebitda_target) / row.ebitda_target * 100
+                        : null
+                    return (
+                      <TableRow key={row.month}>
+                        <TableCell className="font-medium">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="h-4 w-4 text-muted-foreground" />
+                            {getMonthName(row.month)}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {formatCurrency(row.revenue_target)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {formatCurrency(row.revenue_actual)}
+                        </TableCell>
+                        <TableCell
+                          className={`text-right ${
+                            revVariance !== null && revVariance >= 0
+                              ? 'text-green-600'
+                              : 'text-red-600'
+                          }`}
+                        >
+                          {revVariance !== null ? formatPercent(revVariance) : '-'}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {formatCurrency(row.ebitda_target)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {formatCurrency(row.ebitda_actual)}
+                        </TableCell>
+                        <TableCell
+                          className={`text-right ${
+                            ebitdaVariance !== null && ebitdaVariance >= 0
+                              ? 'text-green-600'
+                              : 'text-red-600'
+                          }`}
+                        >
+                          {ebitdaVariance !== null ? formatPercent(ebitdaVariance) : '-'}
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }

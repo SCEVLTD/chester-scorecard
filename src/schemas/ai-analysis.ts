@@ -21,6 +21,7 @@ export const aiAnalysisSchema = z.object({
   trendBreaks: z.array(z.string()),
   generatedAt: z.string(),
   modelUsed: z.string(),
+  isConsultantView: z.boolean().optional(), // true if generated for consultant role (no specific financial figures)
 })
 
 export type AIAnalysis = z.infer<typeof aiAnalysisSchema>
