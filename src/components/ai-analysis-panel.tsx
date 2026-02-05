@@ -84,11 +84,11 @@ function LoadingSkeleton() {
  * Standard Analysis Display (for company and super_admin)
  */
 function StandardAnalysisDisplay({ analysis, generatedAt }: { analysis: StandardAnalysis; generatedAt: string }) {
-  // Defensive checks for required arrays
-  const topQuestions = analysis.topQuestions || []
-  const actions30Day = analysis.actions30Day || []
-  const inconsistencies = analysis.inconsistencies || []
-  const trendBreaks = analysis.trendBreaks || []
+  // Defensive checks - ensure arrays exist and are actually arrays
+  const topQuestions = Array.isArray(analysis?.topQuestions) ? analysis.topQuestions : []
+  const actions30Day = Array.isArray(analysis?.actions30Day) ? analysis.actions30Day : []
+  const inconsistencies = Array.isArray(analysis?.inconsistencies) ? analysis.inconsistencies : []
+  const trendBreaks = Array.isArray(analysis?.trendBreaks) ? analysis.trendBreaks : []
 
   return (
     <div className="space-y-4">
@@ -150,11 +150,11 @@ function StandardAnalysisDisplay({ analysis, generatedAt }: { analysis: Standard
             <ul className="space-y-3">
               {actions30Day.map((item, index) => (
                 <li key={index} className="flex items-start gap-3">
-                  <Badge className={priorityColors[item.priority] || 'bg-gray-500'}>
-                    {item.priority.toUpperCase()}
+                  <Badge className={priorityColors[item?.priority] || 'bg-gray-500'}>
+                    {(item?.priority || 'medium').toUpperCase()}
                   </Badge>
                   <span className="text-sm text-muted-foreground">
-                    {item.action}
+                    {item?.action || 'No action specified'}
                   </span>
                 </li>
               ))}
@@ -208,6 +208,12 @@ function StandardAnalysisDisplay({ analysis, generatedAt }: { analysis: Standard
  * Consultant Analysis Display (strategic, no specific figures)
  */
 function ConsultantAnalysisDisplay({ analysis, generatedAt }: { analysis: ConsultantAnalysis; generatedAt: string }) {
+  // Defensive checks for required arrays
+  const keyObservations = Array.isArray(analysis.keyObservations) ? analysis.keyObservations : []
+  const discussionPoints = Array.isArray(analysis.discussionPoints) ? analysis.discussionPoints : []
+  const strategicRecommendations = Array.isArray(analysis.strategicRecommendations) ? analysis.strategicRecommendations : []
+  const redFlags = Array.isArray(analysis.redFlags) ? analysis.redFlags : []
+
   return (
     <div className="space-y-4">
       {/* Section header */}
@@ -231,71 +237,77 @@ function ConsultantAnalysisDisplay({ analysis, generatedAt }: { analysis: Consul
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            {analysis.execSummary}
+            {analysis.execSummary || 'No summary available.'}
           </p>
         </CardContent>
       </Card>
 
       {/* Key Observations */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Target className="h-4 w-4" />
-            Key Observations
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
-            {analysis.keyObservations.map((observation, index) => (
-              <li key={index}>{observation}</li>
-            ))}
-          </ol>
-        </CardContent>
-      </Card>
+      {keyObservations.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Target className="h-4 w-4" />
+              Key Observations
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
+              {keyObservations.map((observation, index) => (
+                <li key={index}>{observation}</li>
+              ))}
+            </ol>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Discussion Points for Meeting */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <MessageCircle className="h-4 w-4" />
-            Discussion Points for Meeting
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
-            {analysis.discussionPoints.map((point, index) => (
-              <li key={index}>{point}</li>
-            ))}
-          </ol>
-        </CardContent>
-      </Card>
+      {discussionPoints.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <MessageCircle className="h-4 w-4" />
+              Discussion Points for Meeting
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
+              {discussionPoints.map((point, index) => (
+                <li key={index}>{point}</li>
+              ))}
+            </ol>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Strategic Recommendations */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <ListChecks className="h-4 w-4" />
-            Strategic Recommendations
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ul className="space-y-3">
-            {analysis.strategicRecommendations.map((item, index) => (
-              <li key={index} className="flex items-start gap-3">
-                <Badge className={priorityColors[item.priority] || 'bg-gray-500'}>
-                  {item.priority.toUpperCase()}
-                </Badge>
-                <span className="text-sm text-muted-foreground">
-                  {item.recommendation}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
+      {strategicRecommendations.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <ListChecks className="h-4 w-4" />
+              Strategic Recommendations
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-3">
+              {strategicRecommendations.map((item, index) => (
+                <li key={index} className="flex items-start gap-3">
+                  <Badge className={priorityColors[item?.priority] || 'bg-gray-500'}>
+                    {(item?.priority || 'medium').toUpperCase()}
+                  </Badge>
+                  <span className="text-sm text-muted-foreground">
+                    {item?.recommendation || 'No recommendation'}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Red Flags (only if present) */}
-      {analysis.redFlags.length > 0 && (
+      {redFlags.length > 0 && (
         <Card className="border-red-300">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2 text-red-600">
@@ -305,7 +317,7 @@ function ConsultantAnalysisDisplay({ analysis, generatedAt }: { analysis: Consul
           </CardHeader>
           <CardContent>
             <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
-              {analysis.redFlags.map((item, index) => (
+              {redFlags.map((item, index) => (
                 <li key={index}>{item}</li>
               ))}
             </ul>
