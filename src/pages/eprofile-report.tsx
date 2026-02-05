@@ -58,8 +58,8 @@ function formatCurrency(value: number | null | undefined, compact = false): stri
   const formatter = new Intl.NumberFormat('en-GB', {
     style: 'currency',
     currency: 'GBP',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
+    minimumFractionDigits: compact ? 2 : 0,
+    maximumFractionDigits: compact ? 2 : 0,
     notation: compact ? 'compact' : 'standard',
   })
   return formatter.format(value)
