@@ -46,8 +46,9 @@ const ratioInput = z.number().min(0).optional()
 /**
  * Forced-choice enum schemas for qualitative sections
  * Store the string key (e.g., "aligned"), derive numeric score in scoring functions
+ * Leadership keeps 'na' option for solo entrepreneurs (one-man bands)
  */
-const leadershipChoice = z.enum(['aligned', 'minor', 'misaligned', 'toxic']).optional()
+const leadershipChoice = z.enum(['aligned', 'minor', 'misaligned', 'toxic', 'na']).optional()
 const marketDemandChoice = z.enum(['strong', 'flat', 'softening', 'decline']).optional()
 const marketingChoice = z.enum(['clear', 'activity', 'poor', 'none']).optional()
 const productChoice = z.enum(['differentiated', 'adequate', 'weak', 'broken']).optional()

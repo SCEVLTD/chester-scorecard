@@ -4,6 +4,7 @@ import { parsePortfolioAnalysis, type PortfolioAnalysis } from '@/schemas/portfo
 import { aggregatePortfolio } from '@/lib/portfolio-aggregator'
 import type { PortfolioSummary } from '@/hooks/use-portfolio-summary'
 import type { Scorecard } from '@/types/database.types'
+import { useAuth } from '@/contexts/auth-context'
 
 interface GeneratePortfolioAnalysisParams {
   portfolioSummary: PortfolioSummary[]
@@ -36,6 +37,11 @@ interface GeneratePortfolioAnalysisParams {
  * ```
  */
 export function useGeneratePortfolioAnalysis() {
+  const { userRole } = useAuth()
+
+  // Consultants get a strategic view without specific financial figures
+  const isConsultant = userRole === 'consultant'
+
   return useMutation({
     mutationFn: async ({
       portfolioSummary,
@@ -49,7 +55,7 @@ export function useGeneratePortfolioAnalysis() {
 
       // Call Edge Function to generate analysis
       const { data, error } = await supabase.functions.invoke('generate-portfolio-analysis', {
-        body: { aggregate },
+        body: { aggregate, isConsultant },
       })
 
       if (error) {

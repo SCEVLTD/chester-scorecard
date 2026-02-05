@@ -12,6 +12,7 @@ import { CheckCircle, Clock, Mail, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import { useSubmissionStatus } from '@/hooks/use-submission-status'
+import { useAuth } from '@/contexts/auth-context'
 
 interface SubmissionStatusPanelProps {
   month: string // YYYY-MM format
@@ -20,6 +21,7 @@ interface SubmissionStatusPanelProps {
 export function SubmissionStatusPanel({ month }: SubmissionStatusPanelProps) {
   const { data: statuses, isLoading } = useSubmissionStatus(month)
   const [isSending, setIsSending] = useState(false)
+  const { userRole } = useAuth()
 
   // Split into submitted and pending
   const submitted = statuses?.filter((s) => s.submitted) || []
@@ -99,18 +101,20 @@ export function SubmissionStatusPanel({ month }: SubmissionStatusPanelProps) {
             <CardTitle>Submission Status</CardTitle>
             <p className="text-sm text-muted-foreground">{monthLabel}</p>
           </div>
-          <Button
-            onClick={handleSendReminders}
-            disabled={pending.length === 0 || isSending}
-            size="sm"
-          >
-            {isSending ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <Mail className="h-4 w-4 mr-2" />
-            )}
-            Send Reminders
-          </Button>
+          {userRole === 'super_admin' && (
+            <Button
+              onClick={handleSendReminders}
+              disabled={pending.length === 0 || isSending}
+              size="sm"
+            >
+              {isSending ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Mail className="h-4 w-4 mr-2" />
+              )}
+              Send Reminders
+            </Button>
+          )}
         </div>
       </CardHeader>
       <CardContent>

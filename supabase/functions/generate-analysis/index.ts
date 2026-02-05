@@ -44,6 +44,7 @@ interface RequestBody {
   businessName: string
   eProfile?: string | null
   historicalData?: HistoricalDataPoint[]
+  isConsultant?: boolean
 }
 
 function formatVariance(value: number | null): string {
@@ -145,6 +146,108 @@ function formatHistoricalData(data: HistoricalDataPoint[] | undefined): string {
   return lines.join('\n')
 }
 
+function buildConsultantPrompt(
+  scorecard: ScorecardData,
+  previousScorecard: ScorecardData | null,
+  businessName: string,
+  submission: CompanySubmission | null,
+  eProfile?: string | null,
+  historicalData?: HistoricalDataPoint[]
+): string {
+  const eProfileSection = eProfile
+    ? `E-PROFILE: ${eProfile} - ${E_PROFILE_LABELS[eProfile] || 'Unknown category'}\n`
+    : ''
+
+  // Calculate trend direction without specific figures
+  const revenueTrend = scorecard.revenue_variance !== null
+    ? scorecard.revenue_variance > 5 ? 'above target'
+      : scorecard.revenue_variance < -5 ? 'below target'
+      : 'near target'
+    : 'not reported'
+
+  const profitTrend = scorecard.net_profit_variance !== null
+    ? scorecard.net_profit_variance > 5 ? 'above target'
+      : scorecard.net_profit_variance < -5 ? 'below target'
+      : 'near target'
+    : 'not reported'
+
+  // Historical trend assessment (qualitative)
+  let historicalTrend = 'No historical data available'
+  if (historicalData && historicalData.length >= 3) {
+    const recentThree = historicalData.slice(-3)
+    const revTrends = recentThree.map(d =>
+      d.revenue_target && d.revenue_target > 0
+        ? ((d.revenue_actual || 0) - d.revenue_target) / d.revenue_target
+        : 0
+    )
+    const avgTrend = revTrends.reduce((a, b) => a + b, 0) / revTrends.length
+    historicalTrend = avgTrend > 0.05 ? 'Consistent outperformance over recent months'
+      : avgTrend < -0.05 ? 'Persistent underperformance trend'
+      : 'Stable performance relative to targets'
+  }
+
+  return `You are a SENIOR BUSINESS CONSULTANT preparing for a one-on-one advisory meeting with a client business owner. Your role is to provide strategic insights and facilitate productive conversation, NOT to report specific financial figures.
+
+IMPORTANT RULES:
+- DO NOT include specific pound values, percentages, or numeric figures in your output
+- Focus on PATTERNS, TRENDS, and STRATEGIC INSIGHTS
+- Frame observations as conversation starters and strategic questions
+- Adopt an advisory, coaching tone - not a reporting tone
+- Use language like "appears to be", "suggests", "indicates" rather than exact figures
+
+Use UK English spelling throughout (e.g. analyse, prioritise, organisation).
+
+BUSINESS: ${businessName}
+MONTH: ${scorecard.month}
+${eProfileSection}
+OVERALL HEALTH: ${scorecard.rag_status.toUpperCase()} status (${scorecard.total_score >= 70 ? 'Strong' : scorecard.total_score >= 40 ? 'Moderate' : 'Needs attention'})
+
+=== PERFORMANCE INDICATORS (Qualitative) ===
+Revenue Performance: ${revenueTrend}
+Profitability Performance: ${profitTrend}
+Historical Trajectory: ${historicalTrend}
+
+=== LEAD INDICATORS ===
+Sales Activity Level: ${submission?.outbound_calls !== null ? (submission.outbound_calls > 50 ? 'High' : submission.outbound_calls > 20 ? 'Moderate' : 'Low') : 'Not tracked'}
+New Business Generation: ${submission?.first_orders !== null ? (submission.first_orders > 5 ? 'Strong' : submission.first_orders > 2 ? 'Steady' : 'Light') : 'Not tracked'}
+
+=== QUALITATIVE ASSESSMENTS ===
+Leadership/Alignment: ${formatQualitative(scorecard.leadership)}
+Market Demand: ${formatQualitative(scorecard.market_demand)}
+Marketing Effectiveness: ${formatQualitative(scorecard.marketing)}
+Product Strength: ${formatQualitative(scorecard.product_strength)}
+Supplier Strength: ${formatQualitative(scorecard.supplier_strength)}
+Sales Execution: ${formatQualitative(scorecard.sales_execution)}
+
+=== CLIENT'S OWN PERSPECTIVE ===
+They see their biggest opportunity as: ${submission?.company_biggest_opportunity || 'Not shared'}
+They see their biggest risk as: ${submission?.company_biggest_risk || 'Not shared'}
+Recent wins they've highlighted: ${submission?.company_wins || 'Not shared'}
+Challenges they're facing: ${submission?.company_challenges || 'Not shared'}
+
+${previousScorecard ? `
+=== MONTH-ON-MONTH MOVEMENT ===
+Trend: ${scorecard.total_score > previousScorecard.total_score ? 'Improving' : scorecard.total_score < previousScorecard.total_score ? 'Declining' : 'Stable'}
+Momentum: ${Math.abs(scorecard.total_score - previousScorecard.total_score) > 10 ? 'Significant shift' : 'Gradual change'}
+` : '=== MONTH-ON-MONTH MOVEMENT ===\nFirst month of tracking - establishing baseline'}
+
+---
+
+REQUIRED OUTPUT (Consultant Advisory Format):
+
+1. Executive Summary (150-200 words): Synthesise the business health into a strategic narrative. DO NOT quote specific figures. Focus on the story - what's working, what's concerning, what deserves attention. Write as a senior consultant briefing themselves before a client meeting.
+
+2. Key Observations (5 items): Strategic insights about the business. Frame as observations that lead to meaningful conversation. Examples: "Leadership alignment appears healthy, suggesting clear strategic direction" or "Sales activity doesn't match the reported execution quality - worth exploring".
+
+3. Discussion Points for Meeting (5 items): Open-ended questions to facilitate productive dialogue. Frame as "What's driving...", "How is the team feeling about...", "Are there opportunities to...". These should prompt reflection, not defensive responses.
+
+4. Strategic Recommendations (3-5 items): Advisory suggestions framed as "Consider...", "Explore...", "Review whether...". Each should have a priority (high/medium/low). Focus on strategic moves, not operational fixes.
+
+5. Red Flags (0-3 items): Only include if data suggests genuine concern. Frame diplomatically but clearly. If none evident, return empty array.
+
+6. Relationship Context: One brief note on how the client seems to view their business (optimistic, concerned, realistic) based on their self-reported insights vs actual performance indicators.`
+}
+
 function buildPrompt(
   scorecard: ScorecardData,
   previousScorecard: ScorecardData | null,
@@ -235,7 +338,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { scorecard, previousScorecard, businessName, eProfile, historicalData } = await req.json() as RequestBody
+    const { scorecard, previousScorecard, businessName, eProfile, historicalData, isConsultant } = await req.json() as RequestBody
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -296,9 +399,13 @@ Deno.serve(async (req) => {
       apiKey: Deno.env.get('ANTHROPIC_API_KEY'),
     })
 
-    const prompt = buildPrompt(scorecard, previousScorecard, businessName, submission, eProfile, fetchedHistoricalData)
+    // Build appropriate prompt based on user role
+    const prompt = isConsultant
+      ? buildConsultantPrompt(scorecard, previousScorecard, businessName, submission, eProfile, fetchedHistoricalData)
+      : buildPrompt(scorecard, previousScorecard, businessName, submission, eProfile, fetchedHistoricalData)
 
-    const analysisTool = {
+    // Tool schema for admin/standard analysis
+    const standardAnalysisTool = {
       name: 'submit_analysis',
       description: 'Submit the completed business analysis',
       input_schema: {
@@ -327,6 +434,37 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Tool schema for consultant analysis (no specific figures, strategic focus)
+    const consultantAnalysisTool = {
+      name: 'submit_analysis',
+      description: 'Submit the consultant executive summary',
+      input_schema: {
+        type: 'object' as const,
+        properties: {
+          execSummary: { type: 'string', description: 'Executive summary (150-200 words) - strategic narrative, no specific figures' },
+          keyObservations: { type: 'array', items: { type: 'string' }, description: '5 strategic observations about the business' },
+          discussionPoints: { type: 'array', items: { type: 'string' }, description: '5 open-ended questions to facilitate productive meeting dialogue' },
+          strategicRecommendations: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                recommendation: { type: 'string' },
+                priority: { type: 'string', enum: ['high', 'medium', 'low'] }
+              },
+              required: ['recommendation', 'priority']
+            },
+            description: '3-5 strategic recommendations with priority levels'
+          },
+          redFlags: { type: 'array', items: { type: 'string' }, description: '0-3 items of genuine concern (empty array if none)' },
+          relationshipContext: { type: 'string', description: 'Brief note on how client views their business (optimistic, concerned, realistic)' }
+        },
+        required: ['execSummary', 'keyObservations', 'discussionPoints', 'strategicRecommendations', 'redFlags', 'relationshipContext']
+      }
+    }
+
+    const analysisTool = isConsultant ? consultantAnalysisTool : standardAnalysisTool
+
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-5-20250929',
       max_tokens: 2000,
@@ -346,6 +484,7 @@ Deno.serve(async (req) => {
     // Add metadata
     analysis.generatedAt = new Date().toISOString()
     analysis.modelUsed = 'claude-sonnet-4-5-20250929'
+    analysis.isConsultantView = isConsultant || false
 
     return new Response(JSON.stringify(analysis), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

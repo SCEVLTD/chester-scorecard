@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { parseAIAnalysis, type AIAnalysis } from '@/schemas/ai-analysis'
 import type { Scorecard } from '@/types/database.types'
+import { useAuth } from '@/contexts/auth-context'
 
 interface GenerateAnalysisParams {
   scorecardId: string
@@ -36,6 +37,10 @@ interface GenerateAnalysisParams {
  */
 export function useGenerateAnalysis() {
   const queryClient = useQueryClient()
+  const { userRole } = useAuth()
+
+  // Consultants get a strategic view without specific financial figures
+  const isConsultant = userRole === 'consultant'
 
   return useMutation({
     mutationFn: async ({
@@ -46,7 +51,7 @@ export function useGenerateAnalysis() {
     }: GenerateAnalysisParams): Promise<AIAnalysis> => {
       // Call Edge Function to generate analysis
       const { data, error } = await supabase.functions.invoke('generate-analysis', {
-        body: { scorecard, previousScorecard, businessName },
+        body: { scorecard, previousScorecard, businessName, isConsultant },
       })
 
       if (error) {

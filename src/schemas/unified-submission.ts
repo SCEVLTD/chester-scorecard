@@ -6,13 +6,15 @@ const positiveMonetaryValue = z.coerce
 
 const monetaryValue = z.coerce.number()
 
-// Qualitative option enums (match src/lib/scoring.ts) - includes N/A option
+// Qualitative option enums (match src/lib/scoring.ts)
+// Leadership keeps N/A option for solo entrepreneurs (one-man bands)
+// All other questions require a selection (N/A removed per client feedback)
 const leadershipOptions = z.enum(['aligned', 'minor', 'misaligned', 'toxic', 'na'])
-const marketDemandOptions = z.enum(['strong', 'flat', 'softening', 'decline', 'na'])
-const marketingOptions = z.enum(['clear', 'activity', 'poor', 'none', 'na'])
-const productOptions = z.enum(['differentiated', 'adequate', 'weak', 'broken', 'na'])
-const supplierOptions = z.enum(['strong', 'acceptable', 'weak', 'damaging', 'na'])
-const salesOptions = z.enum(['beating', 'onTarget', 'underperforming', 'none', 'na'])
+const marketDemandOptions = z.enum(['strong', 'flat', 'softening', 'decline'])
+const marketingOptions = z.enum(['clear', 'activity', 'poor', 'none'])
+const productOptions = z.enum(['differentiated', 'adequate', 'weak', 'broken'])
+const supplierOptions = z.enum(['strong', 'acceptable', 'weak', 'damaging'])
+const salesOptions = z.enum(['beating', 'onTarget', 'underperforming', 'none'])
 
 export const unifiedSubmissionSchema = z.object({
   // Month selection (FORM-06)

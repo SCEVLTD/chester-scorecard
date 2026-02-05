@@ -27,7 +27,7 @@ export function HomePage() {
   const [filterSectorId, setFilterSectorId] = useState<string | null>(null)
   const [editingBusiness, setEditingBusiness] = useState<Business | null>(null)
 
-  const { signOut } = useAuth()
+  const { signOut, userRole } = useAuth()
   const { data: businesses, isLoading } = useBusinesses()
   const { data: sectors } = useSectors()
   const { data: latestScores } = useLatestScoresPerBusiness()
@@ -143,27 +143,31 @@ export function HomePage() {
             <LayoutGrid className="h-6 w-6 text-primary" />
             <span className="text-sm font-medium">Portfolio</span>
           </button>
-          <button
-            onClick={() => navigate('/admin/import')}
-            className="flex flex-col items-center gap-2 p-4 rounded-xl bg-card border shadow-sm hover:shadow-md hover:border-primary/30 transition-all"
-          >
-            <Upload className="h-6 w-6 text-muted-foreground" />
-            <span className="text-sm font-medium text-muted-foreground">Import</span>
-          </button>
+          {userRole === 'super_admin' && (
+            <button
+              onClick={() => navigate('/admin/import')}
+              className="flex flex-col items-center gap-2 p-4 rounded-xl bg-card border shadow-sm hover:shadow-md hover:border-primary/30 transition-all"
+            >
+              <Upload className="h-6 w-6 text-muted-foreground" />
+              <span className="text-sm font-medium text-muted-foreground">Import</span>
+            </button>
+          )}
         </div>
 
-        {/* Admin link */}
-        <div className="flex justify-end">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/admin/admins')}
-            className="text-xs text-muted-foreground"
-          >
-            <Shield className="mr-1 h-3 w-3" />
-            Manage Admins
-          </Button>
-        </div>
+        {/* Admin link (Super Admin Only) */}
+        {userRole === 'super_admin' && (
+          <div className="flex justify-end">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/admin/admins')}
+              className="text-xs text-muted-foreground"
+            >
+              <Shield className="mr-1 h-3 w-3" />
+              Manage Admins
+            </Button>
+          </div>
+        )}
 
         {/* Main Content Card */}
         <Card>
@@ -171,30 +175,34 @@ export function HomePage() {
             <CardTitle className="text-base">Businesses</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Add business form */}
-            <form onSubmit={handleCreateBusiness} className="space-y-3">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <Input
-                  type="text"
-                  placeholder="Business name"
-                  value={newBusinessName}
-                  onChange={(e) => setNewBusinessName(e.target.value)}
-                />
-                <Input
-                  type="email"
-                  placeholder="Contact email (optional)"
-                  value={newBusinessEmail}
-                  onChange={(e) => setNewBusinessEmail(e.target.value)}
-                />
-              </div>
-              <Button type="submit" disabled={createBusiness.isPending} className="w-full md:w-auto">
-                <Plus className="mr-2 h-4 w-4" />
-                Add Business
-              </Button>
-            </form>
+            {/* Add business form (Super Admin Only) */}
+            {userRole === 'super_admin' && (
+              <>
+                <form onSubmit={handleCreateBusiness} className="space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <Input
+                      type="text"
+                      placeholder="Business name"
+                      value={newBusinessName}
+                      onChange={(e) => setNewBusinessName(e.target.value)}
+                    />
+                    <Input
+                      type="email"
+                      placeholder="Contact email (optional)"
+                      value={newBusinessEmail}
+                      onChange={(e) => setNewBusinessEmail(e.target.value)}
+                    />
+                  </div>
+                  <Button type="submit" disabled={createBusiness.isPending} className="w-full md:w-auto">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Business
+                  </Button>
+                </form>
 
-            {/* Divider */}
-            <div className="border-t" />
+                {/* Divider */}
+                <div className="border-t" />
+              </>
+            )}
 
             {/* Sector filter */}
             <div className="flex items-center gap-3">
@@ -278,18 +286,20 @@ export function HomePage() {
                         >
                           <Pencil className="h-4 w-4 text-muted-foreground" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleDeleteBusiness(business.id, business.name)
-                          }}
-                          title="Delete business"
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
+                        {userRole === 'super_admin' && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleDeleteBusiness(business.id, business.name)
+                            }}
+                            title="Delete business"
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        )}
                       </div>
                     </div>
                   )

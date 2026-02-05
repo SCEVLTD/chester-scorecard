@@ -10,7 +10,8 @@ import { z } from 'zod'
  */
 
 // Define the enum schemas (matching those in scorecard.ts)
-const leadershipSchema = z.enum(['aligned', 'minor', 'misaligned', 'toxic'])
+// Leadership keeps 'na' option for solo entrepreneurs (one-man bands)
+const leadershipSchema = z.enum(['aligned', 'minor', 'misaligned', 'toxic', 'na'])
 const marketDemandSchema = z.enum(['strong', 'flat', 'softening', 'decline'])
 const marketingSchema = z.enum(['clear', 'activity', 'poor', 'none'])
 const productSchema = z.enum(['differentiated', 'adequate', 'weak', 'broken'])

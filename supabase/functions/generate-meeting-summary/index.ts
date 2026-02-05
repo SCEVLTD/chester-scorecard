@@ -42,6 +42,7 @@ interface RequestBody {
   meetingDate?: string
   meetingType?: 'friday_group' | 'one_on_one' | 'quarterly_review' | 'ad_hoc'
   title?: string
+  isConsultant?: boolean
 }
 
 function buildPrompt(agg: PortfolioAggregate): string {
@@ -79,6 +80,69 @@ Generate a meeting prep summary with:
 4. **groupActions** (3-5 items): Collective actions the group could take. Focus on peer learning opportunities.
 
 5. **healthSummary** (2-3 sentences): Overall portfolio health assessment. Use aggregate stats only.
+
+Respond ONLY with valid JSON matching this structure:
+{
+  "aggregatedWins": ["string", ...],
+  "commonChallenges": ["string", ...],
+  "discussionPoints": ["string", ...],
+  "groupActions": ["string", ...],
+  "healthSummary": "string",
+  "generatedAt": "${new Date().toISOString()}",
+  "modelUsed": "claude-sonnet-4-20250514"
+}`
+}
+
+function buildConsultantPrompt(agg: PortfolioAggregate): string {
+  // Calculate qualitative descriptions instead of raw numbers
+  const totalCount = agg.totalBusinesses
+  const healthyPct = Math.round((agg.distribution.green / totalCount) * 100)
+  const portfolioHealth = healthyPct >= 70 ? 'strong overall health'
+    : healthyPct >= 50 ? 'mixed health with room for improvement'
+    : healthyPct >= 30 ? 'significant concerns across the group'
+    : 'challenging period for the portfolio'
+
+  return `You are preparing a meeting summary for the Chester Brethren Business Group Friday meeting.
+
+CRITICAL RULES:
+- This summary must NOT identify individual businesses
+- DO NOT include specific scores, percentages, or pound figures in your output
+- Focus on patterns, themes, and qualitative observations
+- Use language like "several members", "a notable pattern", "the majority"
+- Frame everything in a way appropriate for group discussion
+
+Use UK English spelling throughout (e.g. analyse, prioritise, organisation).
+
+<portfolio_context>
+Analysis Month: ${agg.analysisMonth}
+Group Size: ${agg.totalBusinesses} businesses
+Portfolio Health: ${portfolioHealth}
+</portfolio_context>
+
+<common_themes>
+Areas needing group attention:
+${agg.weakestSections.map(s =>
+  `- ${s.section}: ${s.businessesBelow50Pct > totalCount / 2 ? 'Widespread concern' : s.businessesBelow50Pct > 0 ? 'Some members struggling' : 'Generally adequate'}`
+).join('\n')}
+
+Common challenges mentioned:
+${[...new Set(agg.businesses.slice(0, 10).map(b => b.topRisk))].slice(0, 5).map(r => `- ${r}`).join('\n')}
+
+Common opportunities identified:
+${[...new Set(agg.businesses.slice(0, 10).map(b => b.topOpportunity))].slice(0, 5).map(o => `- ${o}`).join('\n')}
+</common_themes>
+
+Generate a meeting prep summary with:
+
+1. **aggregatedWins** (3-5 items): Common positive outcomes. NO specific figures. Use phrases like "Several members have seen improvement in..." or "Positive momentum in..."
+
+2. **commonChallenges** (3-5 items): Shared difficulties. NO specific figures. Focus on themes not metrics.
+
+3. **discussionPoints** (5-7 items): Topics for group discussion. Frame as "How are members handling..." or "What approaches are working for..."
+
+4. **groupActions** (3-5 items): Collective actions the group could take. Focus on peer support and shared learning.
+
+5. **healthSummary** (2-3 sentences): Qualitative portfolio assessment. NO specific scores or percentages. Describe the overall trajectory and mood.
 
 Respond ONLY with valid JSON matching this structure:
 {
@@ -153,13 +217,16 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json() as RequestBody
-    const { aggregatedData, persist, meetingDate, meetingType, title } = body
+    const { aggregatedData, persist, meetingDate, meetingType, title, isConsultant } = body
 
     const anthropic = new Anthropic({
       apiKey: Deno.env.get('ANTHROPIC_API_KEY'),
     })
 
-    const prompt = buildPrompt(aggregatedData)
+    // Build appropriate prompt based on user role
+    const prompt = isConsultant
+      ? buildConsultantPrompt(aggregatedData)
+      : buildPrompt(aggregatedData)
 
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
@@ -178,6 +245,7 @@ Deno.serve(async (req) => {
     // Ensure metadata is present
     parsed.generatedAt = new Date().toISOString()
     parsed.modelUsed = 'claude-sonnet-4-20250514'
+    parsed.isConsultantView = isConsultant || false
 
     // Persist to database if requested
     let meetingId: string | null = null

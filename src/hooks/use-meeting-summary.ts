@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { parseMeetingSummary, type MeetingSummary } from '@/schemas/meeting-summary'
 import type { PortfolioAggregate } from '@/lib/portfolio-aggregator'
 import type { MeetingType } from '@/types/database.types'
+import { useAuth } from '@/contexts/auth-context'
 
 interface GenerateMeetingSummaryParams {
   aggregatedData: PortfolioAggregate
@@ -41,6 +42,10 @@ export interface MeetingSummaryWithId extends MeetingSummary {
  */
 export function useGenerateMeetingSummary() {
   const queryClient = useQueryClient()
+  const { userRole } = useAuth()
+
+  // Consultants get a strategic view without specific financial figures
+  const isConsultant = userRole === 'consultant'
 
   return useMutation({
     mutationFn: async ({
@@ -51,7 +56,7 @@ export function useGenerateMeetingSummary() {
       title,
     }: GenerateMeetingSummaryParams): Promise<MeetingSummaryWithId> => {
       const { data, error } = await supabase.functions.invoke('generate-meeting-summary', {
-        body: { aggregatedData, persist, meetingDate, meetingType, title },
+        body: { aggregatedData, persist, meetingDate, meetingType, title, isConsultant },
       })
       if (error) throw new Error(error.message || 'Failed to generate meeting summary')
 
