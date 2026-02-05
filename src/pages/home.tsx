@@ -90,7 +90,9 @@ export function HomePage() {
 
   const handleSignOut = async () => {
     await signOut()
-    navigate('/login')
+    // Use full page reload to ensure auth state is properly cleared
+    // (wouter navigate can race with auth state updates)
+    window.location.href = '/login'
   }
 
   return (
