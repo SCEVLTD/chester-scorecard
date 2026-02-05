@@ -623,3 +623,175 @@ Six major amendments required to the Chester Business Scorecard system:
 - `src/components/charts/city-revenue-chart.tsx`
 - `src/components/charts/city-ebitda-chart.tsx`
 - `src/components/charts/city-eprofile-chart.tsx`
+
+---
+
+# Consultant View Financial Data Fixes (2026-02-05)
+
+> Source: User testing of consultant view (scott@brandedai.net)
+> Status: ✅ ALL TASKS COMPLETE (2026-02-05)
+
+**Verified:**
+- Performance Page: YTD cards hidden, no £ values, no Monthly Detail table ✅
+- Charts Page: Percentage scores (0-100) visible ✅
+- AI Analysis: Consultant-specific version without £ figures ✅
+- Company Insights: Now visible for consultants (RLS fix applied) ✅
+
+## Overview
+
+Fix data visibility inconsistencies for consultant role users. Consultants should see scores and trends but NOT financial £ values.
+
+### Email Address Clarification
+- `scott@brandedai.net` = **consultant** (test account)
+- `scott@brandedai.co.uk` = **super_admin** (production account)
+
+---
+
+## Phase 15: Consultant View Financial Data Fixes
+
+### Task 15.1: Fix Performance Page - Hide £ values (HIGH)
+**Status:** ✅ COMPLETE
+**File:** `src/pages/company-performance.tsx`
+
+**Problem:** No role-based filtering - consultants see all £ values and monthly detail table.
+
+**Changes:**
+- [x] Import `useAuth` and get `userRole`
+- [x] Create `isConsultant` check
+- [x] Hide/mask YTD Summary card £ values for consultants (shows "—")
+- [x] Hide variance badges for consultants
+- [x] Hide chart Y-axis £ values for consultants
+- [x] Hide Tooltip values for consultants
+- [x] Hide Monthly Detail table entirely for consultants
+
+**Verification:**
+- Log in as `scott@brandedai.net` (consultant)
+- Navigate to Performance tab
+- Confirm: No £ values visible, no monthly detail table
+
+---
+
+### Task 15.2: Fix Charts Page - Show Percentage Scores (MEDIUM)
+**Status:** ✅ COMPLETE
+**File:** `src/pages/charts.tsx`
+
+**Problem:** Incorrectly hiding percentage scores (0-100) for consultants. Percentages are NOT financial data.
+
+**Changes:**
+- [x] Remove `hideAxisValues={userRole === 'consultant'}` from ScoreTrendChart
+- [x] Remove `hideAxisValues={userRole === 'consultant'}` from SectionBreakdownChart
+- [x] Remove `hideAxisValues={userRole === 'consultant'}` from SectionComparisonChart
+- [x] Remove unused `useAuth` import
+
+**Verification:**
+- Log in as `scott@brandedai.net` (consultant)
+- Navigate to Charts tab
+- Confirm: Score percentages (0-100) visible on all charts
+
+---
+
+### Task 15.3: Fix AI Analysis Caching (HIGH)
+**Status:** ✅ COMPLETE
+**Files:**
+- `src/hooks/use-ai-analysis.ts`
+- `src/components/ai-analysis-panel.tsx`
+
+**Problem:** AI analysis cached with `isConsultantView` flag. If super_admin generates first, consultant sees full figures.
+
+**Changes:**
+- [x] Check `isConsultantView` flag when consultant views cached analysis
+- [x] If mismatch (consultant viewing admin analysis), auto-regenerate
+- [x] Consultant analysis uses qualitative language only (via Edge Function)
+
+**Implementation:**
+- Added role check in `ai-analysis-panel.tsx` useEffect
+- If consultant views analysis where `isConsultantView !== true`, auto-regenerates
+- New analysis generated with consultant-appropriate prompt
+
+**Verification:**
+- Log in as super_admin, generate AI analysis
+- Log in as consultant, view same scorecard
+- Confirm: Consultant sees qualitative analysis without £ figures
+
+---
+
+## Test Accounts
+
+| Role | Email | Password |
+|------|-------|----------|
+| super_admin | scott@benchiva.com | password |
+| consultant | scott@brandedai.net | password |
+| business_user | contact@scottmarkham.com | password |
+
+## Dependencies
+
+```
+Task 15.1 (Performance) ───┐
+                           │
+Task 15.2 (Charts) ────────┼─► Independent - all run in parallel
+                           │
+Task 15.3 (AI Analysis) ───┤
+                           │
+Task 15.4 (RLS Fix) ───────┘
+```
+
+### Task 15.4: Fix RLS - Consultant Access to Company Insights (HIGH)
+**Status:** ✅ COMPLETE
+**File:** `supabase/migrations/20260205_fix_consultant_rls.sql`
+
+**Problem:** `is_admin()` function only returned true for `user_role = 'admin'`, but consultants have `user_role = 'consultant'`. This blocked consultants from querying `company_submissions` table, causing Company Insights section to be missing.
+
+**Changes:**
+- [x] Updated `is_admin()` to return true for `'admin'`, `'super_admin'`, AND `'consultant'`
+- [x] Applied migration to live Supabase database
+- [x] Committed migration file to repo
+
+**Verification:**
+- Log in as consultant
+- View any scorecard with company submission data
+- Confirm: Company Insights section now visible
+
+---
+
+## Reference: AUTH-08
+
+Formal authorization requirement that consultants must NOT see raw financial figures.
+Currently implemented in:
+- `src/components/submitted-financials-display.tsx` (returns null for consultant)
+- `src/components/compare/comparison-columns.tsx` (filters financial rows)
+- `src/pages/company-performance.tsx` (hides YTD cards, axis values, tooltips, monthly table)
+- `src/hooks/use-ai-analysis.ts` (generates consultant-specific AI analysis)
+
+---
+
+# Security Status (2026-02-05)
+
+## Consultant View Fixes: ✅ COMPLETE
+
+All consultant view restrictions are now working:
+- Performance page: No £ values visible
+- Charts page: Percentage scores visible (not financial)
+- AI Analysis: Consultant version without £ figures
+- Company Insights: Now visible (qualitative data)
+
+## Outstanding Security Advisories
+
+Run `supabase db lint` or check Supabase Dashboard > Advisors for latest status.
+
+### ERRORS (Should Fix)
+| Issue | Table/View | Description |
+|-------|------------|-------------|
+| RLS Disabled | `invitations` | RLS policies exist but RLS not enabled |
+| SECURITY DEFINER | `city_monthly_aggregate` | View uses SECURITY DEFINER |
+| SECURITY DEFINER | `city_ytd_aggregate` | View uses SECURITY DEFINER |
+| SECURITY DEFINER | `eprofile_monthly_aggregate` | View uses SECURITY DEFINER |
+
+### WARNINGS (Consider Fixing)
+| Issue | Entity | Description |
+|-------|--------|-------------|
+| search_path mutable | Multiple functions | `is_admin`, `get_my_business_id`, etc. |
+| Permissive RLS | `admins` | INSERT/DELETE policies use `true` |
+| Permissive RLS | `company_submissions` | INSERT/UPDATE policies use `true` |
+| Leaked password protection | Auth | Feature disabled |
+
+**Note:** The permissive policies on `company_submissions` are intentional - magic link flow requires anonymous insert. Token validation happens at application layer.
