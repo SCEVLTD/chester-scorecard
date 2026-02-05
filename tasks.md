@@ -795,3 +795,41 @@ Run `supabase db lint` or check Supabase Dashboard > Advisors for latest status.
 | Leaked password protection | Auth | Feature disabled |
 
 **Note:** The permissive policies on `company_submissions` are intentional - magic link flow requires anonymous insert. Token validation happens at application layer.
+
+---
+
+# Bug Fixes
+
+## E-Profile Distribution Chart Center Label (2026-02-05)
+
+**Status:** ✅ FIXED
+
+**Problem:** Center label ("14 Businesses") in E-Profile donut chart was not centred in the donut hole. Multiple attempts using CSS absolute positioning failed due to ResponsiveContainer's dynamic sizing.
+
+**Solution:** Use Recharts' native `<Label>` component with `position="center"` and `dy` offsets for multi-line text. This renders SVG text at the exact chart coordinates.
+
+**File:** `src/components/charts/city-eprofile-chart.tsx`
+
+**Changes:**
+```tsx
+<Pie data={chartData} cx="50%" cy="45%" innerRadius={60} outerRadius={110}>
+  {/* Cell mapping... */}
+  <Label
+    value={total}
+    position="center"
+    dy={-10}
+    style={{ fontSize: 28, fontWeight: 700, fill: '#0f172a' }}
+  />
+  <Label
+    value="Businesses"
+    position="center"
+    dy={16}
+    style={{ fontSize: 14, fill: '#64748b' }}
+  />
+</Pie>
+```
+
+**Reference:** [Recharts Issue #191](https://github.com/recharts/recharts/issues/191)
+
+**Commits:**
+- `b9dd797` - fix(chart): use Recharts Label component with position=center
