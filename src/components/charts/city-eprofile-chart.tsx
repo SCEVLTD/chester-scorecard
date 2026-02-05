@@ -12,7 +12,6 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  Label,
 } from 'recharts'
 import type { EProfile } from '@/types/database.types'
 import { E_PROFILE_LABELS } from '@/types/database.types'
@@ -104,36 +103,17 @@ export function CityEprofileChart({ data }: CityEprofileChartProps) {
     )
   }
 
-  // Custom center label component
-  const CenterLabel = ({ viewBox }: { viewBox?: { cx?: number; cy?: number } }) => {
-    const cx = viewBox?.cx ?? 0
-    const cy = viewBox?.cy ?? 0
-    return (
-      <g>
-        <text
-          x={cx}
-          y={cy - 8}
-          textAnchor="middle"
-          dominantBaseline="central"
-          style={{ fontSize: 28, fontWeight: 700, fill: '#0f172a' }}
-        >
-          {total}
-        </text>
-        <text
-          x={cx}
-          y={cy + 16}
-          textAnchor="middle"
-          dominantBaseline="central"
-          style={{ fontSize: 14, fill: '#64748b' }}
-        >
-          Businesses
-        </text>
-      </g>
-    )
-  }
-
   return (
-    <div className="h-[350px] w-full">
+    <div className="h-[350px] w-full relative">
+      {/* Center label - positioned to match Pie cx="50%" cy="45%" */}
+      <div
+        className="absolute left-1/2 pointer-events-none z-10 flex flex-col items-center"
+        style={{ top: 'calc(45% - 20px)', transform: 'translateX(-50%)' }}
+      >
+        <span className="text-3xl font-bold text-slate-900">{total}</span>
+        <span className="text-sm text-slate-500">Businesses</span>
+      </div>
+
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
@@ -156,8 +136,6 @@ export function CityEprofileChart({ data }: CityEprofileChartProps) {
                 strokeWidth={2}
               />
             ))}
-            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-            <Label content={CenterLabel as any} position="center" />
           </Pie>
 
           <Tooltip
