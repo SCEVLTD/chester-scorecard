@@ -6,6 +6,10 @@ import {
   AlertTriangle,
   TrendingDown,
   RefreshCw,
+  MessageCircle,
+  Target,
+  Flag,
+  UserCheck,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -13,7 +17,7 @@ import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useGenerateAnalysis } from '@/hooks/use-ai-analysis'
 import { useAuth } from '@/contexts/auth-context'
-import type { AIAnalysis } from '@/types/ai-analysis.types'
+import { isStorageFormat, type AIAnalysisStorage, type StandardAnalysis, type ConsultantAnalysis, type LegacyAnalysis } from '@/schemas/ai-analysis'
 import type { Scorecard } from '@/types/database.types'
 
 interface AIAnalysisPanelProps {
@@ -77,118 +81,9 @@ function LoadingSkeleton() {
 }
 
 /**
- * AI Analysis Panel Component
- *
- * Displays AI-generated analysis for a scorecard including:
- * - Executive Summary
- * - Focus Points for Next Month
- * - 30-Day Actions with priority badges
- * - Inconsistencies detected (if any)
- * - Trend breaks vs previous month (if any)
- *
- * Auto-generates analysis on mount if not already present in scorecard.
- * Supports regeneration via button click.
+ * Standard Analysis Display (for company and super_admin)
  */
-export function AIAnalysisPanel({
-  scorecard,
-  previousScorecard,
-  businessName,
-}: AIAnalysisPanelProps) {
-  const [analysis, setAnalysis] = useState<AIAnalysis | null>(null)
-  const generateAnalysis = useGenerateAnalysis()
-  const { userRole } = useAuth()
-
-  // Check if current user is a consultant
-  const isConsultant = userRole === 'consultant'
-
-  // On mount, check for existing analysis or trigger generation
-  // If a consultant is viewing analysis that was generated for super_admin (with full financial figures),
-  // automatically regenerate to get the consultant-appropriate version
-  useEffect(() => {
-    if (scorecard.ai_analysis) {
-      const existingAnalysis = scorecard.ai_analysis as unknown as AIAnalysis
-
-      // Check if consultant is viewing a non-consultant analysis (cached super_admin version)
-      // isConsultantView will be undefined for legacy analyses or false for admin analyses
-      const needsConsultantRegeneration = isConsultant && existingAnalysis.isConsultantView !== true
-
-      if (needsConsultantRegeneration && !generateAnalysis.isPending && !generateAnalysis.isSuccess) {
-        // Consultant viewing admin analysis - regenerate with consultant view
-        console.log('[AIAnalysisPanel] Consultant viewing non-consultant analysis, regenerating...')
-        generateAnalysis.mutate({
-          scorecardId: scorecard.id,
-          scorecard,
-          previousScorecard,
-          businessName,
-        })
-      } else if (!needsConsultantRegeneration) {
-        // Analysis exists and matches viewer's role (or viewer is admin)
-        setAnalysis(existingAnalysis)
-      }
-    } else if (!generateAnalysis.isPending && !generateAnalysis.isSuccess) {
-      // No analysis yet, trigger generation
-      generateAnalysis.mutate({
-        scorecardId: scorecard.id,
-        scorecard,
-        previousScorecard,
-        businessName,
-      })
-    }
-  }, [scorecard.id, isConsultant]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Update local state when mutation succeeds
-  useEffect(() => {
-    if (generateAnalysis.isSuccess && generateAnalysis.data) {
-      setAnalysis(generateAnalysis.data)
-    }
-  }, [generateAnalysis.isSuccess, generateAnalysis.data])
-
-  // Handle regeneration
-  const handleRegenerate = () => {
-    setAnalysis(null)
-    generateAnalysis.reset()
-    generateAnalysis.mutate({
-      scorecardId: scorecard.id,
-      scorecard,
-      previousScorecard,
-      businessName,
-    })
-  }
-
-  // Loading state
-  if (generateAnalysis.isPending) {
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <Brain className="h-5 w-5 animate-pulse" />
-          <span className="text-sm">Generating AI analysis (5-15 seconds)...</span>
-        </div>
-        <LoadingSkeleton />
-      </div>
-    )
-  }
-
-  // Error state
-  if (generateAnalysis.isError) {
-    return (
-      <Alert variant="destructive">
-        <AlertDescription className="flex items-center justify-between">
-          <span>Failed to generate AI analysis. Please try again.</span>
-          <Button variant="outline" size="sm" onClick={handleRegenerate}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Retry
-          </Button>
-        </AlertDescription>
-      </Alert>
-    )
-  }
-
-  // No analysis yet and not loading (shouldn't happen, but guard)
-  if (!analysis) {
-    return null
-  }
-
-  // Success state - render all sections
+function StandardAnalysisDisplay({ analysis, generatedAt }: { analysis: StandardAnalysis; generatedAt: string }) {
   return (
     <div className="space-y-4">
       {/* Section header */}
@@ -198,7 +93,7 @@ export function AIAnalysisPanel({
           <h3 className="font-semibold">AI Analysis</h3>
         </div>
         <span className="text-xs text-muted-foreground">
-          Generated {new Date(analysis.generatedAt).toLocaleString()}
+          Generated {new Date(generatedAt).toLocaleString()}
         </span>
       </div>
 
@@ -246,9 +141,7 @@ export function AIAnalysisPanel({
           <ul className="space-y-3">
             {analysis.actions30Day.map((item, index) => (
               <li key={index} className="flex items-start gap-3">
-                <Badge
-                  className={priorityColors[item.priority] || 'bg-gray-500'}
-                >
+                <Badge className={priorityColors[item.priority] || 'bg-gray-500'}>
                   {item.priority.toUpperCase()}
                 </Badge>
                 <span className="text-sm text-muted-foreground">
@@ -297,6 +190,284 @@ export function AIAnalysisPanel({
           </CardContent>
         </Card>
       )}
+    </div>
+  )
+}
+
+/**
+ * Consultant Analysis Display (strategic, no specific figures)
+ */
+function ConsultantAnalysisDisplay({ analysis, generatedAt }: { analysis: ConsultantAnalysis; generatedAt: string }) {
+  return (
+    <div className="space-y-4">
+      {/* Section header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Brain className="h-5 w-5 text-primary" />
+          <h3 className="font-semibold">Consultant Briefing</h3>
+        </div>
+        <span className="text-xs text-muted-foreground">
+          Generated {new Date(generatedAt).toLocaleString()}
+        </span>
+      </div>
+
+      {/* Executive Summary */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Lightbulb className="h-4 w-4" />
+            Strategic Overview
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            {analysis.execSummary}
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* Key Observations */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Target className="h-4 w-4" />
+            Key Observations
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
+            {analysis.keyObservations.map((observation, index) => (
+              <li key={index}>{observation}</li>
+            ))}
+          </ol>
+        </CardContent>
+      </Card>
+
+      {/* Discussion Points for Meeting */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <MessageCircle className="h-4 w-4" />
+            Discussion Points for Meeting
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
+            {analysis.discussionPoints.map((point, index) => (
+              <li key={index}>{point}</li>
+            ))}
+          </ol>
+        </CardContent>
+      </Card>
+
+      {/* Strategic Recommendations */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <ListChecks className="h-4 w-4" />
+            Strategic Recommendations
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ul className="space-y-3">
+            {analysis.strategicRecommendations.map((item, index) => (
+              <li key={index} className="flex items-start gap-3">
+                <Badge className={priorityColors[item.priority] || 'bg-gray-500'}>
+                  {item.priority.toUpperCase()}
+                </Badge>
+                <span className="text-sm text-muted-foreground">
+                  {item.recommendation}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </CardContent>
+      </Card>
+
+      {/* Red Flags (only if present) */}
+      {analysis.redFlags.length > 0 && (
+        <Card className="border-red-300">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2 text-red-600">
+              <Flag className="h-4 w-4" />
+              Areas of Concern
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
+              {analysis.redFlags.map((item, index) => (
+                <li key={index}>{item}</li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Relationship Context */}
+      {analysis.relationshipContext && (
+        <Card className="border-blue-200 bg-blue-50/50">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2 text-blue-700">
+              <UserCheck className="h-4 w-4" />
+              Client Perspective
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              {analysis.relationshipContext}
+            </p>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  )
+}
+
+/**
+ * AI Analysis Panel Component
+ *
+ * Displays AI-generated analysis for a scorecard.
+ * - Consultants see strategic briefing without specific figures
+ * - Company users and super_admins see detailed analysis with figures
+ *
+ * Auto-generates BOTH versions on mount if not already present.
+ * Legacy analyses (single version) are regenerated to create both versions.
+ */
+export function AIAnalysisPanel({
+  scorecard,
+  previousScorecard,
+  businessName,
+}: AIAnalysisPanelProps) {
+  const [analysis, setAnalysis] = useState<AIAnalysisStorage | null>(null)
+  const generateAnalysis = useGenerateAnalysis()
+  const { userRole } = useAuth()
+
+  // Check if current user is a consultant
+  const isConsultant = userRole === 'consultant'
+
+  // On mount, check for existing analysis or trigger generation
+  useEffect(() => {
+    if (scorecard.ai_analysis) {
+      const existingAnalysis = scorecard.ai_analysis as unknown
+
+      // Check if it's the new storage format (has standard/consultant keys)
+      if (isStorageFormat(existingAnalysis as AIAnalysisStorage | LegacyAnalysis)) {
+        const storageAnalysis = existingAnalysis as AIAnalysisStorage
+
+        // Check if we have the version we need
+        const hasRequiredVersion = isConsultant
+          ? !!storageAnalysis.consultant
+          : !!storageAnalysis.standard
+
+        if (hasRequiredVersion) {
+          setAnalysis(storageAnalysis)
+          return
+        }
+      }
+
+      // Legacy format or missing required version - regenerate with both versions
+      if (!generateAnalysis.isPending && !generateAnalysis.isSuccess) {
+        console.log('[AIAnalysisPanel] Regenerating to create both versions...')
+        generateAnalysis.mutate({
+          scorecardId: scorecard.id,
+          scorecard,
+          previousScorecard,
+          businessName,
+        })
+      }
+    } else if (!generateAnalysis.isPending && !generateAnalysis.isSuccess) {
+      // No analysis yet, trigger generation
+      generateAnalysis.mutate({
+        scorecardId: scorecard.id,
+        scorecard,
+        previousScorecard,
+        businessName,
+      })
+    }
+  }, [scorecard.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Update local state when mutation succeeds
+  useEffect(() => {
+    if (generateAnalysis.isSuccess && generateAnalysis.data) {
+      setAnalysis(generateAnalysis.data)
+    }
+  }, [generateAnalysis.isSuccess, generateAnalysis.data])
+
+  // Handle regeneration
+  const handleRegenerate = () => {
+    setAnalysis(null)
+    generateAnalysis.reset()
+    generateAnalysis.mutate({
+      scorecardId: scorecard.id,
+      scorecard,
+      previousScorecard,
+      businessName,
+    })
+  }
+
+  // Loading state
+  if (generateAnalysis.isPending) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Brain className="h-5 w-5 animate-pulse" />
+          <span className="text-sm">Generating AI analysis (10-20 seconds)...</span>
+        </div>
+        <LoadingSkeleton />
+      </div>
+    )
+  }
+
+  // Error state
+  if (generateAnalysis.isError) {
+    return (
+      <Alert variant="destructive">
+        <AlertDescription className="flex items-center justify-between">
+          <span>Failed to generate AI analysis. Please try again.</span>
+          <Button variant="outline" size="sm" onClick={handleRegenerate}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Retry
+          </Button>
+        </AlertDescription>
+      </Alert>
+    )
+  }
+
+  // No analysis yet and not loading (shouldn't happen, but guard)
+  if (!analysis) {
+    return null
+  }
+
+  // Determine which version to display
+  const displayContent = isConsultant && analysis.consultant ? (
+    <ConsultantAnalysisDisplay
+      analysis={analysis.consultant}
+      generatedAt={analysis.generatedAt}
+    />
+  ) : analysis.standard ? (
+    <StandardAnalysisDisplay
+      analysis={analysis.standard}
+      generatedAt={analysis.generatedAt}
+    />
+  ) : null
+
+  if (!displayContent) {
+    return (
+      <Alert>
+        <AlertDescription className="flex items-center justify-between">
+          <span>Analysis not available for your role. Regenerating...</span>
+          <Button variant="outline" size="sm" onClick={handleRegenerate}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Generate
+          </Button>
+        </AlertDescription>
+      </Alert>
+    )
+  }
+
+  return (
+    <div className="space-y-4">
+      {displayContent}
 
       {/* Regenerate button */}
       <div className="flex justify-end">

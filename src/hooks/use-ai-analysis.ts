@@ -1,8 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
-import { parseAIAnalysis, type AIAnalysis } from '@/schemas/ai-analysis'
+import type { AIAnalysisStorage } from '@/schemas/ai-analysis'
 import type { Scorecard } from '@/types/database.types'
-import { useAuth } from '@/contexts/auth-context'
 
 interface GenerateAnalysisParams {
   scorecardId: string
@@ -14,33 +13,19 @@ interface GenerateAnalysisParams {
 /**
  * Mutation hook for generating AI analysis via Edge Function and saving to database.
  *
- * Calls the generate-analysis Edge Function with scorecard data, then persists
- * the result to the scorecards table. Invalidates cache on success.
+ * ALWAYS generates BOTH standard and consultant versions in parallel.
+ * The appropriate version is displayed based on user role in AIAnalysisPanel.
  *
- * Usage:
- * ```tsx
- * const generateAnalysis = useGenerateAnalysis()
- *
- * // Trigger generation
- * generateAnalysis.mutate({
- *   scorecardId: scorecard.id,
- *   scorecard,
- *   previousScorecard,
- *   businessName: 'Acme Corp',
- * })
- *
- * // Check state
- * if (generateAnalysis.isPending) { ... }
- * if (generateAnalysis.isError) { ... }
- * if (generateAnalysis.isSuccess) { const analysis = generateAnalysis.data }
- * ```
+ * Storage format:
+ * {
+ *   standard: { execSummary, topQuestions, actions30Day, ... },
+ *   consultant: { execSummary, keyObservations, discussionPoints, ... },
+ *   generatedAt: ISO timestamp,
+ *   modelUsed: 'claude-sonnet-4-5'
+ * }
  */
 export function useGenerateAnalysis() {
   const queryClient = useQueryClient()
-  const { userRole } = useAuth()
-
-  // Consultants get a strategic view without specific financial figures
-  const isConsultant = userRole === 'consultant'
 
   return useMutation({
     mutationFn: async ({
@@ -48,32 +33,30 @@ export function useGenerateAnalysis() {
       scorecard,
       previousScorecard,
       businessName,
-    }: GenerateAnalysisParams): Promise<AIAnalysis> => {
-      // Call Edge Function to generate analysis
+    }: GenerateAnalysisParams): Promise<AIAnalysisStorage> => {
+      // Call Edge Function to generate BOTH versions
       const { data, error } = await supabase.functions.invoke('generate-analysis', {
-        body: { scorecard, previousScorecard, businessName, isConsultant },
+        body: {
+          scorecard,
+          previousScorecard,
+          businessName,
+          generateBoth: true, // Always generate both versions
+        },
       })
 
       if (error) {
         throw new Error(error.message || 'Failed to generate AI analysis')
       }
 
-      // Validate response structure with Zod schema
-      const analysis = parseAIAnalysis(data)
-
-      // Add isConsultantView flag to persisted analysis so we can check later
-      // if cached analysis matches the viewer's role
-      const analysisWithRole = {
-        ...analysis,
-        isConsultantView: isConsultant,
-      }
+      // The response should be in the new combined format
+      const analysis = data as AIAnalysisStorage
 
       // Persist analysis to database
       const { error: saveError } = await supabase
         .from('scorecards')
         .update({
-          ai_analysis: analysisWithRole,
-          ai_analysis_generated_at: analysisWithRole.generatedAt,
+          ai_analysis: analysis,
+          ai_analysis_generated_at: analysis.generatedAt,
         })
         .eq('id', scorecardId)
 
@@ -81,7 +64,7 @@ export function useGenerateAnalysis() {
         throw new Error(saveError.message || 'Failed to save AI analysis')
       }
 
-      return analysisWithRole
+      return analysis
     },
     onSuccess: (_, variables) => {
       // Invalidate scorecard query to refresh cached data

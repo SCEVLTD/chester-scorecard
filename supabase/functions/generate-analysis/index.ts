@@ -44,7 +44,8 @@ interface RequestBody {
   businessName: string
   eProfile?: string | null
   historicalData?: HistoricalDataPoint[]
-  isConsultant?: boolean
+  generateBoth?: boolean  // NEW: Generate both standard and consultant versions
+  isConsultant?: boolean  // LEGACY: For backwards compatibility
 }
 
 function formatVariance(value: number | null): string {
@@ -55,7 +56,6 @@ function formatVariance(value: number | null): string {
 
 function formatQualitative(value: string | null): string {
   if (!value) return 'Not rated'
-  // Map the selection values to readable labels
   const labels: Record<string, string> = {
     // Leadership
     'aligned': 'Fully aligned, accountable leadership',
@@ -110,7 +110,6 @@ function formatHistoricalData(data: HistoricalDataPoint[] | undefined): string {
   let ytdEbitdaActual = 0
   let ytdEbitdaTarget = 0
 
-  // Get current year
   const currentYear = new Date().getFullYear().toString()
 
   data.forEach((d) => {
@@ -123,7 +122,6 @@ function formatHistoricalData(data: HistoricalDataPoint[] | undefined): string {
 
     lines.push(`${d.month}: Revenue GBP ${(d.revenue_actual || 0).toLocaleString()} vs GBP ${(d.revenue_target || 0).toLocaleString()} target (${revVariance !== null ? formatVariance(revVariance) : 'N/A'}) | EBITDA GBP ${(d.ebitda_actual || 0).toLocaleString()} (${ebitdaVariance !== null ? formatVariance(ebitdaVariance) : 'N/A'})`)
 
-    // Accumulate YTD for current year
     if (d.month.startsWith(currentYear)) {
       ytdRevActual += d.revenue_actual || 0
       ytdRevTarget += d.revenue_target || 0
@@ -132,7 +130,6 @@ function formatHistoricalData(data: HistoricalDataPoint[] | undefined): string {
     }
   })
 
-  // Add YTD summary
   const ytdRevVariance = ytdRevTarget > 0
     ? ((ytdRevActual - ytdRevTarget) / ytdRevTarget * 100)
     : null
@@ -152,13 +149,12 @@ function buildConsultantPrompt(
   businessName: string,
   submission: CompanySubmission | null,
   eProfile?: string | null,
-  historicalData?: HistoricalDataPoint[]
+  _historicalData?: HistoricalDataPoint[]
 ): string {
   const eProfileSection = eProfile
     ? `E-PROFILE: ${eProfile} - ${E_PROFILE_LABELS[eProfile] || 'Unknown category'}\n`
     : ''
 
-  // Calculate trend direction without specific figures
   const revenueTrend = scorecard.revenue_variance !== null
     ? scorecard.revenue_variance > 5 ? 'above target'
       : scorecard.revenue_variance < -5 ? 'below target'
@@ -170,21 +166,6 @@ function buildConsultantPrompt(
       : scorecard.net_profit_variance < -5 ? 'below target'
       : 'near target'
     : 'not reported'
-
-  // Historical trend assessment (qualitative)
-  let historicalTrend = 'No historical data available'
-  if (historicalData && historicalData.length >= 3) {
-    const recentThree = historicalData.slice(-3)
-    const revTrends = recentThree.map(d =>
-      d.revenue_target && d.revenue_target > 0
-        ? ((d.revenue_actual || 0) - d.revenue_target) / d.revenue_target
-        : 0
-    )
-    const avgTrend = revTrends.reduce((a, b) => a + b, 0) / revTrends.length
-    historicalTrend = avgTrend > 0.05 ? 'Consistent outperformance over recent months'
-      : avgTrend < -0.05 ? 'Persistent underperformance trend'
-      : 'Stable performance relative to targets'
-  }
 
   return `You are a SENIOR BUSINESS CONSULTANT preparing for a one-on-one advisory meeting with a client business owner. Your role is to provide strategic insights and facilitate productive conversation, NOT to report specific financial figures.
 
@@ -205,7 +186,6 @@ OVERALL HEALTH: ${scorecard.rag_status.toUpperCase()} status (${scorecard.total_
 === PERFORMANCE INDICATORS (Qualitative) ===
 Revenue Performance: ${revenueTrend}
 Profitability Performance: ${profitTrend}
-Historical Trajectory: ${historicalTrend}
 
 === LEAD INDICATORS ===
 Sales Activity Level: ${submission?.outbound_calls !== null ? (submission.outbound_calls > 50 ? 'High' : submission.outbound_calls > 20 ? 'Moderate' : 'Low') : 'Not tracked'}
@@ -248,7 +228,7 @@ REQUIRED OUTPUT (Consultant Advisory Format):
 6. Relationship Context: One brief note on how the client seems to view their business (optimistic, concerned, realistic) based on their self-reported insights vs actual performance indicators.`
 }
 
-function buildPrompt(
+function buildStandardPrompt(
   scorecard: ScorecardData,
   previousScorecard: ScorecardData | null,
   businessName: string,
@@ -326,19 +306,97 @@ REQUIRED OUTPUT:
 
 5. Trend Breaks: If prior month data exists, note any significant changes (more than 10 point score change, RAG status change, major metric swings). If no prior data, return empty array.
 
-6. Historical Context: If historical data is provided, assess the trajectory. Is revenue trending up, flat, or down? Is EBITDA margin improving? How does YTD compare to target? Provide a brief assessment (2-3 sentences).
+6. Historical Context: If historical data is provided, assess the trajectory. Is revenue trending up, flat, or down? Is EBITDA margin improving? How does YTD compare to target? Provide a brief assessment (2-3 sentences). Empty string if no historical data.
 
-7. E-Profile Considerations: If an E-Profile is provided, note any size-appropriate considerations. E0/E1 businesses may have different priorities than E4/E5. Comment on whether the business appears to be operating appropriately for its scale.`
+7. E-Profile Considerations: If an E-Profile is provided, note any size-appropriate considerations. E0/E1 businesses may have different priorities than E4/E5. Comment on whether the business appears to be operating appropriately for its scale. Empty string if no E-Profile provided.`
+}
+
+// Tool schemas
+const standardAnalysisTool = {
+  name: 'submit_analysis',
+  description: 'Submit the completed business analysis',
+  input_schema: {
+    type: 'object' as const,
+    properties: {
+      execSummary: { type: 'string', description: 'Executive summary (150 to 250 words)' },
+      topQuestions: { type: 'array', items: { type: 'string' }, description: '5 focus points for next month' },
+      actions30Day: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            action: { type: 'string' },
+            priority: { type: 'string', enum: ['high', 'medium', 'low'] }
+          },
+          required: ['action', 'priority']
+        },
+        description: 'Prioritised 30 day action items'
+      },
+      inconsistencies: { type: 'array', items: { type: 'string' }, description: 'Data inconsistencies detected (empty array if none)' },
+      trendBreaks: { type: 'array', items: { type: 'string' }, description: 'Significant trend breaks vs prior month (empty array if none)' },
+      historicalContext: { type: 'string', description: 'Brief assessment of historical trajectory. Empty string if no data.' },
+      eProfileConsiderations: { type: 'string', description: 'Size-appropriate considerations. Empty string if no E-Profile.' }
+    },
+    required: ['execSummary', 'topQuestions', 'actions30Day', 'inconsistencies', 'trendBreaks', 'historicalContext', 'eProfileConsiderations']
+  }
+}
+
+const consultantAnalysisTool = {
+  name: 'submit_analysis',
+  description: 'Submit the consultant executive summary',
+  input_schema: {
+    type: 'object' as const,
+    properties: {
+      execSummary: { type: 'string', description: 'Executive summary (150-200 words) - strategic narrative, no specific figures' },
+      keyObservations: { type: 'array', items: { type: 'string' }, description: '5 strategic observations about the business' },
+      discussionPoints: { type: 'array', items: { type: 'string' }, description: '5 open-ended questions for meeting dialogue' },
+      strategicRecommendations: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            recommendation: { type: 'string' },
+            priority: { type: 'string', enum: ['high', 'medium', 'low'] }
+          },
+          required: ['recommendation', 'priority']
+        },
+        description: '3-5 strategic recommendations with priority levels'
+      },
+      redFlags: { type: 'array', items: { type: 'string' }, description: '0-3 items of genuine concern (empty array if none)' },
+      relationshipContext: { type: 'string', description: 'Brief note on how client views their business' }
+    },
+    required: ['execSummary', 'keyObservations', 'discussionPoints', 'strategicRecommendations', 'redFlags', 'relationshipContext']
+  }
+}
+
+async function generateSingleAnalysis(
+  anthropic: Anthropic,
+  prompt: string,
+  tool: typeof standardAnalysisTool | typeof consultantAnalysisTool
+): Promise<Record<string, unknown>> {
+  const response = await anthropic.messages.create({
+    model: 'claude-sonnet-4-5-20250929',
+    max_tokens: 2000,
+    messages: [{ role: 'user', content: prompt }],
+    tools: [tool],
+    tool_choice: { type: 'tool', name: 'submit_analysis' }
+  })
+
+  const toolUse = response.content.find(block => block.type === 'tool_use')
+  if (!toolUse || toolUse.type !== 'tool_use') {
+    throw new Error('No tool use response from Claude')
+  }
+
+  return toolUse.input as Record<string, unknown>
 }
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const { scorecard, previousScorecard, businessName, eProfile, historicalData, isConsultant } = await req.json() as RequestBody
+    const { scorecard, previousScorecard, businessName, eProfile, historicalData, generateBoth, isConsultant } = await req.json() as RequestBody
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -356,10 +414,9 @@ Deno.serve(async (req) => {
       submission = data as CompanySubmission | null
     }
 
-    // Fetch historical data if not provided (last 12 months)
+    // Fetch historical data if not provided
     let fetchedHistoricalData = historicalData
     if (!fetchedHistoricalData && scorecard.company_submission_id) {
-      // Get business_id from the submission's data_request
       const { data: dataRequest } = await supabase
         .from('company_submissions')
         .select('data_requests!inner(business_id)')
@@ -369,7 +426,6 @@ Deno.serve(async (req) => {
       if (dataRequest) {
         const businessId = (dataRequest.data_requests as { business_id: string }).business_id
 
-        // Fetch last 12 months of financial data
         const { data: history } = await supabase
           .from('company_submissions')
           .select(`
@@ -390,7 +446,7 @@ Deno.serve(async (req) => {
             revenue_target: h.revenue_target,
             ebitda_actual: h.net_profit_actual,
             ebitda_target: h.net_profit_target,
-          })).reverse() // Oldest first
+          })).reverse()
         }
       }
     }
@@ -399,91 +455,44 @@ Deno.serve(async (req) => {
       apiKey: Deno.env.get('ANTHROPIC_API_KEY'),
     })
 
-    // Build appropriate prompt based on user role
+    const generatedAt = new Date().toISOString()
+    const modelUsed = 'claude-sonnet-4-5-20250929'
+
+    // NEW: Generate both versions in parallel
+    if (generateBoth) {
+      const standardPrompt = buildStandardPrompt(scorecard, previousScorecard, businessName, submission, eProfile, fetchedHistoricalData)
+      const consultantPrompt = buildConsultantPrompt(scorecard, previousScorecard, businessName, submission, eProfile, fetchedHistoricalData)
+
+      // Run both in parallel
+      const [standardResult, consultantResult] = await Promise.all([
+        generateSingleAnalysis(anthropic, standardPrompt, standardAnalysisTool),
+        generateSingleAnalysis(anthropic, consultantPrompt, consultantAnalysisTool),
+      ])
+
+      // Return combined format
+      const combinedAnalysis = {
+        standard: standardResult,
+        consultant: consultantResult,
+        generatedAt,
+        modelUsed,
+      }
+
+      return new Response(JSON.stringify(combinedAnalysis), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    // LEGACY: Single version generation (for backwards compatibility)
     const prompt = isConsultant
       ? buildConsultantPrompt(scorecard, previousScorecard, businessName, submission, eProfile, fetchedHistoricalData)
-      : buildPrompt(scorecard, previousScorecard, businessName, submission, eProfile, fetchedHistoricalData)
-
-    // Tool schema for admin/standard analysis
-    const standardAnalysisTool = {
-      name: 'submit_analysis',
-      description: 'Submit the completed business analysis',
-      input_schema: {
-        type: 'object' as const,
-        properties: {
-          execSummary: { type: 'string', description: 'Executive summary (150 to 250 words)' },
-          topQuestions: { type: 'array', items: { type: 'string' }, description: '5 focus points for next month - areas to monitor, improve, or track progress' },
-          actions30Day: {
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                action: { type: 'string' },
-                priority: { type: 'string', enum: ['high', 'medium', 'low'] }
-              },
-              required: ['action', 'priority']
-            },
-            description: 'Prioritised 30 day action items'
-          },
-          inconsistencies: { type: 'array', items: { type: 'string' }, description: 'Data inconsistencies detected (empty array if none)' },
-          trendBreaks: { type: 'array', items: { type: 'string' }, description: 'Significant trend breaks vs prior month (empty array if none or no prior data)' },
-          historicalContext: { type: 'string', description: 'Brief assessment of historical trajectory (2-3 sentences). Empty string if no historical data.' },
-          eProfileConsiderations: { type: 'string', description: 'Size-appropriate considerations based on E-Profile. Empty string if no E-Profile provided.' }
-        },
-        required: ['execSummary', 'topQuestions', 'actions30Day', 'inconsistencies', 'trendBreaks', 'historicalContext', 'eProfileConsiderations']
-      }
-    }
-
-    // Tool schema for consultant analysis (no specific figures, strategic focus)
-    const consultantAnalysisTool = {
-      name: 'submit_analysis',
-      description: 'Submit the consultant executive summary',
-      input_schema: {
-        type: 'object' as const,
-        properties: {
-          execSummary: { type: 'string', description: 'Executive summary (150-200 words) - strategic narrative, no specific figures' },
-          keyObservations: { type: 'array', items: { type: 'string' }, description: '5 strategic observations about the business' },
-          discussionPoints: { type: 'array', items: { type: 'string' }, description: '5 open-ended questions to facilitate productive meeting dialogue' },
-          strategicRecommendations: {
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                recommendation: { type: 'string' },
-                priority: { type: 'string', enum: ['high', 'medium', 'low'] }
-              },
-              required: ['recommendation', 'priority']
-            },
-            description: '3-5 strategic recommendations with priority levels'
-          },
-          redFlags: { type: 'array', items: { type: 'string' }, description: '0-3 items of genuine concern (empty array if none)' },
-          relationshipContext: { type: 'string', description: 'Brief note on how client views their business (optimistic, concerned, realistic)' }
-        },
-        required: ['execSummary', 'keyObservations', 'discussionPoints', 'strategicRecommendations', 'redFlags', 'relationshipContext']
-      }
-    }
+      : buildStandardPrompt(scorecard, previousScorecard, businessName, submission, eProfile, fetchedHistoricalData)
 
     const analysisTool = isConsultant ? consultantAnalysisTool : standardAnalysisTool
-
-    const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-5-20250929',
-      max_tokens: 2000,
-      messages: [{ role: 'user', content: prompt }],
-      tools: [analysisTool],
-      tool_choice: { type: 'tool', name: 'submit_analysis' }
-    })
-
-    // Extract the tool use result
-    const toolUse = response.content.find(block => block.type === 'tool_use')
-    if (!toolUse || toolUse.type !== 'tool_use') {
-      throw new Error('No tool use response from Claude')
-    }
-
-    const analysis = toolUse.input as Record<string, unknown>
+    const analysis = await generateSingleAnalysis(anthropic, prompt, analysisTool)
 
     // Add metadata
-    analysis.generatedAt = new Date().toISOString()
-    analysis.modelUsed = 'claude-sonnet-4-5-20250929'
+    analysis.generatedAt = generatedAt
+    analysis.modelUsed = modelUsed
     analysis.isConsultantView = isConsultant || false
 
     return new Response(JSON.stringify(analysis), {
