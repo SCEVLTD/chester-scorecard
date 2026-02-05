@@ -12,6 +12,7 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  Label,
 } from 'recharts'
 import type { EProfile } from '@/types/database.types'
 import { E_PROFILE_LABELS } from '@/types/database.types'
@@ -104,16 +105,7 @@ export function CityEprofileChart({ data }: CityEprofileChartProps) {
   }
 
   return (
-    <div className="h-[350px] w-full relative">
-      {/* Center label - positioned to match Pie cx="50%" cy="45%" */}
-      <div
-        className="absolute left-1/2 pointer-events-none z-10 flex flex-col items-center"
-        style={{ top: 'calc(45% - 20px)', transform: 'translateX(-50%)' }}
-      >
-        <span className="text-3xl font-bold text-slate-900">{total}</span>
-        <span className="text-sm text-slate-500">Businesses</span>
-      </div>
-
+    <div className="h-[350px] w-full">
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
@@ -136,6 +128,18 @@ export function CityEprofileChart({ data }: CityEprofileChartProps) {
                 strokeWidth={2}
               />
             ))}
+            <Label
+              value={total}
+              position="center"
+              dy={-10}
+              style={{ fontSize: 28, fontWeight: 700, fill: '#0f172a' }}
+            />
+            <Label
+              value="Businesses"
+              position="center"
+              dy={16}
+              style={{ fontSize: 14, fill: '#64748b' }}
+            />
           </Pie>
 
           <Tooltip
