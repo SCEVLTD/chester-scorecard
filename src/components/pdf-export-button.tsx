@@ -1,11 +1,12 @@
 import { Button } from '@/components/ui/button'
 import { Download, Loader2 } from 'lucide-react'
 import { usePdfExport } from '@/hooks/use-pdf-export'
-import type { Scorecard } from '@/types/database.types'
+import type { Scorecard, CompanySubmission } from '@/types/database.types'
 
 interface PdfExportButtonProps {
   scorecard: Scorecard
   businessName: string
+  submission?: CompanySubmission | null
 }
 
 /**
@@ -14,13 +15,13 @@ interface PdfExportButtonProps {
  * Renders a button that triggers PDF generation and download for a scorecard.
  * Shows loading spinner during generation and error message if generation fails.
  */
-export function PdfExportButton({ scorecard, businessName }: PdfExportButtonProps) {
+export function PdfExportButton({ scorecard, businessName, submission }: PdfExportButtonProps) {
   const { exportPdf, isGenerating, error } = usePdfExport()
 
   return (
     <div className="flex flex-col items-center">
       <Button
-        onClick={() => exportPdf(scorecard, businessName)}
+        onClick={() => exportPdf(scorecard, businessName, submission)}
         disabled={isGenerating}
         variant="outline"
         className="w-full"

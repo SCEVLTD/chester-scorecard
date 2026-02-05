@@ -4,6 +4,7 @@ import { ScoreHeader } from '@/components/score-header'
 import { AIAnalysisPanel } from '@/components/ai-analysis-panel'
 import { PdfExportButton } from '@/components/pdf-export-button'
 import { SubmittedFinancialsDisplay } from '@/components/submitted-financials-display'
+import { InsightsCard } from '@/components/insights-card'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -98,7 +99,7 @@ export function BusinessScorecardView({
               )}
             </Button>
           )}
-          <PdfExportButton scorecard={scorecard} businessName={businessName} />
+          <PdfExportButton scorecard={scorecard} businessName={businessName} submission={submission} />
         </div>
       </div>
 
@@ -283,6 +284,9 @@ export function BusinessScorecardView({
               </CardContent>
             </Card>
           )}
+
+          {/* Company Insights - from submission questions */}
+          <InsightsCard submission={submission} />
         </>
       )}
 

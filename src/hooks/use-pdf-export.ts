@@ -7,11 +7,11 @@
  */
 import { useState, useCallback } from 'react'
 import { saveAs } from 'file-saver'
-import type { Scorecard } from '@/types/database.types'
+import type { Scorecard, CompanySubmission } from '@/types/database.types'
 
 interface UsePdfExportReturn {
   /** Generate and download a PDF for the given scorecard */
-  exportPdf: (scorecard: Scorecard, businessName: string) => Promise<void>
+  exportPdf: (scorecard: Scorecard, businessName: string, submission?: CompanySubmission | null) => Promise<void>
   /** Whether PDF generation is currently in progress */
   isGenerating: boolean
   /** Error from the last generation attempt, if any */
@@ -52,7 +52,8 @@ export function usePdfExport(): UsePdfExportReturn {
 
   const exportPdf = useCallback(async (
     scorecard: Scorecard,
-    businessName: string
+    businessName: string,
+    submission?: CompanySubmission | null
   ): Promise<void> => {
     setIsGenerating(true)
     setError(null)
@@ -68,7 +69,7 @@ export function usePdfExport(): UsePdfExportReturn {
       // Generate PDF blob
       // Note: Call ScorecardPdf as a function since we're outside React render
       const blob = await pdf(
-        ScorecardPdf({ scorecard, businessName })
+        ScorecardPdf({ scorecard, businessName, submission })
       ).toBlob()
 
       // Generate safe filename: "BusinessName-scorecard-2026-01.pdf"

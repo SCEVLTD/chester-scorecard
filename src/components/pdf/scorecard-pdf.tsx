@@ -8,12 +8,13 @@
 import { Document, Page, View, Text, Image } from '@react-pdf/renderer'
 import { styles, ragColors } from './pdf-styles'
 import { mapScorecardToPdfData, type PdfScorecardData } from '@/lib/pdf-data-mapper'
-import type { Scorecard } from '@/types/database.types'
+import type { Scorecard, CompanySubmission } from '@/types/database.types'
 import { velocityLogoBase64 } from './velocity-logo'
 
 interface ScorecardPdfProps {
   scorecard: Scorecard
   businessName: string
+  submission?: CompanySubmission | null
 }
 
 /**
@@ -116,6 +117,42 @@ function CommentaryBlock({ label, text }: { label: string; text: string }) {
 }
 
 /**
+ * Company Insights section
+ */
+function CompanyInsightsSection({ data }: { data: PdfScorecardData }) {
+  if (!data.companyInsights) return null
+
+  const { biggestOpportunity, biggestRisk, challenges, wins } = data.companyInsights
+
+  // Check if there's any content to display
+  if (!biggestOpportunity && !biggestRisk && !challenges && !wins) {
+    return null
+  }
+
+  return (
+    <View style={styles.commentarySection}>
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>Company Insights</Text>
+      </View>
+      <View style={{ paddingTop: 6 }}>
+        {biggestOpportunity && (
+          <CommentaryBlock label="Biggest Opportunity" text={biggestOpportunity} />
+        )}
+        {biggestRisk && (
+          <CommentaryBlock label="Biggest Risk" text={biggestRisk} />
+        )}
+        {challenges && (
+          <CommentaryBlock label="Current Challenges" text={challenges} />
+        )}
+        {wins && (
+          <CommentaryBlock label="Recent Wins" text={wins} />
+        )}
+      </View>
+    </View>
+  )
+}
+
+/**
  * AI Analysis section
  */
 function AIAnalysisSection({ data }: { data: PdfScorecardData }) {
@@ -179,8 +216,8 @@ function formatProductivity(benchmark: number | null, actual: number | null): st
  * Renders a complete scorecard as a single-page (or multi-page if needed) PDF.
  * Uses flexbox layouts via @react-pdf/renderer primitives.
  */
-export function ScorecardPdf({ scorecard, businessName }: ScorecardPdfProps) {
-  const data = mapScorecardToPdfData(scorecard, businessName)
+export function ScorecardPdf({ scorecard, businessName, submission }: ScorecardPdfProps) {
+  const data = mapScorecardToPdfData(scorecard, businessName, submission)
 
   return (
     <Document>
@@ -331,6 +368,9 @@ export function ScorecardPdf({ scorecard, businessName }: ScorecardPdfProps) {
             <CommentaryBlock label="Consultant Gut Feel" text={data.commentary.gutFeel} />
           </View>
         </View>
+
+        {/* Company Insights Section (if present) */}
+        <CompanyInsightsSection data={data} />
 
         {/* AI Analysis Section (if present) */}
         <AIAnalysisSection data={data} />

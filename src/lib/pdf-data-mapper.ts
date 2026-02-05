@@ -5,7 +5,7 @@
  * with pre-calculated scores for display.
  */
 import { format } from 'date-fns'
-import type { Scorecard } from '@/types/database.types'
+import type { Scorecard, CompanySubmission } from '@/types/database.types'
 import type { AIAnalysis } from '@/types/ai-analysis.types'
 import {
   scoreFinancialMetric,
@@ -68,6 +68,13 @@ export interface PdfScorecardData {
     gutFeel: string
   }
 
+  companyInsights?: {
+    biggestOpportunity: string
+    biggestRisk: string
+    challenges: string
+    wins: string
+  }
+
   aiAnalysis?: AIAnalysis
 }
 
@@ -116,11 +123,13 @@ function getChoiceLabel(choice: string | null): string {
  *
  * @param scorecard The scorecard database record
  * @param businessName The business name for the header
+ * @param submission Optional company submission with insights
  * @returns PDF-ready data structure with calculated scores
  */
 export function mapScorecardToPdfData(
   scorecard: Scorecard,
-  businessName: string
+  businessName: string,
+  submission?: CompanySubmission | null
 ): PdfScorecardData {
   // Calculate individual financial scores
   const revenueScore = scorecard.revenue_variance !== null
@@ -223,6 +232,18 @@ export function mapScorecardToPdfData(
       leadershipConfidence: scorecard.leadership_confidence || '',
       gutFeel: scorecard.consultant_gut_feel || '',
     },
+
+    companyInsights: submission && (
+      submission.company_biggest_opportunity ||
+      submission.company_biggest_risk ||
+      submission.company_challenges ||
+      submission.company_wins
+    ) ? {
+      biggestOpportunity: submission.company_biggest_opportunity || '',
+      biggestRisk: submission.company_biggest_risk || '',
+      challenges: submission.company_challenges || '',
+      wins: submission.company_wins || '',
+    } : undefined,
 
     aiAnalysis,
   }
