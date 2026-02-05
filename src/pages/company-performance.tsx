@@ -149,8 +149,8 @@ export function CompanyPerformancePage() {
         {eProfile ? E_PROFILE_LABELS[eProfile] : 'Historical revenue and EBITDA performance'}
       </p>
 
-      {/* YTD Summary Cards */}
-      {ytdSummary && (
+      {/* YTD Summary Cards - hidden for consultants (no financial figures) */}
+      {!isConsultant && ytdSummary && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Card>
             <CardHeader className="pb-2">
@@ -162,10 +162,10 @@ export function CompanyPerformancePage() {
               <div className="space-y-2">
                 <div className="flex justify-between items-end">
                   <span className="text-2xl font-bold">
-                    {isConsultant ? '—' : formatCurrency(ytdSummary.revenue_actual)}
+                    {formatCurrency(ytdSummary.revenue_actual)}
                   </span>
                   <span className="text-sm text-muted-foreground">
-                    {isConsultant ? '' : `of ${formatCurrency(ytdSummary.revenue_target)}`}
+                    of {formatCurrency(ytdSummary.revenue_target)}
                   </span>
                 </div>
                 <Progress
@@ -176,7 +176,7 @@ export function CompanyPerformancePage() {
                   }
                   className="h-2"
                 />
-                {!isConsultant && ytdSummary.revenue_variance_pct !== null && (
+                {ytdSummary.revenue_variance_pct !== null && (
                   <Badge
                     variant={ytdSummary.revenue_variance_pct >= 0 ? 'default' : 'destructive'}
                     className="text-xs"
@@ -203,10 +203,10 @@ export function CompanyPerformancePage() {
               <div className="space-y-2">
                 <div className="flex justify-between items-end">
                   <span className="text-2xl font-bold">
-                    {isConsultant ? '—' : formatCurrency(ytdSummary.ebitda_actual)}
+                    {formatCurrency(ytdSummary.ebitda_actual)}
                   </span>
                   <span className="text-sm text-muted-foreground">
-                    {isConsultant ? '' : `of ${formatCurrency(ytdSummary.ebitda_target)}`}
+                    of {formatCurrency(ytdSummary.ebitda_target)}
                   </span>
                 </div>
                 <Progress
@@ -218,7 +218,7 @@ export function CompanyPerformancePage() {
                   className="h-2"
                 />
                 <div className="flex items-center gap-2">
-                  {!isConsultant && ytdSummary.ebitda_variance_pct !== null && (
+                  {ytdSummary.ebitda_variance_pct !== null && (
                     <Badge
                       variant={ytdSummary.ebitda_variance_pct >= 0 ? 'default' : 'destructive'}
                       className="text-xs"
@@ -231,7 +231,7 @@ export function CompanyPerformancePage() {
                       {formatPercent(ytdSummary.ebitda_variance_pct)} vs target
                     </Badge>
                   )}
-                  {!isConsultant && ytdSummary.ebitda_pct !== null && (
+                  {ytdSummary.ebitda_pct !== null && (
                     <Badge variant="secondary" className="text-xs">
                       {ytdSummary.ebitda_pct.toFixed(1)}% margin
                     </Badge>

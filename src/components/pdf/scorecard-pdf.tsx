@@ -154,11 +154,25 @@ function CompanyInsightsSection({ data }: { data: PdfScorecardData }) {
 
 /**
  * AI Analysis section
+ * Handles both new storage format (standard/consultant) and legacy format
  */
 function AIAnalysisSection({ data }: { data: PdfScorecardData }) {
   if (!data.aiAnalysis) return null
 
-  const { execSummary, actions30Day } = data.aiAnalysis
+  // Extract standard analysis - handle both new and legacy formats
+  const analysis = data.aiAnalysis
+  const isNewFormat = 'standard' in analysis || 'consultant' in analysis
+
+  // Get execSummary and actions from appropriate source
+  const execSummary = isNewFormat
+    ? (analysis as { standard?: { execSummary: string } }).standard?.execSummary
+    : (analysis as { execSummary: string }).execSummary
+
+  const actions30Day = isNewFormat
+    ? (analysis as { standard?: { actions30Day: Array<{ action: string; priority: string }> } }).standard?.actions30Day
+    : (analysis as { actions30Day: Array<{ action: string; priority: string }> }).actions30Day
+
+  if (!execSummary) return null
 
   return (
     <View style={styles.aiSection}>
@@ -168,7 +182,7 @@ function AIAnalysisSection({ data }: { data: PdfScorecardData }) {
       {actions30Day && actions30Day.length > 0 && (
         <View>
           <Text style={styles.aiActionsTitle}>30-Day Priority Actions:</Text>
-          {actions30Day.slice(0, 5).map((action, index) => (
+          {actions30Day.slice(0, 5).map((action: { action: string; priority: string }, index: number) => (
             <View key={index} style={styles.aiAction}>
               <Text style={styles.aiActionBullet}>
                 {action.priority === 'high' ? '!' : '-'}
