@@ -12,6 +12,7 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  Label,
 } from 'recharts'
 import type { EProfile } from '@/types/database.types'
 import { E_PROFILE_LABELS } from '@/types/database.types'
@@ -103,6 +104,34 @@ export function CityEprofileChart({ data }: CityEprofileChartProps) {
     )
   }
 
+  // Custom center label component
+  const CenterLabel = ({ viewBox }: { viewBox?: { cx?: number; cy?: number } }) => {
+    const cx = viewBox?.cx ?? 0
+    const cy = viewBox?.cy ?? 0
+    return (
+      <g>
+        <text
+          x={cx}
+          y={cy - 8}
+          textAnchor="middle"
+          dominantBaseline="central"
+          style={{ fontSize: 28, fontWeight: 700, fill: '#0f172a' }}
+        >
+          {total}
+        </text>
+        <text
+          x={cx}
+          y={cy + 16}
+          textAnchor="middle"
+          dominantBaseline="central"
+          style={{ fontSize: 14, fill: '#64748b' }}
+        >
+          Businesses
+        </text>
+      </g>
+    )
+  }
+
   return (
     <div className="h-[350px] w-full">
       <ResponsiveContainer width="100%" height="100%">
@@ -110,9 +139,9 @@ export function CityEprofileChart({ data }: CityEprofileChartProps) {
           <Pie
             data={chartData}
             cx="50%"
-            cy="50%"
+            cy="45%"
             innerRadius={60}
-            outerRadius={120}
+            outerRadius={110}
             paddingAngle={2}
             dataKey="count"
             nameKey="profile"
@@ -127,6 +156,8 @@ export function CityEprofileChart({ data }: CityEprofileChartProps) {
                 strokeWidth={2}
               />
             ))}
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            <Label content={CenterLabel as any} position="center" />
           </Pie>
 
           <Tooltip
@@ -150,9 +181,10 @@ export function CityEprofileChart({ data }: CityEprofileChartProps) {
           />
 
           <Legend
-            layout="vertical"
-            align="right"
-            verticalAlign="middle"
+            layout="horizontal"
+            align="center"
+            verticalAlign="bottom"
+            wrapperStyle={{ paddingTop: 8 }}
             formatter={(value: string) => {
               const profile = value as EProfile
               const item = chartData.find((d) => d.profile === profile)
@@ -168,14 +200,6 @@ export function CityEprofileChart({ data }: CityEprofileChartProps) {
           />
         </PieChart>
       </ResponsiveContainer>
-
-      {/* Center label showing total */}
-      <div className="relative -mt-[215px] pointer-events-none">
-        <div className="flex flex-col items-center justify-center h-[120px]">
-          <span className="text-3xl font-bold">{total}</span>
-          <span className="text-sm text-muted-foreground">Businesses</span>
-        </div>
-      </div>
     </div>
   )
 }
