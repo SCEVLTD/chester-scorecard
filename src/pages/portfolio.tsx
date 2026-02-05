@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { AlertTriangle, GitCompare, Sparkles, Loader2, X, FileText, Pencil, Mail, Link2, Trash2, Plus, Calendar } from 'lucide-react'
 import { PageHeader } from '@/components/page-header'
@@ -366,8 +367,8 @@ export function PortfolioPage() {
           <SubmissionStatusPanel month={displayMonth} />
         </div>
 
-        {/* Bulk Invitation Panel (Admin Only) */}
-        {(userRole === 'super_admin' || userRole === 'consultant' ) && (
+        {/* Bulk Invitation Panel (Super Admin Only) */}
+        {userRole === 'super_admin' && (
           <div className="mb-6">
             <BulkInvitationPanel />
           </div>
@@ -408,28 +409,32 @@ export function PortfolioPage() {
           </Card>
         )}
 
-        {/* Month Filter */}
-        <div className="flex items-center gap-4 mb-4">
-          <label htmlFor="month-filter" className="text-sm font-medium">
-            Filter by month:
-          </label>
-          <Select
-            value={selectedMonth ?? 'latest'}
-            onValueChange={(value) => setSelectedMonth(value === 'latest' ? undefined : value)}
-          >
-            <SelectTrigger id="month-filter" className="w-[200px]">
-              <SelectValue placeholder="Select month" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="latest">Latest</SelectItem>
-              {monthOptions.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {/* Month Filter - unified styling with FilterBar */}
+        <Card className="mb-4">
+          <CardContent className="py-4">
+            <div className="flex items-center gap-3">
+              <Label htmlFor="month-filter" className="text-sm font-semibold whitespace-nowrap">
+                Month:
+              </Label>
+              <Select
+                value={selectedMonth ?? 'latest'}
+                onValueChange={(value) => setSelectedMonth(value === 'latest' ? undefined : value)}
+              >
+                <SelectTrigger id="month-filter" className="w-[180px] font-semibold text-base">
+                  <SelectValue placeholder="Select month" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="latest">Latest</SelectItem>
+                  {monthOptions.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Tabs for Card and Heatmap views */}
         <Tabs defaultValue="cards" className="mt-6">
@@ -580,19 +585,21 @@ export function PortfolioPage() {
                             <Pencil className="h-4 w-4 text-muted-foreground" />
                           </Button>
 
-                          {/* Delete button */}
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleDeleteBusiness(business.id, business.name)
-                            }}
-                            title="Delete business"
-                          >
-                            <Trash2 className="h-4 w-4 text-red-500" />
-                          </Button>
+                          {/* Delete button (Super Admin Only) */}
+                          {userRole === 'super_admin' && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleDeleteBusiness(business.id, business.name)
+                              }}
+                              title="Delete business"
+                            >
+                              <Trash2 className="h-4 w-4 text-red-500" />
+                            </Button>
+                          )}
 
                           {/* Score badge if they have one */}
                           {scorecard && (

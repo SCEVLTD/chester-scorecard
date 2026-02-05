@@ -9,7 +9,6 @@
 import { useState, useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   Table,
   TableBody,
@@ -20,16 +19,14 @@ import {
 } from '@/components/ui/table'
 import { TrendingUp, TrendingDown, Building2, Loader2 } from 'lucide-react'
 import { PageHeader } from '@/components/page-header'
+import { FilterBar } from '@/components/filter-bar'
 import {
   useCityMonthlyAggregate,
   useCityYtdAggregate,
   useYearOverYearComparison,
   useEProfileYearAggregate,
 } from '@/hooks/use-city-aggregate'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Label } from '@/components/ui/label'
 import type { CityMonthlyAggregate, EProfile } from '@/types/database.types'
-import { E_PROFILE_LABELS } from '@/types/database.types'
 
 // Format currency for display
 function formatCurrency(value: number | null | undefined, compact = false): string {
@@ -260,64 +257,21 @@ export function CityDashboardPage() {
 
   return (
     <div className="container mx-auto py-6 space-y-6">
-      <PageHeader
-        backTo="/"
-        actions={
-          <Select
-            value={selectedYear.toString()}
-            onValueChange={(v) => setSelectedYear(parseInt(v))}
-          >
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {availableYears.map((year) => (
-                <SelectItem key={year} value={year.toString()}>
-                  {year}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        }
-      />
+      <PageHeader backTo="/" />
 
       <h1 className="text-2xl font-bold text-center">Chester Group Results</h1>
       <p className="text-center text-muted-foreground mb-4">Aggregated performance across all businesses</p>
 
-      {/* E-Profile Filter */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium">Filter by E-Profile</CardTitle>
-          <CardDescription>Select which business categories to include</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-4">
-            {ALL_PROFILES.map((profile) => (
-              <div key={profile} className="flex items-center space-x-2">
-                <Checkbox
-                  id={`filter-${profile}`}
-                  checked={selectedProfiles.has(profile)}
-                  onCheckedChange={() => toggleProfile(profile)}
-                />
-                <Label
-                  htmlFor={`filter-${profile}`}
-                  className="text-sm cursor-pointer"
-                >
-                  <span className="font-medium">{profile}</span>
-                  <span className="text-muted-foreground ml-1">
-                    - {E_PROFILE_LABELS[profile]}
-                  </span>
-                </Label>
-              </div>
-            ))}
-          </div>
-          {selectedProfiles.size < ALL_PROFILES.length && (
-            <p className="text-sm text-blue-600 mt-2">
-              Showing {selectedProfiles.size} of {ALL_PROFILES.length} categories
-            </p>
-          )}
-        </CardContent>
-      </Card>
+      {/* Unified Filter Bar - Year selector and E-Profile filter */}
+      <FilterBar
+        year={selectedYear}
+        onYearChange={setSelectedYear}
+        availableYears={availableYears}
+        eProfileFilter={{
+          selected: selectedProfiles,
+          onToggle: toggleProfile,
+        }}
+      />
 
       {/* KPI Summary Cards */}
       {totals && (

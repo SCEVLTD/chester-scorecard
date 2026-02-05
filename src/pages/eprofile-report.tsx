@@ -11,7 +11,6 @@ import { useLocation } from 'wouter'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Checkbox } from '@/components/ui/checkbox'
 import {
   Table,
   TableBody,
@@ -25,15 +24,9 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { ChevronDown, AlertTriangle, Loader2 } from 'lucide-react'
 import { PageHeader } from '@/components/page-header'
+import { FilterBar } from '@/components/filter-bar'
 import {
   BarChart,
   Bar,
@@ -213,57 +206,28 @@ export function EProfileReportPage() {
     )
   }
 
+  // Build available years list
+  const availableYears = useMemo(() => {
+    return [currentYear, currentYear - 1]
+  }, [currentYear])
+
   return (
     <div className="container mx-auto py-6 space-y-6">
-      <PageHeader
-        backTo="/portfolio"
-        actions={
-          <Select
-            value={selectedYear.toString()}
-            onValueChange={(v) => setSelectedYear(parseInt(v))}
-          >
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {[currentYear, currentYear - 1].map((year) => (
-                <SelectItem key={year} value={year.toString()}>
-                  {year}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        }
-      />
+      <PageHeader backTo="/portfolio" />
 
       <h1 className="text-2xl font-bold text-center">E-Profile Analysis</h1>
       <p className="text-center text-muted-foreground mb-4">Business performance grouped by revenue category</p>
 
-      {/* E-Profile Filter */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium">Filter by E-Profile</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-4">
-            {ALL_PROFILES.map((profile) => (
-              <div key={profile} className="flex items-center space-x-2">
-                <Checkbox
-                  id={profile}
-                  checked={selectedProfiles.has(profile)}
-                  onCheckedChange={() => toggleProfile(profile)}
-                />
-                <label
-                  htmlFor={profile}
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  {profile} - {E_PROFILE_LABELS[profile]}
-                </label>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Unified Filter Bar - Year selector and E-Profile filter */}
+      <FilterBar
+        year={selectedYear}
+        onYearChange={setSelectedYear}
+        availableYears={availableYears}
+        eProfileFilter={{
+          selected: selectedProfiles,
+          onToggle: toggleProfile,
+        }}
+      />
 
       {/* Distribution Charts */}
       <div className="grid md:grid-cols-2 gap-6">
