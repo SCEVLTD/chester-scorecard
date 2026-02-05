@@ -17,7 +17,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { TrendingUp, TrendingDown, Building2, Loader2 } from 'lucide-react'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { TrendingUp, TrendingDown, Building2, Loader2, BarChart3, TableIcon } from 'lucide-react'
 import { PageHeader } from '@/components/page-header'
 import { FilterBar } from '@/components/filter-bar'
 import {
@@ -26,7 +27,12 @@ import {
   useYearOverYearComparison,
   useEProfileYearAggregate,
 } from '@/hooks/use-city-aggregate'
+import { CityRevenueChart } from '@/components/charts/city-revenue-chart'
+import { CityEbitdaChart } from '@/components/charts/city-ebitda-chart'
+import { CityEprofileChart } from '@/components/charts/city-eprofile-chart'
 import type { CityMonthlyAggregate, EProfile } from '@/types/database.types'
+
+type ViewMode = 'table' | 'graph'
 
 // Format currency for display
 function formatCurrency(value: number | null | undefined, compact = false): string {
@@ -111,6 +117,7 @@ export function CityDashboardPage() {
   const currentYear = new Date().getFullYear()
   const [selectedYear, setSelectedYear] = useState<number>(currentYear)
   const [selectedProfiles, setSelectedProfiles] = useState<Set<EProfile>>(new Set(ALL_PROFILES))
+  const [viewMode, setViewMode] = useState<ViewMode>('table')
 
   const { data: monthlyData, isLoading: monthlyLoading } = useCityMonthlyAggregate(selectedYear)
   const { data: eprofileData } = useEProfileYearAggregate(selectedYear)
@@ -273,6 +280,22 @@ export function CityDashboardPage() {
         }}
       />
 
+      {/* View Mode Toggle */}
+      <div className="flex justify-center">
+        <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)}>
+          <TabsList>
+            <TabsTrigger value="table" className="gap-2">
+              <TableIcon className="h-4 w-4" />
+              Table View
+            </TabsTrigger>
+            <TabsTrigger value="graph" className="gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Graph View
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
+
       {/* KPI Summary Cards */}
       {totals && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -322,257 +345,312 @@ export function CityDashboardPage() {
         </div>
       )}
 
-      {/* Monthly Breakdown Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Monthly Breakdown</CardTitle>
-          <CardDescription>
-            Revenue and EBITDA performance by month for {selectedYear}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="sticky left-0 bg-background">Metric</TableHead>
-                  {filteredMonthlyData?.map((m) => (
-                    <TableHead key={m.month} className="text-right min-w-[80px]">
-                      {getMonthName(m.month)}
-                    </TableHead>
-                  ))}
-                  <TableHead className="text-right font-bold min-w-[100px]">YTD</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {/* Revenue Target */}
-                <TableRow>
-                  <TableCell className="sticky left-0 bg-background font-medium">
-                    Sales Target
-                  </TableCell>
-                  {filteredMonthlyData?.map((m) => (
-                    <TableCell key={m.month} className="text-right">
-                      {formatCurrency(m.total_revenue_target, true)}
-                    </TableCell>
-                  ))}
-                  <TableCell className="text-right font-bold">
-                    {totals && formatCurrency(totals.revenue_target, true)}
-                  </TableCell>
-                </TableRow>
-                {/* Revenue Actual */}
-                <TableRow>
-                  <TableCell className="sticky left-0 bg-background font-medium">
-                    Sales Actual
-                  </TableCell>
-                  {filteredMonthlyData?.map((m) => (
-                    <TableCell key={m.month} className="text-right">
-                      {formatCurrency(m.total_revenue_actual, true)}
-                    </TableCell>
-                  ))}
-                  <TableCell className="text-right font-bold">
-                    {totals && formatCurrency(totals.revenue_actual, true)}
-                  </TableCell>
-                </TableRow>
-                {/* EBITDA Target */}
-                <TableRow>
-                  <TableCell className="sticky left-0 bg-background font-medium">
-                    EBITDA Target
-                  </TableCell>
-                  {filteredMonthlyData?.map((m) => (
-                    <TableCell key={m.month} className="text-right">
-                      {formatCurrency(m.total_ebitda_target, true)}
-                    </TableCell>
-                  ))}
-                  <TableCell className="text-right font-bold">
-                    {totals && formatCurrency(totals.ebitda_target, true)}
-                  </TableCell>
-                </TableRow>
-                {/* EBITDA Actual */}
-                <TableRow>
-                  <TableCell className="sticky left-0 bg-background font-medium">
-                    EBITDA Actual
-                  </TableCell>
-                  {filteredMonthlyData?.map((m) => (
-                    <TableCell key={m.month} className="text-right">
-                      {formatCurrency(m.total_ebitda_actual, true)}
-                    </TableCell>
-                  ))}
-                  <TableCell className="text-right font-bold">
-                    {totals && formatCurrency(totals.ebitda_actual, true)}
-                  </TableCell>
-                </TableRow>
-                {/* EBITDA % Target */}
-                <TableRow>
-                  <TableCell className="sticky left-0 bg-background font-medium">
-                    EBITDA % Target
-                  </TableCell>
-                  {filteredMonthlyData?.map((m) => (
-                    <TableCell key={m.month} className="text-right">
-                      {m.ebitda_pct_target?.toFixed(1)}%
-                    </TableCell>
-                  ))}
-                  <TableCell className="text-right font-bold">
-                    {totals && `${totals.ebitdaPctTarget.toFixed(1)}%`}
-                  </TableCell>
-                </TableRow>
-                {/* EBITDA % Actual */}
-                <TableRow>
-                  <TableCell className="sticky left-0 bg-background font-medium">
-                    EBITDA % Actual
-                  </TableCell>
-                  {filteredMonthlyData?.map((m) => (
-                    <TableCell
-                      key={m.month}
-                      className={`text-right ${
-                        m.ebitda_pct_actual && m.ebitda_pct_target && m.ebitda_pct_actual >= m.ebitda_pct_target
-                          ? 'text-green-600'
-                          : 'text-red-600'
-                      }`}
-                    >
-                      {m.ebitda_pct_actual?.toFixed(1)}%
-                    </TableCell>
-                  ))}
-                  <TableCell
-                    className={`text-right font-bold ${
-                      totals && totals.ebitdaPctActual >= totals.ebitdaPctTarget
-                        ? 'text-green-600'
-                        : 'text-red-600'
-                    }`}
-                  >
-                    {totals && `${totals.ebitdaPctActual.toFixed(1)}%`}
-                  </TableCell>
-                </TableRow>
-                {/* Business Count */}
-                <TableRow>
-                  <TableCell className="sticky left-0 bg-background font-medium">
-                    No. of Businesses
-                  </TableCell>
-                  {filteredMonthlyData?.map((m) => (
-                    <TableCell key={m.month} className="text-right">
-                      {m.business_count}
-                    </TableCell>
-                  ))}
-                  <TableCell className="text-right font-bold">
-                    {totals?.businessCount}
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Graph View */}
+      {viewMode === 'graph' && (
+        <>
+          {/* Revenue Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Revenue Performance</CardTitle>
+              <CardDescription>
+                Monthly revenue target vs actual for {selectedYear}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <CityRevenueChart
+                data={filteredMonthlyData || []}
+                totals={totals}
+              />
+            </CardContent>
+          </Card>
 
-      {/* Year-over-Year Comparison */}
-      {yoyComparison && yoyData && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Year-over-Year Comparison</CardTitle>
-            <CardDescription>
-              {selectedYear - 1} vs {selectedYear} revenue comparison
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="sticky left-0 bg-background">Year</TableHead>
-                    {yoyData.currentYear.map((m) => (
-                      <TableHead key={m.month} className="text-right min-w-[80px]">
-                        {getMonthName(m.month)}
-                      </TableHead>
-                    ))}
-                    <TableHead className="text-right font-bold min-w-[100px]">YTD</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <TableRow>
-                    <TableCell className="sticky left-0 bg-background font-medium">
-                      {selectedYear - 1}
-                    </TableCell>
-                    {yoyData.previousYear.map((m) => (
-                      <TableCell key={m.month} className="text-right">
-                        {formatCurrency(m.total_revenue_actual, true)}
+          {/* EBITDA Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle>EBITDA Performance</CardTitle>
+              <CardDescription>
+                Monthly EBITDA target vs actual with EBITDA % for {selectedYear}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <CityEbitdaChart
+                data={filteredMonthlyData || []}
+                totals={totals}
+              />
+            </CardContent>
+          </Card>
+
+          {/* E-Profile Chart */}
+          {monthlyData && monthlyData.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>E-Profile Distribution</CardTitle>
+                <CardDescription>Business count by E-Profile category</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <CityEprofileChart data={monthlyData[0]} />
+              </CardContent>
+            </Card>
+          )}
+        </>
+      )}
+
+      {/* Table View */}
+      {viewMode === 'table' && (
+        <>
+          {/* Monthly Breakdown Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Monthly Breakdown</CardTitle>
+              <CardDescription>
+                Revenue and EBITDA performance by month for {selectedYear}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="sticky left-0 bg-background">Metric</TableHead>
+                      {filteredMonthlyData?.map((m) => (
+                        <TableHead key={m.month} className="text-right min-w-[80px]">
+                          {getMonthName(m.month)}
+                        </TableHead>
+                      ))}
+                      <TableHead className="text-right font-bold min-w-[100px]">YTD</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {/* Revenue Target */}
+                    <TableRow>
+                      <TableCell className="sticky left-0 bg-background font-medium">
+                        Sales Target
                       </TableCell>
-                    ))}
-                    <TableCell className="text-right font-bold">
-                      {formatCurrency(yoyComparison.previousRevenue, true)}
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="sticky left-0 bg-background font-medium">
-                      {selectedYear}
-                    </TableCell>
-                    {yoyData.currentYear.map((m) => (
-                      <TableCell key={m.month} className="text-right">
-                        {formatCurrency(m.total_revenue_actual, true)}
+                      {filteredMonthlyData?.map((m) => (
+                        <TableCell key={m.month} className="text-right">
+                          {formatCurrency(m.total_revenue_target, true)}
+                        </TableCell>
+                      ))}
+                      <TableCell className="text-right font-bold">
+                        {totals && formatCurrency(totals.revenue_target, true)}
                       </TableCell>
-                    ))}
-                    <TableCell className="text-right font-bold">
-                      {formatCurrency(yoyComparison.currentRevenue, true)}
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="sticky left-0 bg-background font-medium">
-                      % Change
-                    </TableCell>
-                    {yoyData.currentYear.map((m, i) => {
-                      const prev = yoyData.previousYear[i]?.total_revenue_actual || 0
-                      const curr = m.total_revenue_actual || 0
-                      const change = prev > 0 ? ((curr - prev) / prev) * 100 : null
-                      return (
+                    </TableRow>
+                    {/* Revenue Actual */}
+                    <TableRow>
+                      <TableCell className="sticky left-0 bg-background font-medium">
+                        Sales Actual
+                      </TableCell>
+                      {filteredMonthlyData?.map((m) => (
+                        <TableCell key={m.month} className="text-right">
+                          {formatCurrency(m.total_revenue_actual, true)}
+                        </TableCell>
+                      ))}
+                      <TableCell className="text-right font-bold">
+                        {totals && formatCurrency(totals.revenue_actual, true)}
+                      </TableCell>
+                    </TableRow>
+                    {/* EBITDA Target */}
+                    <TableRow>
+                      <TableCell className="sticky left-0 bg-background font-medium">
+                        EBITDA Target
+                      </TableCell>
+                      {filteredMonthlyData?.map((m) => (
+                        <TableCell key={m.month} className="text-right">
+                          {formatCurrency(m.total_ebitda_target, true)}
+                        </TableCell>
+                      ))}
+                      <TableCell className="text-right font-bold">
+                        {totals && formatCurrency(totals.ebitda_target, true)}
+                      </TableCell>
+                    </TableRow>
+                    {/* EBITDA Actual */}
+                    <TableRow>
+                      <TableCell className="sticky left-0 bg-background font-medium">
+                        EBITDA Actual
+                      </TableCell>
+                      {filteredMonthlyData?.map((m) => (
+                        <TableCell key={m.month} className="text-right">
+                          {formatCurrency(m.total_ebitda_actual, true)}
+                        </TableCell>
+                      ))}
+                      <TableCell className="text-right font-bold">
+                        {totals && formatCurrency(totals.ebitda_actual, true)}
+                      </TableCell>
+                    </TableRow>
+                    {/* EBITDA % Target */}
+                    <TableRow>
+                      <TableCell className="sticky left-0 bg-background font-medium">
+                        EBITDA % Target
+                      </TableCell>
+                      {filteredMonthlyData?.map((m) => (
+                        <TableCell key={m.month} className="text-right">
+                          {m.ebitda_pct_target?.toFixed(1)}%
+                        </TableCell>
+                      ))}
+                      <TableCell className="text-right font-bold">
+                        {totals && `${totals.ebitdaPctTarget.toFixed(1)}%`}
+                      </TableCell>
+                    </TableRow>
+                    {/* EBITDA % Actual */}
+                    <TableRow>
+                      <TableCell className="sticky left-0 bg-background font-medium">
+                        EBITDA % Actual
+                      </TableCell>
+                      {filteredMonthlyData?.map((m) => (
                         <TableCell
                           key={m.month}
                           className={`text-right ${
-                            change !== null && change >= 0 ? 'text-green-600' : 'text-red-600'
+                            m.ebitda_pct_actual && m.ebitda_pct_target && m.ebitda_pct_actual >= m.ebitda_pct_target
+                              ? 'text-green-600'
+                              : 'text-red-600'
                           }`}
                         >
-                          {change !== null ? formatPercent(change) : '-'}
+                          {m.ebitda_pct_actual?.toFixed(1)}%
                         </TableCell>
-                      )
-                    })}
-                    <TableCell
-                      className={`text-right font-bold ${
-                        yoyComparison.changePercent >= 0 ? 'text-green-600' : 'text-red-600'
-                      }`}
-                    >
-                      {formatPercent(yoyComparison.changePercent)}
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+                      ))}
+                      <TableCell
+                        className={`text-right font-bold ${
+                          totals && totals.ebitdaPctActual >= totals.ebitdaPctTarget
+                            ? 'text-green-600'
+                            : 'text-red-600'
+                        }`}
+                      >
+                        {totals && `${totals.ebitdaPctActual.toFixed(1)}%`}
+                      </TableCell>
+                    </TableRow>
+                    {/* Business Count */}
+                    <TableRow>
+                      <TableCell className="sticky left-0 bg-background font-medium">
+                        No. of Businesses
+                      </TableCell>
+                      {filteredMonthlyData?.map((m) => (
+                        <TableCell key={m.month} className="text-right">
+                          {m.business_count}
+                        </TableCell>
+                      ))}
+                      <TableCell className="text-right font-bold">
+                        {totals?.businessCount}
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
 
-      {/* E-Profile Distribution Summary */}
-      {monthlyData && monthlyData.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>E-Profile Distribution</CardTitle>
-            <CardDescription>Business count by E-Profile category</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-4">
-              {[
-                { profile: 'E0', label: 'Entry (<£0.5m)', count: monthlyData[0].e0_count },
-                { profile: 'E1', label: 'Emerging', count: monthlyData[0].e1_count },
-                { profile: 'E2', label: 'Expansion', count: monthlyData[0].e2_count },
-                { profile: 'E3', label: 'Elevation', count: monthlyData[0].e3_count },
-                { profile: 'E4', label: 'Established', count: monthlyData[0].e4_count },
-                { profile: 'E5', label: 'Enterprise', count: monthlyData[0].e5_count },
-              ].map(
-                ({ profile, label, count }) =>
-                  count > 0 && (
-                    <Badge key={profile} variant="secondary" className="text-sm px-3 py-1">
-                      {profile}: {count} ({label})
-                    </Badge>
-                  )
-              )}
-            </div>
-          </CardContent>
-        </Card>
+          {/* Year-over-Year Comparison */}
+          {yoyComparison && yoyData && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Year-over-Year Comparison</CardTitle>
+                <CardDescription>
+                  {selectedYear - 1} vs {selectedYear} revenue comparison
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="sticky left-0 bg-background">Year</TableHead>
+                        {yoyData.currentYear.map((m) => (
+                          <TableHead key={m.month} className="text-right min-w-[80px]">
+                            {getMonthName(m.month)}
+                          </TableHead>
+                        ))}
+                        <TableHead className="text-right font-bold min-w-[100px]">YTD</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell className="sticky left-0 bg-background font-medium">
+                          {selectedYear - 1}
+                        </TableCell>
+                        {yoyData.previousYear.map((m) => (
+                          <TableCell key={m.month} className="text-right">
+                            {formatCurrency(m.total_revenue_actual, true)}
+                          </TableCell>
+                        ))}
+                        <TableCell className="text-right font-bold">
+                          {formatCurrency(yoyComparison.previousRevenue, true)}
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell className="sticky left-0 bg-background font-medium">
+                          {selectedYear}
+                        </TableCell>
+                        {yoyData.currentYear.map((m) => (
+                          <TableCell key={m.month} className="text-right">
+                            {formatCurrency(m.total_revenue_actual, true)}
+                          </TableCell>
+                        ))}
+                        <TableCell className="text-right font-bold">
+                          {formatCurrency(yoyComparison.currentRevenue, true)}
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell className="sticky left-0 bg-background font-medium">
+                          % Change
+                        </TableCell>
+                        {yoyData.currentYear.map((m, i) => {
+                          const prev = yoyData.previousYear[i]?.total_revenue_actual || 0
+                          const curr = m.total_revenue_actual || 0
+                          const change = prev > 0 ? ((curr - prev) / prev) * 100 : null
+                          return (
+                            <TableCell
+                              key={m.month}
+                              className={`text-right ${
+                                change !== null && change >= 0 ? 'text-green-600' : 'text-red-600'
+                              }`}
+                            >
+                              {change !== null ? formatPercent(change) : '-'}
+                            </TableCell>
+                          )
+                        })}
+                        <TableCell
+                          className={`text-right font-bold ${
+                            yoyComparison.changePercent >= 0 ? 'text-green-600' : 'text-red-600'
+                          }`}
+                        >
+                          {formatPercent(yoyComparison.changePercent)}
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* E-Profile Distribution Summary */}
+          {monthlyData && monthlyData.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>E-Profile Distribution</CardTitle>
+                <CardDescription>Business count by E-Profile category</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-4">
+                  {[
+                    { profile: 'E0', label: 'Entry (<£0.5m)', count: monthlyData[0].e0_count },
+                    { profile: 'E1', label: 'Emerging', count: monthlyData[0].e1_count },
+                    { profile: 'E2', label: 'Expansion', count: monthlyData[0].e2_count },
+                    { profile: 'E3', label: 'Elevation', count: monthlyData[0].e3_count },
+                    { profile: 'E4', label: 'Established', count: monthlyData[0].e4_count },
+                    { profile: 'E5', label: 'Enterprise', count: monthlyData[0].e5_count },
+                  ].map(
+                    ({ profile, label, count }) =>
+                      count > 0 && (
+                        <Badge key={profile} variant="secondary" className="text-sm px-3 py-1">
+                          {profile}: {count} ({label})
+                        </Badge>
+                      )
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </>
       )}
     </div>
   )
