@@ -35,11 +35,13 @@ const SECTION_COLORS: Record<string, string> = {
 interface SectionComparisonChartProps {
   data: ChartDataPoint[]
   sections?: string[]
+  hideAxisValues?: boolean
 }
 
 export function SectionComparisonChart({
   data,
   sections = [],
+  hideAxisValues = false,
 }: SectionComparisonChartProps) {
   if (!data.length) {
     return (
@@ -92,7 +94,7 @@ export function SectionComparisonChart({
           />
           <YAxis
             domain={[0, 100]}
-            tick={{ fontSize: 12, fill: '#6b7280' }}
+            tick={hideAxisValues ? false : { fontSize: 12, fill: '#6b7280' }}
             tickLine={false}
             axisLine={{ stroke: '#e5e7eb' }}
             tickFormatter={(value) => `${value}%`}

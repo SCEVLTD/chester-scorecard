@@ -30,6 +30,7 @@ interface SectionBarData {
 
 interface SectionBreakdownChartProps {
   data: ChartDataPoint | null | undefined
+  hideAxisValues?: boolean
 }
 
 // Get colour based on percentage performance
@@ -39,7 +40,7 @@ function getPerformanceColor(percentage: number): string {
   return '#ef4444' // Red
 }
 
-export function SectionBreakdownChart({ data }: SectionBreakdownChartProps) {
+export function SectionBreakdownChart({ data, hideAxisValues = false }: SectionBreakdownChartProps) {
   if (!data) {
     return (
       <div className="flex h-[350px] items-center justify-center text-muted-foreground">
@@ -76,7 +77,7 @@ export function SectionBreakdownChart({ data }: SectionBreakdownChartProps) {
           <XAxis
             type="number"
             domain={[0, 100]}
-            tick={{ fontSize: 12, fill: '#6b7280' }}
+            tick={hideAxisValues ? false : { fontSize: 12, fill: '#6b7280' }}
             tickLine={false}
             axisLine={{ stroke: '#e5e7eb' }}
             tickFormatter={(value) => `${value}%`}
@@ -118,12 +119,14 @@ export function SectionBreakdownChart({ data }: SectionBreakdownChartProps) {
             {barData.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={getPerformanceColor(entry.percentage)} />
             ))}
-            <LabelList
-              dataKey="percentage"
-              position="right"
-              formatter={(value) => `${value}%`}
-              style={{ fill: '#374151', fontWeight: 600, fontSize: 12 }}
-            />
+            {!hideAxisValues && (
+              <LabelList
+                dataKey="percentage"
+                position="right"
+                formatter={(value) => `${value}%`}
+                style={{ fill: '#374151', fontWeight: 600, fontSize: 12 }}
+              />
+            )}
           </Bar>
         </BarChart>
       </ResponsiveContainer>

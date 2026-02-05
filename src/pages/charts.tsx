@@ -16,6 +16,7 @@ import {
   CardTitle,
   CardDescription,
 } from '@/components/ui/card'
+import { useAuth } from '@/contexts/auth-context'
 import { useBusinesses } from '@/hooks/use-businesses'
 import { useBusinessScorecards } from '@/hooks/use-scorecards'
 import { useChartData } from '@/hooks/use-chart-data'
@@ -31,6 +32,7 @@ const SECTION_KEYS = Object.keys(SECTION_CONFIG)
 export function ChartsPage() {
   const { businessId } = useParams<{ businessId: string }>()
   const [, navigate] = useLocation()
+  const { userRole } = useAuth()
   const { data: businesses } = useBusinesses()
   const { data: scorecards, isLoading } = useBusinessScorecards(businessId!)
   const { filters, setFilters } = useChartFilters()
@@ -125,7 +127,7 @@ export function ChartsPage() {
             <CardDescription>Total score trajectory over time</CardDescription>
           </CardHeader>
           <CardContent>
-            <ScoreTrendChart data={chartData} />
+            <ScoreTrendChart data={chartData} hideAxisValues={userRole === 'consultant'} />
           </CardContent>
         </Card>
 
@@ -138,7 +140,7 @@ export function ChartsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <SectionBreakdownChart data={latestMonth} />
+            <SectionBreakdownChart data={latestMonth} hideAxisValues={userRole === 'consultant'} />
           </CardContent>
         </Card>
 
@@ -175,6 +177,7 @@ export function ChartsPage() {
             <SectionComparisonChart
               data={chartData}
               sections={filters.sections}
+              hideAxisValues={userRole === 'consultant'}
             />
           </CardContent>
         </Card>

@@ -21,13 +21,14 @@ import type { ChartDataPoint } from '@/hooks/use-chart-data'
 
 interface ScoreTrendChartProps {
   data: ChartDataPoint[]
+  hideAxisValues?: boolean
 }
 
 // RAG thresholds
 const RAG_GREEN = 70
 const RAG_AMBER = 40
 
-export function ScoreTrendChart({ data }: ScoreTrendChartProps) {
+export function ScoreTrendChart({ data, hideAxisValues = false }: ScoreTrendChartProps) {
   if (!data.length) {
     return (
       <div className="flex h-[350px] items-center justify-center text-muted-foreground">
@@ -62,7 +63,7 @@ export function ScoreTrendChart({ data }: ScoreTrendChartProps) {
           />
           <YAxis
             domain={[0, 100]}
-            tick={{ fontSize: 12, fill: '#6b7280' }}
+            tick={hideAxisValues ? false : { fontSize: 12, fill: '#6b7280' }}
             tickLine={false}
             axisLine={{ stroke: '#e5e7eb' }}
             ticks={[0, 20, 40, 60, 80, 100]}
