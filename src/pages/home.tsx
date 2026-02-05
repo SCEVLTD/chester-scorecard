@@ -95,121 +95,128 @@ export function HomePage() {
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
-      <div className="mx-auto max-w-2xl">
+      <div className="mx-auto max-w-2xl space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img
+              src="/velocity-logo.png"
+              alt="Velocity"
+              className="h-9"
+            />
+            <div>
+              <h1 className="text-lg font-semibold text-foreground">Chester Business Scorecard</h1>
+              <p className="text-xs text-muted-foreground">Doing good by doing well</p>
+            </div>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleSignOut}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <LogOut className="mr-1.5 h-4 w-4" />
+            Logout
+          </Button>
+        </div>
+
+        {/* Navigation Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <button
+            onClick={() => navigate('/city')}
+            className="flex flex-col items-center gap-2 p-4 rounded-xl bg-card border shadow-sm hover:shadow-md hover:border-primary/30 transition-all"
+          >
+            <Building2 className="h-6 w-6 text-primary" />
+            <span className="text-sm font-medium">City Dashboard</span>
+          </button>
+          <button
+            onClick={() => navigate('/eprofile')}
+            className="flex flex-col items-center gap-2 p-4 rounded-xl bg-card border shadow-sm hover:shadow-md hover:border-primary/30 transition-all"
+          >
+            <Layers className="h-6 w-6 text-primary" />
+            <span className="text-sm font-medium">E-Profile</span>
+          </button>
+          <button
+            onClick={() => navigate('/portfolio')}
+            className="flex flex-col items-center gap-2 p-4 rounded-xl bg-card border shadow-sm hover:shadow-md hover:border-primary/30 transition-all"
+          >
+            <LayoutGrid className="h-6 w-6 text-primary" />
+            <span className="text-sm font-medium">Portfolio</span>
+          </button>
+          <button
+            onClick={() => navigate('/admin/import')}
+            className="flex flex-col items-center gap-2 p-4 rounded-xl bg-card border shadow-sm hover:shadow-md hover:border-primary/30 transition-all"
+          >
+            <Upload className="h-6 w-6 text-muted-foreground" />
+            <span className="text-sm font-medium text-muted-foreground">Import</span>
+          </button>
+        </div>
+
+        {/* Admin link */}
+        <div className="flex justify-end">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate('/admin/admins')}
+            className="text-xs text-muted-foreground"
+          >
+            <Shield className="mr-1 h-3 w-3" />
+            Manage Admins
+          </Button>
+        </div>
+
+        {/* Main Content Card */}
         <Card>
-          <CardHeader className="text-center space-y-4">
-            <div className="flex flex-col items-center">
-              <img
-                src="/velocity-logo.png"
-                alt="Velocity"
-                className="h-10 mb-2"
-              />
-              <p className="text-sm text-muted-foreground">
-                Doing good by doing well
-              </p>
-            </div>
-            <CardTitle className="text-xl md:text-2xl">Chester Business Scorecard</CardTitle>
-            <div className="flex flex-wrap items-center justify-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate('/city')}
-              >
-                <Building2 className="mr-1.5 h-4 w-4" />
-                City
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate('/eprofile')}
-              >
-                <Layers className="mr-1.5 h-4 w-4" />
-                E-Profile
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate('/portfolio')}
-              >
-                <LayoutGrid className="mr-1.5 h-4 w-4" />
-                Portfolio
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate('/admin/import')}
-              >
-                <Upload className="mr-1.5 h-4 w-4" />
-                Import
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate('/admin/admins')}
-              >
-                <Shield className="mr-1.5 h-4 w-4" />
-                Admins
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleSignOut}
-              >
-                <LogOut className="mr-1.5 h-4 w-4" />
-                Logout
-              </Button>
-            </div>
+          <CardHeader className="pb-4">
+            <CardTitle className="text-base">Businesses</CardTitle>
           </CardHeader>
-          <CardContent>
-            <form onSubmit={handleCreateBusiness} className="mb-4 space-y-2">
-              <div className="flex gap-2">
+          <CardContent className="space-y-4">
+            {/* Add business form */}
+            <form onSubmit={handleCreateBusiness} className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <Input
                   type="text"
                   placeholder="Business name"
                   value={newBusinessName}
                   onChange={(e) => setNewBusinessName(e.target.value)}
-                  className="flex-1"
                 />
                 <Input
                   type="email"
-                  placeholder="Contact email"
+                  placeholder="Contact email (optional)"
                   value={newBusinessEmail}
                   onChange={(e) => setNewBusinessEmail(e.target.value)}
-                  className="flex-1"
                 />
-                <Button type="submit" disabled={createBusiness.isPending}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add
-                </Button>
               </div>
+              <Button type="submit" disabled={createBusiness.isPending} className="w-full md:w-auto">
+                <Plus className="mr-2 h-4 w-4" />
+                Add Business
+              </Button>
             </form>
 
+            {/* Divider */}
+            <div className="border-t" />
+
             {/* Sector filter */}
-            <div className="mb-4">
-              <div className="flex items-center gap-2">
-                <div className="flex-1">
-                  <SectorSelect
-                    value={filterSectorId}
-                    onChange={setFilterSectorId}
-                    placeholder="Filter by sector"
-                    allowClear
-                  />
-                </div>
-                {filterSectorId && filteredBusinesses.length > 0 && (
-                  <span className="text-sm text-muted-foreground whitespace-nowrap">
-                    {filteredBusinesses.length} business{filteredBusinesses.length !== 1 ? 'es' : ''}
-                  </span>
-                )}
+            <div className="flex items-center gap-3">
+              <div className="flex-1">
+                <SectorSelect
+                  value={filterSectorId}
+                  onChange={setFilterSectorId}
+                  placeholder="All sectors"
+                  allowClear
+                />
               </div>
+              {filteredBusinesses.length > 0 && (
+                <span className="text-sm text-muted-foreground whitespace-nowrap">
+                  {filteredBusinesses.length} business{filteredBusinesses.length !== 1 ? 'es' : ''}
+                </span>
+              )}
             </div>
 
-            {isLoading && <p className="text-muted-foreground">Loading...</p>}
+            {isLoading && <p className="text-muted-foreground text-center py-8">Loading...</p>}
 
             {filteredBusinesses.length > 0 && (
               <div className="space-y-2">
-                <p className="text-sm text-muted-foreground mb-3">
-                  Select a business to view history or start a new scorecard:
-                </p>
                 {filteredBusinesses.map((business) => {
                   const latestScore = latestScores?.get(business.id)
                   const sectorName = business.sector_id ? sectorMap.get(business.sector_id) : null
@@ -217,74 +224,73 @@ export function HomePage() {
                   return (
                     <div
                       key={business.id}
-                      className="flex items-center gap-2 rounded-md border border-input p-3"
+                      className="group flex items-center gap-3 rounded-lg border bg-card p-3 hover:border-primary/30 hover:shadow-sm transition-all cursor-pointer"
+                      onClick={() => navigate(`/business/${business.id}`)}
                     >
-                      {/* Main business button */}
-                      <Button
-                        variant="ghost"
-                        className="flex-1 justify-start text-left h-auto py-0 px-2 -ml-2"
-                        onClick={() => navigate(`/business/${business.id}`)}
-                      >
-                        <div className="flex flex-col items-start gap-0.5">
-                          <span className="font-medium">{business.name}</span>
-                          <span className="text-xs text-muted-foreground">
-                            {sectorName || 'No sector'}
-                          </span>
-                        </div>
-                      </Button>
-
-                      {/* Send/copy submission link */}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          sendLoginLink(business.name, business.contact_email)
-                        }}
-                        title={business.contact_email ? `Email link to ${business.contact_email}` : 'Copy submission link'}
-                      >
-                        {business.contact_email ? (
-                          <Mail className="h-4 w-4 text-green-600" />
+                      {/* Score badge - leading */}
+                      <div className="flex-shrink-0">
+                        {latestScore ? (
+                          <Badge className={`${ragColors[latestScore.rag_status]} min-w-[3rem] justify-center`}>
+                            {latestScore.total_score}
+                          </Badge>
                         ) : (
-                          <Link2 className="h-4 w-4 text-blue-600" />
+                          <Badge variant="secondary" className="min-w-[3rem] justify-center text-muted-foreground">
+                            --
+                          </Badge>
                         )}
-                      </Button>
+                      </div>
 
-                      {/* Edit button - opens full edit dialog */}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setEditingBusiness(business)
-                        }}
-                        title="Edit company details"
-                      >
-                        <Pencil className="h-4 w-4 text-muted-foreground" />
-                      </Button>
+                      {/* Business info */}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">{business.name}</p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {sectorName || 'No sector'}
+                        </p>
+                      </div>
 
-                      {/* Delete button */}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleDeleteBusiness(business.id, business.name)
-                        }}
-                        title="Delete business"
-                      >
-                        <Trash2 className="h-4 w-4 text-red-500" />
-                      </Button>
-
-                      {/* Score badge */}
-                      {latestScore && (
-                        <Badge className={ragColors[latestScore.rag_status]}>
-                          {latestScore.total_score}
-                        </Badge>
-                      )}
+                      {/* Actions - visible on hover */}
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            sendLoginLink(business.name, business.contact_email)
+                          }}
+                          title={business.contact_email ? `Email link to ${business.contact_email}` : 'Copy submission link'}
+                        >
+                          {business.contact_email ? (
+                            <Mail className="h-4 w-4 text-green-600" />
+                          ) : (
+                            <Link2 className="h-4 w-4 text-primary" />
+                          )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setEditingBusiness(business)
+                          }}
+                          title="Edit company details"
+                        >
+                          <Pencil className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleDeleteBusiness(business.id, business.name)
+                          }}
+                          title="Delete business"
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
                     </div>
                   )
                 })}
@@ -293,30 +299,34 @@ export function HomePage() {
 
             {/* Empty states */}
             {businesses && businesses.length === 0 && (
-              <p className="text-muted-foreground">
-                No businesses yet. Add one above to get started.
-              </p>
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">
+                  No businesses yet. Add one above to get started.
+                </p>
+              </div>
             )}
 
             {businesses && businesses.length > 0 && filteredBusinesses.length === 0 && (
-              <p className="text-muted-foreground">
-                No businesses in this sector.
-              </p>
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">
+                  No businesses in this sector.
+                </p>
+              </div>
             )}
           </CardContent>
         </Card>
-
-        {/* Edit dialog */}
-        {editingBusiness && (
-          <CompanyEditDialog
-            business={editingBusiness}
-            open={!!editingBusiness}
-            onOpenChange={(open) => {
-              if (!open) setEditingBusiness(null)
-            }}
-          />
-        )}
       </div>
+
+      {/* Edit dialog */}
+      {editingBusiness && (
+        <CompanyEditDialog
+          business={editingBusiness}
+          open={!!editingBusiness}
+          onOpenChange={(open) => {
+            if (!open) setEditingBusiness(null)
+          }}
+        />
+      )}
     </div>
   )
 }
