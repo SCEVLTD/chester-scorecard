@@ -84,6 +84,12 @@ function LoadingSkeleton() {
  * Standard Analysis Display (for company and super_admin)
  */
 function StandardAnalysisDisplay({ analysis, generatedAt }: { analysis: StandardAnalysis; generatedAt: string }) {
+  // Defensive checks for required arrays
+  const topQuestions = analysis.topQuestions || []
+  const actions30Day = analysis.actions30Day || []
+  const inconsistencies = analysis.inconsistencies || []
+  const trendBreaks = analysis.trendBreaks || []
+
   return (
     <div className="space-y-4">
       {/* Section header */}
@@ -107,54 +113,58 @@ function StandardAnalysisDisplay({ analysis, generatedAt }: { analysis: Standard
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            {analysis.execSummary}
+            {analysis.execSummary || 'No summary available.'}
           </p>
         </CardContent>
       </Card>
 
       {/* Focus Points for Next Month */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <ListChecks className="h-4 w-4" />
-            Focus Points for Next Month
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
-            {analysis.topQuestions.map((point, index) => (
-              <li key={index}>{point}</li>
-            ))}
-          </ol>
-        </CardContent>
-      </Card>
+      {topQuestions.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <ListChecks className="h-4 w-4" />
+              Focus Points for Next Month
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
+              {topQuestions.map((point, index) => (
+                <li key={index}>{point}</li>
+              ))}
+            </ol>
+          </CardContent>
+        </Card>
+      )}
 
       {/* 30-Day Actions */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <ListChecks className="h-4 w-4" />
-            Recommended Actions (Next 30 Days)
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ul className="space-y-3">
-            {analysis.actions30Day.map((item, index) => (
-              <li key={index} className="flex items-start gap-3">
-                <Badge className={priorityColors[item.priority] || 'bg-gray-500'}>
-                  {item.priority.toUpperCase()}
-                </Badge>
-                <span className="text-sm text-muted-foreground">
-                  {item.action}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
+      {actions30Day.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <ListChecks className="h-4 w-4" />
+              Recommended Actions (Next 30 Days)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-3">
+              {actions30Day.map((item, index) => (
+                <li key={index} className="flex items-start gap-3">
+                  <Badge className={priorityColors[item.priority] || 'bg-gray-500'}>
+                    {item.priority.toUpperCase()}
+                  </Badge>
+                  <span className="text-sm text-muted-foreground">
+                    {item.action}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Inconsistencies (only if present) */}
-      {analysis.inconsistencies.length > 0 && (
+      {inconsistencies.length > 0 && (
         <Card className="border-amber-300">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2 text-amber-600">
@@ -164,7 +174,7 @@ function StandardAnalysisDisplay({ analysis, generatedAt }: { analysis: Standard
           </CardHeader>
           <CardContent>
             <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
-              {analysis.inconsistencies.map((item, index) => (
+              {inconsistencies.map((item, index) => (
                 <li key={index}>{item}</li>
               ))}
             </ul>
@@ -173,7 +183,7 @@ function StandardAnalysisDisplay({ analysis, generatedAt }: { analysis: Standard
       )}
 
       {/* Trend Breaks (only if present) */}
-      {analysis.trendBreaks.length > 0 && (
+      {trendBreaks.length > 0 && (
         <Card className="border-blue-300">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2 text-blue-600">
@@ -183,7 +193,7 @@ function StandardAnalysisDisplay({ analysis, generatedAt }: { analysis: Standard
           </CardHeader>
           <CardContent>
             <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
-              {analysis.trendBreaks.map((item, index) => (
+              {trendBreaks.map((item, index) => (
                 <li key={index}>{item}</li>
               ))}
             </ul>
