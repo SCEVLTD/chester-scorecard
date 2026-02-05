@@ -28,6 +28,9 @@ import { AdminSetupPage } from '@/pages/admin/setup'
 import { CompanyDashboardPage } from '@/pages/company/dashboard'
 import { MeetingsPage } from '@/pages/meetings'
 import { MeetingPage } from '@/pages/meeting'
+import { CityDashboardPage } from '@/pages/city-dashboard'
+import { CompanyPerformancePage } from '@/pages/company-performance'
+import { EProfileReportPage } from '@/pages/eprofile-report'
 
 function App() {
   return (
@@ -57,6 +60,13 @@ function App() {
                 </ProtectedRoute>
               </Route>
 
+              {/* City Dashboard - accessible to all authenticated users (anonymised data) */}
+              <Route path="/city">
+                <ProtectedRoute>
+                  <CityDashboardPage />
+                </ProtectedRoute>
+              </Route>
+
               {/* Admin-only routes */}
               <Route path="/">
                 <ProtectedRoute requiredRole="admin">
@@ -81,6 +91,11 @@ function App() {
               <Route path="/compare">
                 <ProtectedRoute requiredRole="admin">
                   <ComparePage />
+                </ProtectedRoute>
+              </Route>
+              <Route path="/eprofile">
+                <ProtectedRoute requiredRole="admin">
+                  <EProfileReportPage />
                 </ProtectedRoute>
               </Route>
               <Route path="/admin/import">
@@ -118,6 +133,13 @@ function App() {
                 {(params) => (
                   <ProtectedRoute allowedBusinessId={params.businessId}>
                     <ChartsPage />
+                  </ProtectedRoute>
+                )}
+              </Route>
+              <Route path="/business/:businessId/performance">
+                {(params) => (
+                  <ProtectedRoute allowedBusinessId={params.businessId}>
+                    <CompanyPerformancePage />
                   </ProtectedRoute>
                 )}
               </Route>

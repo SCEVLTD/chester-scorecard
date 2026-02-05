@@ -46,21 +46,25 @@ Deno.serve(async (req) => {
     // Verify the requesting user is a super_admin
     const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token)
     if (userError || !user) {
+      console.error('Auth error:', userError)
       return new Response(
         JSON.stringify({ error: 'Invalid authorization token' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
+    const userEmailLower = user.email?.toLowerCase()
     const { data: adminCheck, error: adminError } = await supabaseAdmin
       .from('admins')
       .select('role')
-      .eq('email', user.email)
+      .ilike('email', userEmailLower || '')
       .maybeSingle()
+
+    console.log('Admin check for', userEmailLower, ':', adminCheck, adminError)
 
     if (adminError || !adminCheck || adminCheck.role !== 'super_admin') {
       return new Response(
-        JSON.stringify({ error: 'Only super admins can invite new admins' }),
+        JSON.stringify({ error: `Only super admins can invite new admins. Your role: ${adminCheck?.role || 'not found'}` }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }

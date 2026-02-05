@@ -10,6 +10,19 @@ export type DataRequestStatus = 'pending' | 'submitted' | 'used'
 
 export type ActionStatus = 'pending' | 'complete'
 
+// E-Profile categories based on annual revenue
+export type EProfile = 'E0' | 'E1' | 'E2' | 'E3' | 'E4' | 'E5'
+
+// E-Profile descriptions for UI display
+export const E_PROFILE_LABELS: Record<EProfile, string> = {
+  E0: 'Entry (<£0.5m)',
+  E1: 'Emerging (£0.5m-£1.5m)',
+  E2: 'Expansion (£1.5m-£5m)',
+  E3: 'Elevation (£5m-£11m)',
+  E4: 'Established (£11m-£20m)',
+  E5: 'Enterprise (£20m+)',
+}
+
 export type MeetingType = 'friday_group' | 'one_on_one' | 'quarterly_review' | 'ad_hoc'
 export type MeetingStatus = 'draft' | 'finalized' | 'archived'
 
@@ -304,6 +317,7 @@ export interface Database {
           sector_id: string | null
           contact_email: string | null
           contact_name: string | null
+          e_profile: EProfile | null
           created_at: string
         }
         Insert: {
@@ -312,6 +326,7 @@ export interface Database {
           sector_id?: string | null
           contact_email?: string | null
           contact_name?: string | null
+          e_profile?: EProfile | null
           created_at?: string
         }
         Update: {
@@ -320,6 +335,7 @@ export interface Database {
           sector_id?: string | null
           contact_email?: string | null
           contact_name?: string | null
+          e_profile?: EProfile | null
           created_at?: string
         }
         Relationships: [
@@ -538,3 +554,59 @@ export type MeetingUpdate = Database['public']['Tables']['meetings']['Update']
 
 export type AdminRole = 'super_admin' | 'consultant'
 export type UserRole = AdminRole | 'business_user' | null
+
+// City aggregate view types
+export interface CityMonthlyAggregate {
+  month: string
+  business_count: number
+  businesses_with_ebitda: number
+  total_revenue_actual: number
+  total_revenue_target: number
+  total_ebitda_actual: number
+  total_ebitda_target: number
+  revenue_variance_pct: number | null
+  ebitda_variance_pct: number | null
+  ebitda_pct_actual: number | null
+  ebitda_pct_target: number | null
+  e0_count: number
+  e1_count: number
+  e2_count: number
+  e3_count: number
+  e4_count: number
+  e5_count: number
+}
+
+export interface EProfileMonthlyAggregate {
+  month: string
+  e_profile: EProfile
+  business_count: number
+  total_revenue_actual: number
+  total_revenue_target: number
+  total_ebitda_actual: number
+  total_ebitda_target: number
+  revenue_variance_pct: number | null
+  ebitda_pct_actual: number | null
+}
+
+export interface CityYtdAggregate {
+  year: string
+  business_count: number
+  ytd_revenue_actual: number
+  ytd_revenue_target: number
+  ytd_ebitda_actual: number
+  ytd_ebitda_target: number
+  revenue_variance_pct: number | null
+  ebitda_pct_actual: number | null
+}
+
+// Company performance data (for historical charts)
+export interface CompanyMonthlyPerformance {
+  month: string
+  business_id: string
+  business_name: string
+  e_profile: EProfile | null
+  revenue_actual: number | null
+  revenue_target: number | null
+  ebitda_actual: number | null
+  ebitda_target: number | null
+}

@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { FileText, TrendingUp, LogOut, ClipboardList } from 'lucide-react'
+import { FileText, TrendingUp, LogOut, ClipboardList, Building2, BarChart3 } from 'lucide-react'
 import { format } from 'date-fns'
 import type { Business, Scorecard } from '@/types/database.types'
 
@@ -110,14 +110,38 @@ export function CompanyDashboardPage() {
             </CardContent>
           </Card>
 
-          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(`/business/${businessId}/charts`)}>
+          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(`/business/${businessId}/performance`)}>
             <CardContent className="flex items-center gap-4 p-6">
               <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
                 <TrendingUp className="h-6 w-6 text-green-600" />
               </div>
               <div>
-                <h3 className="font-semibold">View Trends</h3>
-                <p className="text-sm text-muted-foreground">See your performance over time</p>
+                <h3 className="font-semibold">Your Performance</h3>
+                <p className="text-sm text-muted-foreground">Revenue & EBITDA vs targets</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/city')}>
+            <CardContent className="flex items-center gap-4 p-6">
+              <div className="h-12 w-12 rounded-full bg-purple-100 flex items-center justify-center">
+                <Building2 className="h-6 w-6 text-purple-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold">Chester Group Results</h3>
+                <p className="text-sm text-muted-foreground">Aggregated group performance</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(`/business/${businessId}/charts`)}>
+            <CardContent className="flex items-center gap-4 p-6">
+              <div className="h-12 w-12 rounded-full bg-amber-100 flex items-center justify-center">
+                <BarChart3 className="h-6 w-6 text-amber-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold">Score Charts</h3>
+                <p className="text-sm text-muted-foreground">Scorecard trends over time</p>
               </div>
             </CardContent>
           </Card>

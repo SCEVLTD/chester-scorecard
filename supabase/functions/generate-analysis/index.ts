@@ -30,10 +30,20 @@ interface CompanySubmission {
   company_challenges: string | null
 }
 
+interface HistoricalDataPoint {
+  month: string
+  revenue_actual: number | null
+  revenue_target: number | null
+  ebitda_actual: number | null
+  ebitda_target: number | null
+}
+
 interface RequestBody {
   scorecard: ScorecardData
   previousScorecard: ScorecardData | null
   businessName: string
+  eProfile?: string | null
+  historicalData?: HistoricalDataPoint[]
 }
 
 function formatVariance(value: number | null): string {
@@ -81,23 +91,88 @@ function formatQualitative(value: string | null): string {
   return labels[value] || value
 }
 
+const E_PROFILE_LABELS: Record<string, string> = {
+  E0: 'Entry (<GBP 0.5m annual revenue)',
+  E1: 'Emerging (GBP 0.5m-1.5m)',
+  E2: 'Expansion (GBP 1.5m-5m)',
+  E3: 'Elevation (GBP 5m-11m)',
+  E4: 'Established (GBP 11m-20m)',
+  E5: 'Enterprise (GBP 20m+)',
+}
+
+function formatHistoricalData(data: HistoricalDataPoint[] | undefined): string {
+  if (!data || data.length === 0) return 'No historical data available'
+
+  const lines: string[] = []
+  let ytdRevActual = 0
+  let ytdRevTarget = 0
+  let ytdEbitdaActual = 0
+  let ytdEbitdaTarget = 0
+
+  // Get current year
+  const currentYear = new Date().getFullYear().toString()
+
+  data.forEach((d) => {
+    const revVariance = d.revenue_target && d.revenue_target > 0
+      ? ((d.revenue_actual || 0) - d.revenue_target) / d.revenue_target * 100
+      : null
+    const ebitdaVariance = d.ebitda_target && d.ebitda_target > 0
+      ? ((d.ebitda_actual || 0) - d.ebitda_target) / d.ebitda_target * 100
+      : null
+
+    lines.push(`${d.month}: Revenue GBP ${(d.revenue_actual || 0).toLocaleString()} vs GBP ${(d.revenue_target || 0).toLocaleString()} target (${revVariance !== null ? formatVariance(revVariance) : 'N/A'}) | EBITDA GBP ${(d.ebitda_actual || 0).toLocaleString()} (${ebitdaVariance !== null ? formatVariance(ebitdaVariance) : 'N/A'})`)
+
+    // Accumulate YTD for current year
+    if (d.month.startsWith(currentYear)) {
+      ytdRevActual += d.revenue_actual || 0
+      ytdRevTarget += d.revenue_target || 0
+      ytdEbitdaActual += d.ebitda_actual || 0
+      ytdEbitdaTarget += d.ebitda_target || 0
+    }
+  })
+
+  // Add YTD summary
+  const ytdRevVariance = ytdRevTarget > 0
+    ? ((ytdRevActual - ytdRevTarget) / ytdRevTarget * 100)
+    : null
+  const ytdEbitdaPct = ytdRevActual > 0
+    ? (ytdEbitdaActual / ytdRevActual * 100)
+    : null
+
+  lines.push('')
+  lines.push(`YTD ${currentYear}: Revenue GBP ${ytdRevActual.toLocaleString()} vs GBP ${ytdRevTarget.toLocaleString()} target (${ytdRevVariance !== null ? formatVariance(ytdRevVariance) : 'N/A'}) | EBITDA GBP ${ytdEbitdaActual.toLocaleString()} (${ytdEbitdaPct !== null ? ytdEbitdaPct.toFixed(1) : 'N/A'}% margin)`)
+
+  return lines.join('\n')
+}
+
 function buildPrompt(
   scorecard: ScorecardData,
   previousScorecard: ScorecardData | null,
   businessName: string,
-  submission: CompanySubmission | null
+  submission: CompanySubmission | null,
+  eProfile?: string | null,
+  historicalData?: HistoricalDataPoint[]
 ): string {
+  const eProfileSection = eProfile
+    ? `E-PROFILE: ${eProfile} - ${E_PROFILE_LABELS[eProfile] || 'Unknown category'}\n`
+    : ''
+
+  const historicalSection = historicalData && historicalData.length > 0
+    ? `\n=== HISTORICAL PERFORMANCE (Last ${historicalData.length} months) ===\n${formatHistoricalData(historicalData)}\n`
+    : ''
+
   return `You are a business performance adviser providing insights for a monthly business scorecard review. Use UK English spelling throughout (e.g. analyse, prioritise, organisation).
 
 BUSINESS: ${businessName}
 MONTH: ${scorecard.month}
 TYPE: Company Self Assessment
-
+${eProfileSection}
 OVERALL SCORE: ${scorecard.total_score}/100 (${scorecard.rag_status.toUpperCase()})
 
 === FINANCIAL PERFORMANCE (20 pts max) ===
 Revenue vs Target: ${formatVariance(scorecard.revenue_variance)}
 EBITDA vs Target: ${formatVariance(scorecard.net_profit_variance)}
+${historicalSection}
 
 === LEAD KPIs ===
 Outbound Calls: ${submission?.outbound_calls ?? 'Not reported'}
@@ -146,7 +221,11 @@ REQUIRED OUTPUT:
 
 4. Inconsistencies: Flag any contradictions between qualitative ratings and quantitative results using the detection rules above. If none found, return empty array.
 
-5. Trend Breaks: If prior month data exists, note any significant changes (more than 10 point score change, RAG status change, major metric swings). If no prior data, return empty array.`
+5. Trend Breaks: If prior month data exists, note any significant changes (more than 10 point score change, RAG status change, major metric swings). If no prior data, return empty array.
+
+6. Historical Context: If historical data is provided, assess the trajectory. Is revenue trending up, flat, or down? Is EBITDA margin improving? How does YTD compare to target? Provide a brief assessment (2-3 sentences).
+
+7. E-Profile Considerations: If an E-Profile is provided, note any size-appropriate considerations. E0/E1 businesses may have different priorities than E4/E5. Comment on whether the business appears to be operating appropriately for its scale.`
 }
 
 Deno.serve(async (req) => {
@@ -156,15 +235,15 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { scorecard, previousScorecard, businessName } = await req.json() as RequestBody
+    const { scorecard, previousScorecard, businessName, eProfile, historicalData } = await req.json() as RequestBody
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    const supabase = createClient(supabaseUrl, supabaseKey)
 
     // Fetch company submission if available
     let submission: CompanySubmission | null = null
     if (scorecard.company_submission_id) {
-      const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-      const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-      const supabase = createClient(supabaseUrl, supabaseKey)
-
       const { data } = await supabase
         .from('company_submissions')
         .select('outbound_calls, first_orders, company_biggest_opportunity, company_biggest_risk, company_wins, company_challenges')
@@ -174,11 +253,50 @@ Deno.serve(async (req) => {
       submission = data as CompanySubmission | null
     }
 
+    // Fetch historical data if not provided (last 12 months)
+    let fetchedHistoricalData = historicalData
+    if (!fetchedHistoricalData && scorecard.company_submission_id) {
+      // Get business_id from the submission's data_request
+      const { data: dataRequest } = await supabase
+        .from('company_submissions')
+        .select('data_requests!inner(business_id)')
+        .eq('id', scorecard.company_submission_id)
+        .single()
+
+      if (dataRequest) {
+        const businessId = (dataRequest.data_requests as { business_id: string }).business_id
+
+        // Fetch last 12 months of financial data
+        const { data: history } = await supabase
+          .from('company_submissions')
+          .select(`
+            revenue_actual,
+            revenue_target,
+            net_profit_actual,
+            net_profit_target,
+            data_requests!inner(month, business_id)
+          `)
+          .eq('data_requests.business_id', businessId)
+          .order('data_requests(month)', { ascending: false })
+          .limit(12)
+
+        if (history) {
+          fetchedHistoricalData = history.map((h) => ({
+            month: (h.data_requests as { month: string }).month,
+            revenue_actual: h.revenue_actual,
+            revenue_target: h.revenue_target,
+            ebitda_actual: h.net_profit_actual,
+            ebitda_target: h.net_profit_target,
+          })).reverse() // Oldest first
+        }
+      }
+    }
+
     const anthropic = new Anthropic({
       apiKey: Deno.env.get('ANTHROPIC_API_KEY'),
     })
 
-    const prompt = buildPrompt(scorecard, previousScorecard, businessName, submission)
+    const prompt = buildPrompt(scorecard, previousScorecard, businessName, submission, eProfile, fetchedHistoricalData)
 
     const analysisTool = {
       name: 'submit_analysis',
@@ -201,9 +319,11 @@ Deno.serve(async (req) => {
             description: 'Prioritised 30 day action items'
           },
           inconsistencies: { type: 'array', items: { type: 'string' }, description: 'Data inconsistencies detected (empty array if none)' },
-          trendBreaks: { type: 'array', items: { type: 'string' }, description: 'Significant trend breaks vs prior month (empty array if none or no prior data)' }
+          trendBreaks: { type: 'array', items: { type: 'string' }, description: 'Significant trend breaks vs prior month (empty array if none or no prior data)' },
+          historicalContext: { type: 'string', description: 'Brief assessment of historical trajectory (2-3 sentences). Empty string if no historical data.' },
+          eProfileConsiderations: { type: 'string', description: 'Size-appropriate considerations based on E-Profile. Empty string if no E-Profile provided.' }
         },
-        required: ['execSummary', 'topQuestions', 'actions30Day', 'inconsistencies', 'trendBreaks']
+        required: ['execSummary', 'topQuestions', 'actions30Day', 'inconsistencies', 'trendBreaks', 'historicalContext', 'eProfileConsiderations']
       }
     }
 

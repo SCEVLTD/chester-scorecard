@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Pencil, LayoutGrid, Upload, Link2, Mail, Trash2, LogOut, Shield } from 'lucide-react'
+import { Plus, Pencil, LayoutGrid, Upload, Link2, Mail, Trash2, LogOut, Shield, Building2, Layers } from 'lucide-react'
 import { useBusinesses, useCreateBusiness, useDeleteBusiness } from '@/hooks/use-businesses'
 import { CompanyEditDialog } from '@/components/admin/company-edit-dialog'
 import type { Business } from '@/types/database.types'
@@ -97,8 +97,8 @@ export function HomePage() {
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="mx-auto max-w-2xl">
         <Card>
-          <CardHeader className="text-center">
-            <div className="flex flex-col items-center mb-4">
+          <CardHeader className="text-center space-y-4">
+            <div className="flex flex-col items-center">
               <img
                 src="/velocity-logo.png"
                 alt="Velocity"
@@ -108,14 +108,30 @@ export function HomePage() {
                 Doing good by doing well
               </p>
             </div>
-            <div className="flex items-center justify-center gap-2">
-              <CardTitle>Chester Business Scorecard</CardTitle>
+            <CardTitle className="text-xl md:text-2xl">Chester Business Scorecard</CardTitle>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/city')}
+              >
+                <Building2 className="mr-1.5 h-4 w-4" />
+                City
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/eprofile')}
+              >
+                <Layers className="mr-1.5 h-4 w-4" />
+                E-Profile
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => navigate('/portfolio')}
               >
-                <LayoutGrid className="mr-2 h-4 w-4" />
+                <LayoutGrid className="mr-1.5 h-4 w-4" />
                 Portfolio
               </Button>
               <Button
@@ -123,7 +139,7 @@ export function HomePage() {
                 size="sm"
                 onClick={() => navigate('/admin/import')}
               >
-                <Upload className="mr-2 h-4 w-4" />
+                <Upload className="mr-1.5 h-4 w-4" />
                 Import
               </Button>
               <Button
@@ -131,7 +147,7 @@ export function HomePage() {
                 size="sm"
                 onClick={() => navigate('/admin/admins')}
               >
-                <Shield className="mr-2 h-4 w-4" />
+                <Shield className="mr-1.5 h-4 w-4" />
                 Admins
               </Button>
               <Button
@@ -139,7 +155,7 @@ export function HomePage() {
                 size="sm"
                 onClick={handleSignOut}
               >
-                <LogOut className="mr-2 h-4 w-4" />
+                <LogOut className="mr-1.5 h-4 w-4" />
                 Logout
               </Button>
             </div>

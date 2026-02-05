@@ -1,5 +1,5 @@
 import { useParams, useLocation } from 'wouter'
-import { BarChart3 } from 'lucide-react'
+import { BarChart3, TrendingUp } from 'lucide-react'
 import { PageHeader } from '@/components/page-header'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -40,6 +40,10 @@ export function HistoryPage() {
           <CardHeader className="space-y-4">
             <CardTitle className="text-2xl">{business?.name || 'Loading...'}</CardTitle>
             <div className="flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" onClick={() => navigate(`/business/${businessId}/performance`)}>
+                <TrendingUp className="mr-2 h-4 w-4" />
+                Performance
+              </Button>
               <Button variant="outline" size="sm" onClick={() => navigate(`/business/${businessId}/charts`)}>
                 <BarChart3 className="mr-2 h-4 w-4" />
                 Charts

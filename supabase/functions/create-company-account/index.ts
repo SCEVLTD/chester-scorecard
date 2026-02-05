@@ -133,13 +133,15 @@ Deno.serve(async (req) => {
     }
 
     // Create new auth user
+    // IMPORTANT: Use app_metadata (not user_metadata) so business_id appears in JWT claims
+    // RLS policies use get_my_business_id() which reads from JWT claims root level
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
       email: email.toLowerCase(),
       password,
       email_confirm: true, // Auto-confirm the email
-      user_metadata: {
+      app_metadata: {
         business_id,
-        role: 'company',
+        user_role: 'company',
       },
     })
 

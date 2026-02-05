@@ -5,17 +5,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-/**
- * Send a custom invitation email to a company user.
- * Creates an invitation record with a secure token and sends email via Resend.
- * Does NOT use Supabase's built-in inviteUserByEmail to avoid OTP prefetching issues.
- *
- * Request body:
- * - email: string (required) - The company email address
- * - business_id: string (required) - The business ID
- */
 Deno.serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -39,7 +29,6 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Verify the request has authorization (admin only)
     const authHeader = req.headers.get('authorization')
     if (!authHeader) {
       return new Response(
@@ -50,12 +39,10 @@ Deno.serve(async (req) => {
 
     const token = authHeader.replace('Bearer ', '')
 
-    // Create admin client with service role
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
       auth: { autoRefreshToken: false, persistSession: false }
     })
 
-    // Verify caller is authenticated
     const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token)
     if (userError || !user) {
       return new Response(
@@ -64,7 +51,6 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Check if user's email is in the admins table
     const { data: adminCheck, error: adminError } = await supabaseAdmin
       .from('admins')
       .select('id')
@@ -78,7 +64,6 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Parse request body
     const { email, business_id } = await req.json()
 
     if (!email || !business_id) {
@@ -90,12 +75,11 @@ Deno.serve(async (req) => {
 
     const emailLower = email.toLowerCase().trim()
 
-    // Verify the email belongs to the business
     const { data: emailRecord, error: emailError } = await supabaseAdmin
       .from('company_emails')
       .select('id')
       .eq('business_id', business_id)
-      .eq('email', emailLower)
+      .ilike('email', emailLower)
       .maybeSingle()
 
     if (emailError || !emailRecord) {
@@ -105,7 +89,6 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Get business name for personalized email
     const { data: business } = await supabaseAdmin
       .from('businesses')
       .select('name')
@@ -114,18 +97,15 @@ Deno.serve(async (req) => {
 
     const businessName = business?.name || 'Your Company'
 
-    // Generate secure token (32 bytes = 64 hex chars)
     const tokenBytes = new Uint8Array(32)
     crypto.getRandomValues(tokenBytes)
     const inviteToken = Array.from(tokenBytes).map(b => b.toString(16).padStart(2, '0')).join('')
 
-    // Hash the token for storage (SHA-256)
     const encoder = new TextEncoder()
     const data = encoder.encode(inviteToken)
     const hashBuffer = await crypto.subtle.digest('SHA-256', data)
     const tokenHash = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('')
 
-    // Invalidate any existing pending invitations for this email+business
     await supabaseAdmin
       .from('invitations')
       .update({ status: 'expired' })
@@ -133,7 +113,6 @@ Deno.serve(async (req) => {
       .eq('business_id', business_id)
       .eq('status', 'pending')
 
-    // Create new invitation record (7 day expiry)
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
 
     const { error: insertError } = await supabaseAdmin
@@ -149,16 +128,14 @@ Deno.serve(async (req) => {
     if (insertError) {
       console.error('Insert invitation error:', insertError)
       return new Response(
-        JSON.stringify({ error: 'Failed to create invitation' }),
+        JSON.stringify({ error: 'Failed to create invitation', details: insertError.message }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    // Build setup link
     const siteUrl = Deno.env.get('SITE_URL') || 'https://chester.benchiva.com'
     const setupLink = `${siteUrl}/company/setup?token=${inviteToken}`
 
-    // Send email via Resend
     const emailHtml = `
 <!DOCTYPE html>
 <html>
@@ -202,7 +179,7 @@ Deno.serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Chester Business Scorecard <noreply@velocitygrowth.co.uk>',
+        from: 'Chester Business Scorecard <noreply@chester.benchiva.com>',
         to: emailLower,
         subject: `You're invited to ${businessName}'s Business Scorecard`,
         html: emailHtml,
@@ -213,7 +190,10 @@ Deno.serve(async (req) => {
       const resendError = await resendResponse.text()
       console.error('Resend error:', resendError)
       return new Response(
-        JSON.stringify({ error: 'Failed to send invitation email' }),
+        JSON.stringify({
+          error: 'Failed to send email: ' + resendError,
+          setupLink: setupLink
+        }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
@@ -223,6 +203,7 @@ Deno.serve(async (req) => {
         success: true,
         message: 'Invitation email sent successfully',
         email: emailLower,
+        emailSent: true,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )

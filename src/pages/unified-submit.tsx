@@ -9,6 +9,7 @@ import { PageHeader } from '@/components/page-header'
 import { useAuth } from '@/contexts/auth-context'
 import { useBusinesses } from '@/hooks/use-businesses'
 import { useCreateUnifiedSubmission, useUnifiedSubmission } from '@/hooks/use-unified-submission'
+import { useMonthlyTargets } from '@/hooks/use-company-performance'
 import { unifiedSubmissionSchema, type UnifiedSubmissionData } from '@/schemas/unified-submission'
 import {
   LEADERSHIP_OPTIONS,
@@ -57,6 +58,12 @@ export function UnifiedSubmitPage() {
     selectedMonth || undefined
   )
 
+  // Query for targets to auto-fill (when no existing submission)
+  const { data: monthlyTargets } = useMonthlyTargets(
+    businessId || undefined,
+    selectedMonth || undefined
+  )
+
   const form = useForm<UnifiedSubmissionData>({
     resolver: zodResolver(unifiedSubmissionSchema) as Resolver<UnifiedSubmissionData>,
     defaultValues: {
@@ -94,6 +101,20 @@ export function UnifiedSubmitPage() {
       form.setValue('month', monthFromQuery, { shouldValidate: true })
     }
   }, [monthFromQuery, selectedMonth, form])
+
+  // Auto-fill targets when month is selected and no existing submission
+  useEffect(() => {
+    if (monthlyTargets && !existingSubmission && selectedMonth) {
+      // Only set targets if no existing submission - don't overwrite user-entered actuals
+      const currentValues = form.getValues()
+      if (currentValues.revenueTarget === 0 && monthlyTargets.revenue_target) {
+        form.setValue('revenueTarget', monthlyTargets.revenue_target)
+      }
+      if (currentValues.netProfitTarget === 0 && monthlyTargets.ebitda_target) {
+        form.setValue('netProfitTarget', monthlyTargets.ebitda_target)
+      }
+    }
+  }, [monthlyTargets, existingSubmission, selectedMonth, form])
 
   // Update form when existing submission loads (always reset to show stored values)
   useEffect(() => {
@@ -298,7 +319,12 @@ export function UnifiedSubmitPage() {
                       )}
                     </div>
                     <div>
-                      <Label className="text-sm text-slate-600">Target</Label>
+                      <Label className="text-sm text-slate-600">
+                        Target
+                        {monthlyTargets?.revenue_target && !existingSubmission && (
+                          <span className="ml-2 text-xs text-blue-600">(auto-filled)</span>
+                        )}
+                      </Label>
                       <div className="relative mt-1">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">£</span>
                         <Input
@@ -341,7 +367,12 @@ export function UnifiedSubmitPage() {
                       )}
                     </div>
                     <div>
-                      <Label className="text-sm text-slate-600">Target</Label>
+                      <Label className="text-sm text-slate-600">
+                        Target
+                        {monthlyTargets?.ebitda_target && !existingSubmission && (
+                          <span className="ml-2 text-xs text-blue-600">(auto-filled)</span>
+                        )}
+                      </Label>
                       <div className="relative mt-1">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">£</span>
                         <Input
