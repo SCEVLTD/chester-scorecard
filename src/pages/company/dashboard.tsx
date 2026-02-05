@@ -53,9 +53,9 @@ export function CompanyDashboardPage() {
   })
 
   const handleSignOut = async () => {
+    // Set flag so login page knows we're intentionally logging out
+    sessionStorage.setItem('logout_requested', 'true')
     await signOut()
-    // Use full page reload to ensure auth state is properly cleared
-    // (wouter navigate can race with auth state updates)
     window.location.href = '/login'
   }
 
