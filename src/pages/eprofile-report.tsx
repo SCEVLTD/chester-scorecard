@@ -198,6 +198,11 @@ export function EProfileReportPage() {
     }))
   }, [profileAggregates])
 
+  // Build available years list (must be before any early returns to satisfy React hooks rules)
+  const availableYears = useMemo(() => {
+    return [currentYear, currentYear - 1]
+  }, [currentYear])
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -205,11 +210,6 @@ export function EProfileReportPage() {
       </div>
     )
   }
-
-  // Build available years list
-  const availableYears = useMemo(() => {
-    return [currentYear, currentYear - 1]
-  }, [currentYear])
 
   return (
     <div className="container mx-auto py-6 space-y-6">
