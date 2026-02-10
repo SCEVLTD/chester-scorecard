@@ -260,14 +260,16 @@ Following a comprehensive security audit on 2026-02-10, these phases take immedi
   - [x] DSN configured in Vercel environment variables
 
 ### Task 19.2: Add Uptime Monitoring
-- **Status:** pending
+- **Status:** ⏳ TODO (manual setup - Scott to configure)
 - **Severity:** MEDIUM
 - **Problem:** No uptime monitoring. You won't know if the app goes down until a user tells you.
-- **Changes required:**
-  - [ ] Set up BetterUptime, Checkly, or UptimeRobot (free tier is fine)
-  - [ ] Monitor: `https://chester.benchiva.com` (frontend)
-  - [ ] Monitor: Supabase project health endpoint
-  - [ ] Configure alerts to email/Slack
+- **Recommendation:** UptimeRobot free tier (50 monitors, 5-min intervals, email alerts)
+- **Setup steps:**
+  - [ ] Sign up at https://uptimerobot.com (free)
+  - [ ] Add HTTP(s) monitor: `https://chester.benchiva.com` (5-min interval)
+  - [ ] Add HTTP(s) monitor: `https://hknwkqhckdmosarywaio.supabase.co/rest/v1/` (Supabase health)
+  - [ ] Configure alert contacts: scott@brandedai.co.uk
+  - [ ] Optional: Add status page for client visibility
 
 ### Task 19.3: Add Basic Audit Logging
 - **Status:** COMPLETE
@@ -303,13 +305,15 @@ Following a comprehensive security audit on 2026-02-10, these phases take immedi
 > **Dependencies:** 19.3 (audit logging needed first)
 
 ### Task 20.1: Verify Supabase Data Residency
-- **Status:** pending
+- **Status:** ✅ COMPLETE (verified 2026-02-10)
 - **Severity:** HIGH
-- **Problem:** Must confirm Supabase project is hosted in EU region for GDPR compliance.
-- **Changes required:**
-  - [ ] Check Supabase Dashboard > Settings > General for region
-  - [ ] If not EU: plan migration to EU region (requires Supabase support)
-  - [ ] Document the data residency in a compliance document
+- **Finding:** Supabase project hosted in **eu-west-1 (AWS Ireland)** - EU region confirmed
+  - Project URL: `https://hknwkqhckdmosarywaio.supabase.co`
+  - Server IPv6: `2a05:d018:*` (AWS eu-west-1 range)
+  - PostgreSQL 17.6
+  - [x] Region confirmed as EU (GDPR compliant)
+  - [x] No migration needed - already in EU
+  - [ ] Document data residency in compliance doc (optional - for client-facing docs)
 
 ### Task 20.2: Create Privacy Policy Page
 - **Status:** ✅ COMPLETE
@@ -340,7 +344,7 @@ Following a comprehensive security audit on 2026-02-10, these phases take immedi
   - [x] Includes: business, scorecards, submissions, targets, dataRequests, companyEmails
   - [x] Auth + ownership check (business_user own data, admin any business)
   - [x] Audit logged
-  - [ ] TODO: Add "Export My Data" button in company dashboard UI
+  - [x] "Export My Data" button added to company dashboard (DataPrivacySection component)
 
 ### Task 20.5: Implement Account Deletion (Right to Erasure)
 - **Status:** ✅ COMPLETE
@@ -351,7 +355,7 @@ Following a comprehensive security audit on 2026-02-10, these phases take immedi
   - [x] Requires `confirm: true` in request body
   - [x] Business users: also deletes auth account
   - [x] Anonymised audit log (no PII for deleted users)
-  - [ ] TODO: Add "Delete My Account" button in company dashboard UI
+  - [x] "Delete My Account" button added to company dashboard (requires typing DELETE to confirm)
 
 ---
 
@@ -499,7 +503,7 @@ Following a comprehensive security audit on 2026-02-10, these phases take immedi
 > **Dependencies:** 23.1 (organisations must exist)
 
 ### Task 24.1: Integrate Stripe
-- **Status:** pending
+- **Status:** ⏳ DEFERRED (needs Stripe account + API keys)
 - **Files:** New Edge Functions + new pages
 - **Changes required:**
   - [ ] Create Stripe account and products
@@ -509,7 +513,7 @@ Following a comprehensive security audit on 2026-02-10, these phases take immedi
   - [ ] Handle subscription lifecycle (trial, active, past_due, cancelled)
 
 ### Task 24.2: Implement Usage-Based Billing for AI Features
-- **Status:** pending
+- **Status:** ⏳ DEFERRED (depends on 24.1)
 - **Depends on:** 24.1, 19.4
 - **Changes required:**
   - [ ] Track AI token usage per organisation
@@ -518,7 +522,7 @@ Following a comprehensive security audit on 2026-02-10, these phases take immedi
   - [ ] Show usage in admin dashboard
 
 ### Task 24.3: Create Billing Management Page
-- **Status:** pending
+- **Status:** ⏳ DEFERRED (depends on 24.1)
 - **Depends on:** 24.1
 - **File:** New `src/pages/admin/billing.tsx`
 - **Changes required:**
@@ -627,7 +631,9 @@ Phase 16+17+18+19+20 ─────────► Phase 23 (Multi-Tenancy)
 # Previous Feature Work (Phases 1-15)
 
 > The following phases document the original feature development work.
-> Phases 11-15 are COMPLETE. Phases 1-10 are PENDING (feature work paused for security hardening).
+> **Phases 1-10 are COMPLETE** (except annual targets management - see notes below).
+> Phases 11-15 are also COMPLETE.
+> Chester used the full system live on Friday 7th February 2026.
 
 ## Original Overview
 
@@ -658,7 +664,7 @@ Six major amendments required to the Chester Business Scorecard system:
 ## Phase 1: Database Schema
 
 ### Task 1.1: Create company_annual_targets table
-- **Status:** pending
+- **Status:** ✅ COMPLETE
 - **File:** `supabase/migrations/20260205_add_annual_targets.sql`
 - **Details:**
   - `id` (uuid PK)
@@ -672,7 +678,7 @@ Six major amendments required to the Chester Business Scorecard system:
   - UNIQUE(business_id, year)
 
 ### Task 1.2: Create company_monthly_financials table
-- **Status:** pending
+- **Status:** ✅ COMPLETE
 - **Depends on:** 1.1
 - **File:** `supabase/migrations/20260205_add_monthly_financials.sql`
 - **Details:**
@@ -687,7 +693,7 @@ Six major amendments required to the Chester Business Scorecard system:
   - Indexes: business_id, month, (business_id, month DESC)
 
 ### Task 1.3: Add e_profile to businesses table
-- **Status:** pending
+- **Status:** ✅ COMPLETE
 - **Depends on:** 1.2
 - **File:** `supabase/migrations/20260205_add_eprofile.sql`
 - **Details:**
@@ -698,7 +704,7 @@ Six major amendments required to the Chester Business Scorecard system:
   - Create trigger to auto-update e_profile when revenue changes
 
 ### Task 1.4: Add EBITDA fields to company_submissions
-- **Status:** pending
+- **Status:** ✅ COMPLETE
 - **Depends on:** 1.3
 - **File:** `supabase/migrations/20260205_add_ebitda_fields.sql`
 - **Details:**
@@ -707,7 +713,7 @@ Six major amendments required to the Chester Business Scorecard system:
   - Migrate existing net_profit_override data to ebitda fields
 
 ### Task 1.5: Create city_aggregate_view
-- **Status:** pending
+- **Status:** ✅ COMPLETE
 - **Depends on:** 1.4
 - **File:** `supabase/migrations/20260205_add_city_view.sql`
 - **Details:**
@@ -717,7 +723,7 @@ Six major amendments required to the Chester Business Scorecard system:
   - Variance calculations
 
 ### Task 1.6: Add RLS policies for new tables
-- **Status:** pending
+- **Status:** ✅ COMPLETE
 - **Depends on:** 1.5
 - **File:** `supabase/migrations/20260205_add_new_rls_policies.sql`
 - **Details:**
@@ -726,7 +732,7 @@ Six major amendments required to the Chester Business Scorecard system:
   - Create `is_super_admin()` helper function
 
 ### Task 1.7: Update TypeScript types
-- **Status:** pending
+- **Status:** ✅ COMPLETE
 - **Depends on:** 1.6
 - **File:** `src/types/database.types.ts`
 - **Details:**
@@ -740,7 +746,7 @@ Six major amendments required to the Chester Business Scorecard system:
 ## Phase 2: Data Migration & Import
 
 ### Task 2.1: Migrate existing data to new tables
-- **Status:** pending
+- **Status:** ✅ COMPLETE
 - **Depends on:** 1.7
 - **File:** `supabase/migrations/20260205_migrate_existing_data.sql`
 - **Details:**
@@ -749,7 +755,7 @@ Six major amendments required to the Chester Business Scorecard system:
   - Calculate and set e_profile for all existing businesses
 
 ### Task 2.2: Update Excel import to handle new fields
-- **Status:** pending
+- **Status:** ✅ COMPLETE
 - **Depends on:** 2.1
 - **File:** `src/hooks/use-excel-import.ts`
 - **Details:**
@@ -759,7 +765,7 @@ Six major amendments required to the Chester Business Scorecard system:
   - Support setting e_profile during import
 
 ### Task 2.3: Import 2025 historical data
-- **Status:** pending
+- **Status:** ✅ COMPLETE
 - **Depends on:** 2.2
 - **Details:**
   - Import revenue/EBITDA history from Chester Results PDF data
@@ -772,7 +778,7 @@ Six major amendments required to the Chester Business Scorecard system:
 ## Phase 3: Core Hooks
 
 ### Task 3.1: Create use-business-targets hook
-- **Status:** pending
+- **Status:** ✅ COMPLETE
 - **Depends on:** 1.7
 - **File:** `src/hooks/use-business-targets.ts`
 - **Details:**
@@ -782,7 +788,7 @@ Six major amendments required to the Chester Business Scorecard system:
   - `useBulkUpsertTargets()` - bulk mutation
 
 ### Task 3.2: Create use-monthly-financials hook
-- **Status:** pending
+- **Status:** ✅ COMPLETE
 - **Depends on:** 1.7
 - **File:** `src/hooks/use-monthly-financials.ts`
 - **Details:**
@@ -791,7 +797,7 @@ Six major amendments required to the Chester Business Scorecard system:
   - `useUpsertMonthlyFinancials()` - mutation
 
 ### Task 3.3: Create use-city-aggregate hook
-- **Status:** pending
+- **Status:** ✅ COMPLETE
 - **Depends on:** 1.7
 - **File:** `src/hooks/use-city-aggregate.ts`
 - **Details:**
@@ -800,7 +806,7 @@ Six major amendments required to the Chester Business Scorecard system:
   - Uses city_aggregate_view
 
 ### Task 3.4: Create use-eprofile-report hook
-- **Status:** pending
+- **Status:** ✅ COMPLETE
 - **Depends on:** 1.7
 - **File:** `src/hooks/use-eprofile-report.ts`
 - **Details:**
@@ -813,7 +819,7 @@ Six major amendments required to the Chester Business Scorecard system:
 ## Phase 4: City Dashboard
 
 ### Task 4.1: Create city summary card component
-- **Status:** pending
+- **Status:** ✅ COMPLETE
 - **Depends on:** 3.3
 - **File:** `src/components/city/city-summary-card.tsx`
 - **Details:**
@@ -822,7 +828,7 @@ Six major amendments required to the Chester Business Scorecard system:
   - Business count indicator
 
 ### Task 4.2: Create city month table component
-- **Status:** pending
+- **Status:** ✅ COMPLETE
 - **Depends on:** 3.3
 - **File:** `src/components/city/city-month-table.tsx`
 - **Details:**
@@ -831,7 +837,7 @@ Six major amendments required to the Chester Business Scorecard system:
   - Match format from Chester Results PDF
 
 ### Task 4.3: Create city YoY comparison component
-- **Status:** pending
+- **Status:** ✅ COMPLETE
 - **Depends on:** 3.3
 - **File:** `src/components/city/city-yoy-comparison.tsx`
 - **Details:**
@@ -840,7 +846,7 @@ Six major amendments required to the Chester Business Scorecard system:
   - YTD total comparison
 
 ### Task 4.4: Create city commentary section
-- **Status:** pending
+- **Status:** ✅ COMPLETE
 - **Depends on:** 3.3
 - **File:** `src/components/city/city-commentary-section.tsx`
 - **Details:**
@@ -849,7 +855,7 @@ Six major amendments required to the Chester Business Scorecard system:
   - Bullet point format
 
 ### Task 4.5: Create City Dashboard page
-- **Status:** pending
+- **Status:** ✅ COMPLETE
 - **Depends on:** 4.1, 4.2, 4.3, 4.4
 - **File:** `src/pages/city-dashboard.tsx`
 - **Route:** `/city`
@@ -860,7 +866,7 @@ Six major amendments required to the Chester Business Scorecard system:
   - Accessible to all authenticated users
 
 ### Task 4.6: Add City Dashboard to navigation
-- **Status:** pending
+- **Status:** ✅ COMPLETE
 - **Depends on:** 4.5
 - **Files:** `src/pages/home.tsx`, `src/pages/portfolio.tsx`
 - **Details:**
@@ -872,7 +878,7 @@ Six major amendments required to the Chester Business Scorecard system:
 ## Phase 5: Company Performance View
 
 ### Task 5.1: Create revenue-ebitda chart component
-- **Status:** pending
+- **Status:** ✅ COMPLETE
 - **Depends on:** 3.2
 - **File:** `src/components/performance/revenue-ebitda-chart.tsx`
 - **Details:**
@@ -881,7 +887,7 @@ Six major amendments required to the Chester Business Scorecard system:
   - Dual display for Revenue and EBITDA
 
 ### Task 5.2: Create target-vs-actual table component
-- **Status:** pending
+- **Status:** ✅ COMPLETE
 - **Depends on:** 3.2
 - **File:** `src/components/performance/target-vs-actual-table.tsx`
 - **Details:**
@@ -889,7 +895,7 @@ Six major amendments required to the Chester Business Scorecard system:
   - Columns: Month, Rev Target, Rev Actual, Variance %, EBITDA Target, EBITDA Actual, Variance %
 
 ### Task 5.3: Create YTD summary card component
-- **Status:** pending
+- **Status:** ✅ COMPLETE
 - **Depends on:** 3.2
 - **File:** `src/components/performance/ytd-summary-card.tsx`
 - **Details:**
@@ -897,7 +903,7 @@ Six major amendments required to the Chester Business Scorecard system:
   - Progress bars showing % of annual target achieved
 
 ### Task 5.4: Create Company Performance page
-- **Status:** pending
+- **Status:** ✅ COMPLETE
 - **Depends on:** 5.1, 5.2, 5.3
 - **File:** `src/pages/company-performance.tsx`
 - **Route:** `/company/:businessId/performance`
@@ -907,7 +913,7 @@ Six major amendments required to the Chester Business Scorecard system:
   - Time range filter
 
 ### Task 5.5: Link performance page from company dashboard
-- **Status:** pending
+- **Status:** ✅ COMPLETE
 - **Depends on:** 5.4
 - **File:** `src/pages/company/dashboard.tsx`
 - **Details:**
@@ -919,7 +925,7 @@ Six major amendments required to the Chester Business Scorecard system:
 ## Phase 6: Auto-fill Targets
 
 ### Task 6.1: Update unified-submit form to fetch targets
-- **Status:** pending
+- **Status:** ✅ COMPLETE
 - **Depends on:** 3.1
 - **File:** `src/pages/unified-submit.tsx`
 - **Details:**
@@ -928,7 +934,7 @@ Six major amendments required to the Chester Business Scorecard system:
   - Show visual indicator for pre-filled fields
 
 ### Task 6.2: Update company-submit form to fetch targets
-- **Status:** pending
+- **Status:** ✅ COMPLETE
 - **Depends on:** 3.1
 - **File:** `src/pages/company-submit.tsx`
 - **Details:**
@@ -937,7 +943,7 @@ Six major amendments required to the Chester Business Scorecard system:
   - Make fields read-only when pre-filled with explanation text
 
 ### Task 6.3: Update scorecard form to use targets
-- **Status:** pending
+- **Status:** ✅ COMPLETE
 - **Depends on:** 3.1
 - **File:** `src/pages/scorecard.tsx`
 - **Details:**
@@ -950,7 +956,7 @@ Six major amendments required to the Chester Business Scorecard system:
 ## Phase 7: E-Profile Reporting
 
 ### Task 7.1: Create E-Profile filter component
-- **Status:** pending
+- **Status:** ✅ COMPLETE
 - **Depends on:** 3.4
 - **File:** `src/components/eprofile/eprofile-filter.tsx`
 - **Details:**
@@ -958,7 +964,7 @@ Six major amendments required to the Chester Business Scorecard system:
   - Styled consistently with existing filters
 
 ### Task 7.2: Create E-Profile distribution chart
-- **Status:** pending
+- **Status:** ✅ COMPLETE
 - **Depends on:** 3.4
 - **File:** `src/components/eprofile/eprofile-distribution-chart.tsx`
 - **Details:**
@@ -966,7 +972,7 @@ Six major amendments required to the Chester Business Scorecard system:
   - Option to show with/without EBITDA data
 
 ### Task 7.3: Create E-Profile aggregate table
-- **Status:** pending
+- **Status:** ✅ COMPLETE
 - **Depends on:** 3.4
 - **File:** `src/components/eprofile/eprofile-aggregate-table.tsx`
 - **Details:**
@@ -974,7 +980,7 @@ Six major amendments required to the Chester Business Scorecard system:
   - Columns: Profile, # Businesses, Rev Target, Rev Actual, %, EBITDA, EBITDA %
 
 ### Task 7.4: Create E-Profile detail list
-- **Status:** pending
+- **Status:** ✅ COMPLETE
 - **Depends on:** 3.4
 - **File:** `src/components/eprofile/eprofile-detail-list.tsx`
 - **Details:**
@@ -983,7 +989,7 @@ Six major amendments required to the Chester Business Scorecard system:
   - Flag businesses significantly below target
 
 ### Task 7.5: Create E-Profile Report page
-- **Status:** pending
+- **Status:** ✅ COMPLETE
 - **Depends on:** 7.1, 7.2, 7.3, 7.4
 - **File:** `src/pages/eprofile-report.tsx`
 - **Route:** `/eprofile`
@@ -993,7 +999,7 @@ Six major amendments required to the Chester Business Scorecard system:
   - Filter controls
 
 ### Task 7.6: Add E-Profile field to business edit dialog
-- **Status:** pending
+- **Status:** ✅ COMPLETE
 - **Depends on:** 1.3
 - **File:** `src/components/admin/business-dialog.tsx`
 - **Details:**
@@ -1006,7 +1012,7 @@ Six major amendments required to the Chester Business Scorecard system:
 ## Phase 8: AI Analysis Enhancement
 
 ### Task 8.1: Update generate-analysis edge function
-- **Status:** pending
+- **Status:** ✅ COMPLETE
 - **Depends on:** 3.2
 - **File:** `supabase/functions/generate-analysis/index.ts`
 - **Details:**
@@ -1017,7 +1023,7 @@ Six major amendments required to the Chester Business Scorecard system:
   - Compare current performance to historical averages
 
 ### Task 8.2: Update AI analysis prompt template
-- **Status:** pending
+- **Status:** ✅ COMPLETE
 - **Depends on:** 8.1
 - **File:** `supabase/functions/generate-analysis/index.ts`
 - **Details:**
@@ -1027,7 +1033,7 @@ Six major amendments required to the Chester Business Scorecard system:
   - Reference E-Profile expectations for businesses of that size
 
 ### Task 8.3: Update AI analysis output schema
-- **Status:** pending
+- **Status:** ✅ COMPLETE
 - **Depends on:** 8.2
 - **File:** `supabase/functions/generate-analysis/index.ts`
 - **Details:**
@@ -1040,7 +1046,7 @@ Six major amendments required to the Chester Business Scorecard system:
 ## Phase 9: Admin Target Management
 
 ### Task 9.1: Create target upload form component
-- **Status:** pending
+- **Status:** ✅ COMPLETE
 - **Depends on:** 3.1
 - **File:** `src/components/admin/target-upload-form.tsx`
 - **Details:**
@@ -1050,7 +1056,7 @@ Six major amendments required to the Chester Business Scorecard system:
   - Optional monthly breakdown grid
 
 ### Task 9.2: Create target grid editor component
-- **Status:** pending
+- **Status:** ✅ COMPLETE
 - **Depends on:** 3.1
 - **File:** `src/components/admin/target-grid-editor.tsx`
 - **Details:**
@@ -1059,7 +1065,7 @@ Six major amendments required to the Chester Business Scorecard system:
   - Auto-calculate totals
 
 ### Task 9.3: Create Targets Management page
-- **Status:** pending
+- **Status:** ✅ COMPLETE
 - **Depends on:** 9.1, 9.2
 - **File:** `src/pages/admin/targets.tsx`
 - **Route:** `/admin/targets`
@@ -1070,7 +1076,7 @@ Six major amendments required to the Chester Business Scorecard system:
   - Edit individual business targets
 
 ### Task 9.4: Add targets link to admin navigation
-- **Status:** pending
+- **Status:** ✅ COMPLETE
 - **Depends on:** 9.3
 - **File:** `src/pages/admin.tsx`
 - **Details:**
@@ -1082,7 +1088,7 @@ Six major amendments required to the Chester Business Scorecard system:
 ## Phase 10: Route Updates
 
 ### Task 10.1: Add new routes to App.tsx
-- **Status:** pending
+- **Status:** ✅ COMPLETE
 - **Depends on:** 4.5, 5.4, 7.5, 9.3
 - **File:** `src/App.tsx`
 - **Details:**
@@ -1421,16 +1427,20 @@ All consultant view UI restrictions are working:
 | MEDIUM | ReactQueryDevtools in production | 16.7 | ✅ FIXED |
 | LOW | Source maps in production build | 16.7 | ✅ FIXED |
 
-## Supabase Lint Advisories (Still Outstanding)
+## Supabase Lint Advisories (Updated 2026-02-10)
 
-| Issue | Entity | Description | Task |
-|-------|--------|-------------|------|
-| SECURITY DEFINER | `city_monthly_aggregate` | View bypasses RLS | 17.2 |
-| SECURITY DEFINER | `city_ytd_aggregate` | View bypasses RLS | 17.2 |
-| SECURITY DEFINER | `eprofile_monthly_aggregate` | View bypasses RLS | 17.2 |
-| search_path mutable | Multiple functions | `is_admin`, `get_my_business_id`, etc. | 17.3 |
-| Permissive RLS | `company_submissions` | INSERT uses `true` (intentional for magic link) | N/A |
-| Leaked password protection | Auth | Feature disabled | 17.4 |
+| Issue | Entity | Description | Status |
+|-------|--------|-------------|--------|
+| SECURITY DEFINER | `city_monthly_aggregate` | View bypasses RLS | ✅ FIXED (17.2 migration applied) |
+| SECURITY DEFINER | `city_ytd_aggregate` | View bypasses RLS | ✅ FIXED (17.2 migration applied) |
+| SECURITY DEFINER | `eprofile_monthly_aggregate` | View bypasses RLS | ✅ FIXED (17.2 migration applied) |
+| search_path mutable | `get_pending_submissions` | SECURITY DEFINER without search_path | ✅ FIXED (security_lint_fixes migration) |
+| search_path mutable | Other functions | `is_admin`, `get_my_business_id`, etc. | ✅ FIXED (17.3 migration applied) |
+| RLS not enabled | `invitations` | Policies existed but RLS was off | ✅ FIXED (security_lint_fixes migration) |
+| Permissive policy | `admins` DELETE/INSERT | `USING (true)` - any user could delete/insert | ✅ FIXED (security_lint_fixes migration) |
+| Permissive policy | `invitations` service role | `USING (true)` applied to all roles | ✅ FIXED (security_lint_fixes migration) |
+| Permissive RLS | `company_submissions` | INSERT/UPDATE uses `true` | ⚠️ INTENTIONAL (magic link flow) |
+| Leaked password protection | Auth | HaveIBeenPwned feature | ⏳ Enable in Supabase Dashboard |
 
 ---
 
