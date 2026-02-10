@@ -1,5 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { getCorsHeaders } from '../_shared/cors.ts'
+import { checkRateLimit, rateLimitResponse } from '../_shared/rate-limiter.ts'
+import { writeAuditLog, getClientIp } from '../_shared/audit.ts'
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -58,6 +60,17 @@ Deno.serve(async (req) => {
         JSON.stringify({ error: 'Only admins can send company invites' }),
         { status: 403, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       )
+    }
+
+    // Rate limit check: 20 company invites per admin per day
+    const rateLimitResult = await checkRateLimit(supabaseAdmin, user.id, {
+      action: 'send_company_invite',
+      maxRequests: 20,
+      windowMinutes: 1440,
+    })
+
+    if (!rateLimitResult.allowed) {
+      return rateLimitResponse(getCorsHeaders(req), rateLimitResult.resetAt)
     }
 
     const { email, business_id } = await req.json()
@@ -192,6 +205,17 @@ Deno.serve(async (req) => {
         { status: 500, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       )
     }
+
+    await writeAuditLog(supabaseAdmin, {
+      userId: user.id,
+      userEmail: user.email || null,
+      userRole: null,
+      action: 'send_company_invite',
+      resourceType: 'invitation',
+      metadata: { recipientEmail: emailLower, businessId: business_id },
+      ipAddress: getClientIp(req),
+      userAgent: req.headers.get('user-agent'),
+    })
 
     return new Response(
       JSON.stringify({

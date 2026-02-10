@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { getCorsHeaders } from '../_shared/cors.ts'
+import { writeAuditLog, getClientIp } from '../_shared/audit.ts'
 
 /**
  * Complete account setup - validates invitation token and creates user account.
@@ -214,6 +215,18 @@ Deno.serve(async (req) => {
           accepted_at: new Date().toISOString(),
         })
         .eq('id', invitation.id)
+
+      await writeAuditLog(supabaseAdmin, {
+        userId: userId,
+        userEmail: invitation.email,
+        userRole: 'business_user',
+        action: 'complete_account_setup',
+        resourceType: 'user',
+        resourceId: userId,
+        metadata: { businessId: invitation.business_id, existingUser: !!existingUser },
+        ipAddress: getClientIp(req),
+        userAgent: req.headers.get('user-agent'),
+      })
 
       // Sign in the user to get session tokens
       const { data: session, error: signInError } = await supabaseAdmin.auth.signInWithPassword({

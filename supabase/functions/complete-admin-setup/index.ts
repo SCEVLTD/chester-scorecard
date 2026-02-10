@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { getCorsHeaders } from '../_shared/cors.ts'
+import { writeAuditLog, getClientIp } from '../_shared/audit.ts'
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -191,6 +192,17 @@ Deno.serve(async (req) => {
         .from('admin_invitations')
         .update({ status: 'accepted' })
         .eq('id', invitation.id)
+
+      await writeAuditLog(supabaseAdmin, {
+        userId: null,
+        userEmail: invitation.email,
+        userRole: invitation.role,
+        action: 'complete_admin_setup',
+        resourceType: 'admin',
+        metadata: { role: invitation.role },
+        ipAddress: getClientIp(req),
+        userAgent: req.headers.get('user-agent'),
+      })
 
       // Sign in the user and return session
       const { data: signInData, error: signInError } = await supabaseAdmin.auth.signInWithPassword({

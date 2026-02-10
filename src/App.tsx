@@ -1,6 +1,7 @@
 import { Route, Switch } from 'wouter'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import * as Sentry from '@sentry/react'
 import { Toaster } from 'sonner'
 import { queryClient } from '@/lib/query-client'
 import { ErrorBoundary } from '@/components/error-boundary'
@@ -34,6 +35,22 @@ import { EProfileReportPage } from '@/pages/eprofile-report'
 
 function App() {
   return (
+    <Sentry.ErrorBoundary
+      fallback={({ resetError }) => (
+        <div className="flex flex-col items-center justify-center min-h-screen p-4">
+          <h1 className="text-2xl font-bold text-destructive mb-4">Something went wrong</h1>
+          <p className="text-muted-foreground mb-4">
+            An unexpected error occurred. The error has been reported.
+          </p>
+          <button
+            onClick={resetError}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-md"
+          >
+            Try Again
+          </button>
+        </div>
+      )}
+    >
     <ErrorBoundary>
       <AuthProvider>
         <QueryClientProvider client={queryClient}>
@@ -186,6 +203,7 @@ function App() {
         </QueryClientProvider>
       </AuthProvider>
     </ErrorBoundary>
+    </Sentry.ErrorBoundary>
   )
 }
 

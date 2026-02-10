@@ -1,6 +1,8 @@
 import Anthropic from 'npm:@anthropic-ai/sdk'
 import { createClient } from 'npm:@supabase/supabase-js'
 import { getCorsHeaders } from '../_shared/cors.ts'
+import { checkRateLimit, rateLimitResponse } from '../_shared/rate-limiter.ts'
+import { writeAuditLog, getClientIp } from '../_shared/audit.ts'
 
 interface PortfolioAggregate {
   totalBusinesses: number
@@ -198,6 +200,18 @@ Deno.serve(async (req) => {
       )
     }
 
+    // Rate limit check: 5 portfolio analyses per user per hour
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    const rateLimitResult = await checkRateLimit(supabase, user.id, {
+      action: 'generate_portfolio_analysis',
+      maxRequests: 5,
+      windowMinutes: 60,
+    })
+
+    if (!rateLimitResult.allowed) {
+      return rateLimitResponse(getCorsHeaders(req), rateLimitResult.resetAt)
+    }
+
     const { aggregate, isConsultant } = await req.json() as RequestBody
 
     const anthropic = new Anthropic({
@@ -263,6 +277,20 @@ RULES:
     analysis.generatedAt = new Date().toISOString()
     analysis.modelUsed = 'claude-sonnet-4-20250514'
     analysis.isConsultantView = isConsultant || false
+
+    await writeAuditLog(supabase, {
+      userId: user.id,
+      userEmail: user.email || null,
+      userRole: null,
+      action: 'generate_portfolio_analysis',
+      resourceType: 'portfolio',
+      metadata: {
+        businessCount: aggregate.totalBusinesses,
+        month: aggregate.analysisMonth,
+      },
+      ipAddress: getClientIp(req),
+      userAgent: req.headers.get('user-agent'),
+    })
 
     return new Response(JSON.stringify(analysis), {
       headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },

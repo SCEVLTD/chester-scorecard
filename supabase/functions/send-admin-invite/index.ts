@@ -1,5 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { getCorsHeaders } from '../_shared/cors.ts'
+import { checkRateLimit, rateLimitResponse } from '../_shared/rate-limiter.ts'
+import { writeAuditLog, getClientIp } from '../_shared/audit.ts'
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -63,6 +65,17 @@ Deno.serve(async (req) => {
         JSON.stringify({ error: 'Only super admins can invite new admins' }),
         { status: 403, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       )
+    }
+
+    // Rate limit check: 10 admin invites per super_admin per day
+    const rateLimitResult = await checkRateLimit(supabaseAdmin, user.id, {
+      action: 'send_admin_invite',
+      maxRequests: 10,
+      windowMinutes: 1440,
+    })
+
+    if (!rateLimitResult.allowed) {
+      return rateLimitResponse(getCorsHeaders(req), rateLimitResult.resetAt)
     }
 
     const { email, role } = await req.json()
@@ -196,6 +209,17 @@ Deno.serve(async (req) => {
         { status: 500, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       )
     }
+
+    await writeAuditLog(supabaseAdmin, {
+      userId: user.id,
+      userEmail: user.email || null,
+      userRole: 'super_admin',
+      action: 'send_admin_invite',
+      resourceType: 'admin_invitation',
+      metadata: { recipientEmail: emailLower, role: adminRole },
+      ipAddress: getClientIp(req),
+      userAgent: req.headers.get('user-agent'),
+    })
 
     return new Response(
       JSON.stringify({

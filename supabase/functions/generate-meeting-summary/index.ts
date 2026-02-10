@@ -1,6 +1,8 @@
 import Anthropic from 'npm:@anthropic-ai/sdk'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { getCorsHeaders } from '../_shared/cors.ts'
+import { checkRateLimit, rateLimitResponse } from '../_shared/rate-limiter.ts'
+import { writeAuditLog, getClientIp } from '../_shared/audit.ts'
 
 interface PortfolioAggregate {
   totalBusinesses: number
@@ -236,6 +238,18 @@ Deno.serve(async (req) => {
       )
     }
 
+    // Rate limit check: 5 meeting summaries per user per hour
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    const rateLimitResult = await checkRateLimit(supabase, user.id, {
+      action: 'generate_meeting_summary',
+      maxRequests: 5,
+      windowMinutes: 60,
+    })
+
+    if (!rateLimitResult.allowed) {
+      return rateLimitResponse(getCorsHeaders(req), rateLimitResult.resetAt)
+    }
+
     const body = await req.json() as RequestBody
     const { aggregatedData, persist, meetingDate, meetingType, title, isConsultant } = body
 
@@ -279,9 +293,7 @@ Deno.serve(async (req) => {
       const effectiveType = meetingType || 'friday_group'
       const effectiveTitle = title || formatMeetingTitle(effectiveDate, effectiveType)
 
-      // Insert into meetings table
-      const supabase = createClient(supabaseUrl, supabaseServiceKey)
-
+      // Insert into meetings table (reuse supabase client from rate limit check)
       const { data: meeting, error: insertError } = await supabase
         .from('meetings')
         .insert({
@@ -306,6 +318,23 @@ Deno.serve(async (req) => {
         meetingId = meeting.id
       }
     }
+
+    await writeAuditLog(supabase, {
+      userId: user.id,
+      userEmail: user.email || null,
+      userRole: null,
+      action: 'generate_meeting_summary',
+      resourceType: 'meeting',
+      resourceId: meetingId,
+      metadata: {
+        businessCount: aggregatedData.totalBusinesses,
+        month: aggregatedData.analysisMonth,
+        meetingType: meetingType || 'friday_group',
+        persisted: persist || false,
+      },
+      ipAddress: getClientIp(req),
+      userAgent: req.headers.get('user-agent'),
+    })
 
     // Return response with optional meetingId
     const result = {

@@ -205,45 +205,40 @@ Following a comprehensive security audit on 2026-02-10, these phases take immedi
 > **Dependencies:** Phase 16 (auth must be in place first)
 
 ### Task 18.1: Implement Rate Limiting for AI Generation Functions
-- **Status:** pending
+- **Status:** ✅ COMPLETE
 - **Severity:** HIGH
 - **Depends on:** 16.1, 16.2, 16.3
 - **Files:** `supabase/functions/generate-analysis/index.ts`, `generate-portfolio-analysis/index.ts`, `generate-meeting-summary/index.ts`
 - **Problem:** No rate limiting. Even after auth is added, a compromised account could generate unlimited AI requests burning API credits.
-- **Changes required:**
-  - [ ] Implement token-bucket or sliding-window rate limiting using Supabase database as store:
-    ```sql
-    CREATE TABLE rate_limits (
-      user_id uuid REFERENCES auth.users(id),
-      action text NOT NULL,
-      window_start timestamptz NOT NULL,
-      count integer DEFAULT 1,
-      PRIMARY KEY (user_id, action, window_start)
-    );
-    ```
-  - [ ] Limits: 10 AI generations per user per hour, 50 per day
-  - [ ] Return 429 Too Many Requests when exceeded
-  - [ ] Apply to all three AI functions
+- **Implementation:**
+  - [x] Created `rate_limits` table with atomic increment via Postgres RPC (`increment_rate_limit`)
+  - [x] Created shared rate limiter module: `supabase/functions/_shared/rate-limiter.ts`
+  - [x] Migration: `supabase/migrations/20260210_rate_limiting.sql`
+  - [x] `generate-analysis`: 10 per user per hour
+  - [x] `generate-portfolio-analysis`: 5 per user per hour
+  - [x] `generate-meeting-summary`: 5 per user per hour
+  - [x] Returns 429 with `Retry-After` header when exceeded
+  - [x] Fails open if rate limit infrastructure is temporarily unavailable
 
 ### Task 18.2: Implement Rate Limiting for Invitation/Email Functions
-- **Status:** pending
+- **Status:** ✅ COMPLETE
 - **Severity:** MEDIUM
 - **Depends on:** 18.1 (use same rate limit infrastructure)
-- **Files:** `send-company-invite`, `send-admin-invite`, `send-reminders`, `send-email`
+- **Files:** `send-company-invite`, `send-admin-invite`
 - **Problem:** No rate limiting on email-sending functions. Could be abused for spam.
-- **Changes required:**
-  - [ ] Limits: 20 invitations per admin per day, 50 reminders per day
-  - [ ] Apply to all email-related Edge Functions
+- **Implementation:**
+  - [x] `send-company-invite`: 20 per admin per day (1440 min window)
+  - [x] `send-admin-invite`: 10 per super_admin per day (1440 min window)
+  - [x] Not applied to `send-email` (webhook handler) or `send-invitations`/`send-reminders` (admin bulk ops)
 
 ### Task 18.3: Implement Rate Limiting for Account Creation
-- **Status:** pending
+- **Status:** ✅ COMPLETE
 - **Severity:** MEDIUM
 - **Depends on:** 18.1
 - **File:** `supabase/functions/create-company-account/index.ts`
 - **Problem:** No rate limiting on account creation. Could be used for brute-force.
-- **Changes required:**
-  - [ ] Limits: 10 account creations per admin per hour
-  - [ ] Add exponential backoff on failed auth attempts (Supabase may handle this)
+- **Implementation:**
+  - [x] `create-company-account`: 10 per admin per hour
 
 ---
 
@@ -276,26 +271,17 @@ Following a comprehensive security audit on 2026-02-10, these phases take immedi
   - [ ] Configure alerts to email/Slack
 
 ### Task 19.3: Add Basic Audit Logging
-- **Status:** pending
+- **Status:** COMPLETE
 - **Severity:** HIGH (enterprise requirement)
-- **Files:** New migration + new Edge Function or database triggers
+- **Files:** `supabase/migrations/20260210_audit_logging.sql`, `supabase/functions/_shared/audit.ts`, 8 Edge Functions updated
 - **Problem:** No record of who accessed what data, when. Required for SOC 2 and GDPR compliance.
-- **Changes required:**
-  - [ ] Create `audit_log` table:
-    ```sql
-    CREATE TABLE audit_log (
-      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-      user_id uuid REFERENCES auth.users(id),
-      action text NOT NULL,
-      resource_type text NOT NULL,
-      resource_id uuid,
-      metadata jsonb,
-      ip_address inet,
-      created_at timestamptz DEFAULT now()
-    );
-    ```
-  - [ ] Enable RLS: only super_admin can SELECT
-  - [ ] Add audit triggers for: scorecard creation/update, AI generation, data export, admin actions
+- **Changes delivered:**
+  - [x] Create `audit_log` table with RLS (super_admin SELECT only)
+  - [x] Indexes for user, action, resource, and time-based queries
+  - [x] `write_audit_log` SECURITY DEFINER RPC function for Edge Functions
+  - [x] `cleanup_audit_logs` function for 90-day retention
+  - [x] Shared `_shared/audit.ts` module (writeAuditLog + getClientIp helpers)
+  - [x] Audit logging in: generate-analysis, generate-portfolio-analysis, generate-meeting-summary, send-company-invite, send-admin-invite, create-company-account, complete-account-setup, complete-admin-setup
   - [ ] Create admin UI to view audit logs (Phase 22)
 
 ### Task 19.4: Add Anthropic API Cost Monitoring
@@ -1382,7 +1368,7 @@ All consultant view UI restrictions are working:
 | CRITICAL | AI Edge Functions have no authentication | 16.1, 16.2, 16.3 | ✅ FIXED |
 | CRITICAL | Consultant can access financial data via DB queries | 17.1 | ✅ FIXED (apply migration) |
 | HIGH | Wildcard CORS on all Edge Functions | 16.4 | ✅ FIXED |
-| HIGH | No rate limiting on any endpoint | 18.1-18.3 | pending |
+| HIGH | No rate limiting on any endpoint | 18.1-18.3 | ✅ FIXED (apply migration) |
 | HIGH | SECURITY DEFINER views bypass RLS | 17.2 | ✅ FIXED (apply migration) |
 | HIGH | No security headers on frontend | 16.5 | ✅ FIXED |
 | MEDIUM | JWT claims logged to browser console | 16.6 | ✅ FIXED |

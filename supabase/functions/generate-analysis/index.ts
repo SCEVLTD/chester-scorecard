@@ -1,6 +1,8 @@
 import Anthropic from 'npm:@anthropic-ai/sdk'
 import { createClient } from 'npm:@supabase/supabase-js'
 import { getCorsHeaders } from '../_shared/cors.ts'
+import { checkRateLimit, rateLimitResponse } from '../_shared/rate-limiter.ts'
+import { writeAuditLog, getClientIp } from '../_shared/audit.ts'
 
 interface ScorecardData {
   month: string
@@ -421,6 +423,17 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseKey)
 
+    // Rate limit check: 10 AI generations per user per hour
+    const rateLimitResult = await checkRateLimit(supabase, user.id, {
+      action: 'generate_analysis',
+      maxRequests: 10,
+      windowMinutes: 60,
+    })
+
+    if (!rateLimitResult.allowed) {
+      return rateLimitResponse(getCorsHeaders(req), rateLimitResult.resetAt)
+    }
+
     // Fetch company submission if available
     let submission: CompanySubmission | null = null
     if (scorecard.company_submission_id) {
@@ -496,6 +509,22 @@ Deno.serve(async (req) => {
         modelUsed,
       }
 
+      await writeAuditLog(supabase, {
+        userId: user.id,
+        userEmail: user.email || null,
+        userRole: null,
+        action: 'generate_analysis',
+        resourceType: 'scorecard',
+        resourceId: scorecard.company_submission_id,
+        metadata: {
+          businessName,
+          month: scorecard.month,
+          generateBoth: true,
+        },
+        ipAddress: getClientIp(req),
+        userAgent: req.headers.get('user-agent'),
+      })
+
       return new Response(JSON.stringify(combinedAnalysis), {
         headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
       })
@@ -513,6 +542,23 @@ Deno.serve(async (req) => {
     analysis.generatedAt = generatedAt
     analysis.modelUsed = modelUsed
     analysis.isConsultantView = isConsultant || false
+
+    await writeAuditLog(supabase, {
+      userId: user.id,
+      userEmail: user.email || null,
+      userRole: null,
+      action: 'generate_analysis',
+      resourceType: 'scorecard',
+      resourceId: scorecard.company_submission_id,
+      metadata: {
+        businessName,
+        month: scorecard.month,
+        generateBoth: false,
+        isConsultant: isConsultant || false,
+      },
+      ipAddress: getClientIp(req),
+      userAgent: req.headers.get('user-agent'),
+    })
 
     return new Response(JSON.stringify(analysis), {
       headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
