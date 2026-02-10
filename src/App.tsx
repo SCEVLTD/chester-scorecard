@@ -21,6 +21,8 @@ import { UnifiedSubmitPage } from '@/pages/unified-submit'
 import { AdminImportPage } from '@/pages/admin/import'
 import { ImportBusinessesPage } from '@/pages/admin/import-businesses'
 import { AdminsPage } from '@/pages/admin/admins'
+import { SecurityPage } from '@/pages/admin/security'
+import { ApiUsagePage } from '@/pages/admin/api-usage'
 import { BusinessPage } from '@/pages/business'
 // CompanyLoginPage removed - unified login at /login
 import { CompanyVerifyPage } from '@/pages/company/verify'
@@ -132,6 +134,16 @@ function App() {
               <Route path="/admin/import-businesses">
                 <ProtectedRoute requiredRole="admin">
                   <ImportBusinessesPage />
+                </ProtectedRoute>
+              </Route>
+              <Route path="/admin/security">
+                <ProtectedRoute requiredRole="admin">
+                  <SecurityPage />
+                </ProtectedRoute>
+              </Route>
+              <Route path="/admin/api-usage">
+                <ProtectedRoute requiredRole="admin">
+                  <ApiUsagePage />
                 </ProtectedRoute>
               </Route>
 

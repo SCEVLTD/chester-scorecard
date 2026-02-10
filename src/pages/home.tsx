@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Pencil, LayoutGrid, Upload, Link2, Mail, Trash2, LogOut, Shield, Building2, Layers } from 'lucide-react'
+import { Plus, Pencil, LayoutGrid, Upload, Link2, Mail, Trash2, LogOut, Shield, Building2, Layers, Activity } from 'lucide-react'
 import { useBusinesses, useCreateBusiness, useDeleteBusiness } from '@/hooks/use-businesses'
 import { CompanyEditDialog } from '@/components/admin/company-edit-dialog'
 import type { Business } from '@/types/database.types'
@@ -156,9 +156,9 @@ export function HomePage() {
           )}
         </div>
 
-        {/* Admin link (Super Admin Only) */}
+        {/* Admin links (Super Admin Only) */}
         {userRole === 'super_admin' && (
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-2">
             <Button
               variant="ghost"
               size="sm"
@@ -167,6 +167,24 @@ export function HomePage() {
             >
               <Shield className="mr-1 h-3 w-3" />
               Manage Admins
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/admin/security')}
+              className="text-xs text-muted-foreground"
+            >
+              <Shield className="mr-1 h-3 w-3" />
+              Security
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/admin/api-usage')}
+              className="text-xs text-muted-foreground"
+            >
+              <Activity className="mr-1 h-3 w-3" />
+              API Usage
             </Button>
           </div>
         )}
