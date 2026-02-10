@@ -246,8 +246,8 @@ export function LoginForm() {
 
   // Normal login form
   return (
-    <>
-      <Card className="w-full max-w-md">
+    <div className="w-full max-w-md">
+      <Card>
         <CardHeader className="text-center">
           <img
             src="/velocity-logo.png"
@@ -302,11 +302,11 @@ export function LoginForm() {
           </form>
         </CardContent>
       </Card>
-      <p className="mt-4 text-center text-xs text-muted-foreground">
+      <p className="mt-3 text-center text-xs text-muted-foreground">
         <a href="/privacy" className="hover:underline">Privacy Policy</a>
         {' \u00b7 '}
         <a href="/terms" className="hover:underline">Terms of Service</a>
       </p>
-    </>
+    </div>
   )
 }
