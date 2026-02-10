@@ -336,6 +336,28 @@ Deno.serve(async (req) => {
       userAgent: req.headers.get('user-agent'),
     })
 
+    // Log token usage
+    try {
+      await writeAuditLog(supabase, {
+        userId: user.id,
+        userEmail: user.email || null,
+        userRole: null,
+        action: 'anthropic_api_usage',
+        resourceType: 'ai_tokens',
+        metadata: {
+          function: 'generate-meeting-summary',
+          model: 'claude-sonnet-4-20250514',
+          inputTokens: response.usage.input_tokens,
+          outputTokens: response.usage.output_tokens,
+          totalTokens: response.usage.input_tokens + response.usage.output_tokens,
+        },
+        ipAddress: getClientIp(req),
+        userAgent: req.headers.get('user-agent'),
+      })
+    } catch {
+      // Token usage logging should never block the response
+    }
+
     // Return response with optional meetingId
     const result = {
       ...parsed,

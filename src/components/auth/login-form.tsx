@@ -87,12 +87,47 @@ export function LoginForm() {
     if (!email.trim() || !password) return
 
     setIsLoading(true)
-    const { error } = await signIn(email.trim(), password)
+    const trimmedEmail = email.trim()
+    const { error } = await signIn(trimmedEmail, password)
     setIsLoading(false)
 
     if (error) {
       console.error('Login error:', error)
       toast.error('Invalid email or password')
+
+      // TODO: Audit log calls require service_role permissions.
+      // These will fail silently with the anon key. They will work
+      // once we add a Supabase auth webhook Edge Function.
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (supabase.rpc as any)('write_audit_log', {
+          p_user_id: null,
+          p_user_email: trimmedEmail,
+          p_user_role: null,
+          p_action: 'login_failed',
+          p_resource_type: 'auth',
+          p_metadata: { error: error.message },
+        })
+      } catch {
+        // Silently ignore - audit logging should never break login
+      }
+    } else {
+      // TODO: Audit log calls require service_role permissions.
+      // These will fail silently with the anon key. They will work
+      // once we add a Supabase auth webhook Edge Function.
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (supabase.rpc as any)('write_audit_log', {
+          p_user_id: null,
+          p_user_email: trimmedEmail,
+          p_user_role: null,
+          p_action: 'login_success',
+          p_resource_type: 'auth',
+          p_metadata: {},
+        })
+      } catch {
+        // Silently ignore - audit logging should never break login
+      }
     }
     // Redirect will happen via the useEffect when session/userRole update
   }
@@ -211,60 +246,67 @@ export function LoginForm() {
 
   // Normal login form
   return (
-    <Card className="w-full max-w-md">
-      <CardHeader className="text-center">
-        <img
-          src="/velocity-logo.png"
-          alt="Velocity"
-          className="h-12 mx-auto mb-4"
-        />
-        <CardTitle className="text-xl">Chester Business Scorecard</CardTitle>
-        <CardDescription>Doing good by doing well</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-            />
-          </div>
-          <div className="relative">
-            <Input
-              type={showPassword ? 'text' : 'password'}
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              autoComplete="current-password"
-              className="pr-10"
-            />
-            <button
+    <>
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <img
+            src="/velocity-logo.png"
+            alt="Velocity"
+            className="h-12 mx-auto mb-4"
+          />
+          <CardTitle className="text-xl">Chester Business Scorecard</CardTitle>
+          <CardDescription>Doing good by doing well</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+              />
+            </div>
+            <div className="relative">
+              <Input
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+                className="pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? 'Signing in...' : 'Sign In'}
+            </Button>
+            <Button
               type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              variant="link"
+              className="w-full text-sm"
+              onClick={handleResetPassword}
+              disabled={isResetting}
             >
-              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-            </button>
-          </div>
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? 'Signing in...' : 'Sign In'}
-          </Button>
-          <Button
-            type="button"
-            variant="link"
-            className="w-full text-sm"
-            onClick={handleResetPassword}
-            disabled={isResetting}
-          >
-            {isResetting ? 'Sending...' : 'Forgot password?'}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+              {isResetting ? 'Sending...' : 'Forgot password?'}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+      <div className="mt-4 text-center text-sm text-muted-foreground">
+        <a href="/privacy" className="hover:underline">Privacy Policy</a>
+        {' \u00b7 '}
+        <a href="/terms" className="hover:underline">Terms of Service</a>
+      </div>
+    </>
   )
 }

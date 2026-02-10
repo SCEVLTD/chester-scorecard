@@ -32,6 +32,8 @@ import { MeetingPage } from '@/pages/meeting'
 import { CityDashboardPage } from '@/pages/city-dashboard'
 import { CompanyPerformancePage } from '@/pages/company-performance'
 import { EProfileReportPage } from '@/pages/eprofile-report'
+import { PrivacyPolicyPage } from '@/pages/privacy-policy'
+import { TermsPage } from '@/pages/terms'
 
 function App() {
   return (
@@ -67,6 +69,8 @@ function App() {
               <Route path="/admin/setup" component={AdminSetupPage} />
               <Route path="/company/verify" component={CompanyVerifyPage} />
               <Route path="/unauthorized" component={UnauthorizedPage} />
+              <Route path="/privacy" component={PrivacyPolicyPage} />
+              <Route path="/terms" component={TermsPage} />
               <Route path="/submit/:token" component={CompanySubmitPage} />
               <Route path="/submit/:token/success" component={SubmissionSuccessPage} />
 

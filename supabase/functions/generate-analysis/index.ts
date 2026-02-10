@@ -367,11 +367,16 @@ const consultantAnalysisTool = {
   }
 }
 
+interface AnalysisResult {
+  data: Record<string, unknown>
+  usage: { input_tokens: number; output_tokens: number }
+}
+
 async function generateSingleAnalysis(
   anthropic: Anthropic,
   prompt: string,
   tool: typeof standardAnalysisTool | typeof consultantAnalysisTool
-): Promise<Record<string, unknown>> {
+): Promise<AnalysisResult> {
   const response = await anthropic.messages.create({
     model: 'claude-sonnet-4-5-20250929',
     max_tokens: 2000,
@@ -385,7 +390,10 @@ async function generateSingleAnalysis(
     throw new Error('No tool use response from Claude')
   }
 
-  return toolUse.input as Record<string, unknown>
+  return {
+    data: toolUse.input as Record<string, unknown>,
+    usage: response.usage,
+  }
 }
 
 Deno.serve(async (req) => {
@@ -503,8 +511,8 @@ Deno.serve(async (req) => {
 
       // Return combined format
       const combinedAnalysis = {
-        standard: standardResult,
-        consultant: consultantResult,
+        standard: standardResult.data,
+        consultant: consultantResult.data,
         generatedAt,
         modelUsed,
       }
@@ -525,6 +533,31 @@ Deno.serve(async (req) => {
         userAgent: req.headers.get('user-agent'),
       })
 
+      // Log combined token usage from both API calls
+      const totalInputTokens = standardResult.usage.input_tokens + consultantResult.usage.input_tokens
+      const totalOutputTokens = standardResult.usage.output_tokens + consultantResult.usage.output_tokens
+      try {
+        await writeAuditLog(supabase, {
+          userId: user.id,
+          userEmail: user.email || null,
+          userRole: null,
+          action: 'anthropic_api_usage',
+          resourceType: 'ai_tokens',
+          metadata: {
+            function: 'generate-analysis',
+            model: modelUsed,
+            inputTokens: totalInputTokens,
+            outputTokens: totalOutputTokens,
+            totalTokens: totalInputTokens + totalOutputTokens,
+            callCount: 2,
+          },
+          ipAddress: getClientIp(req),
+          userAgent: req.headers.get('user-agent'),
+        })
+      } catch {
+        // Token usage logging should never block the response
+      }
+
       return new Response(JSON.stringify(combinedAnalysis), {
         headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
       })
@@ -536,9 +569,10 @@ Deno.serve(async (req) => {
       : buildStandardPrompt(scorecard, previousScorecard, businessName, submission, eProfile, fetchedHistoricalData)
 
     const analysisTool = isConsultant ? consultantAnalysisTool : standardAnalysisTool
-    const analysis = await generateSingleAnalysis(anthropic, prompt, analysisTool)
+    const result = await generateSingleAnalysis(anthropic, prompt, analysisTool)
 
     // Add metadata
+    const analysis = result.data
     analysis.generatedAt = generatedAt
     analysis.modelUsed = modelUsed
     analysis.isConsultantView = isConsultant || false
@@ -559,6 +593,28 @@ Deno.serve(async (req) => {
       ipAddress: getClientIp(req),
       userAgent: req.headers.get('user-agent'),
     })
+
+    // Log token usage
+    try {
+      await writeAuditLog(supabase, {
+        userId: user.id,
+        userEmail: user.email || null,
+        userRole: null,
+        action: 'anthropic_api_usage',
+        resourceType: 'ai_tokens',
+        metadata: {
+          function: 'generate-analysis',
+          model: modelUsed,
+          inputTokens: result.usage.input_tokens,
+          outputTokens: result.usage.output_tokens,
+          totalTokens: result.usage.input_tokens + result.usage.output_tokens,
+        },
+        ipAddress: getClientIp(req),
+        userAgent: req.headers.get('user-agent'),
+      })
+    } catch {
+      // Token usage logging should never block the response
+    }
 
     return new Response(JSON.stringify(analysis), {
       headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },

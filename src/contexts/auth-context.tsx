@@ -1,7 +1,16 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState, useRef, useCallback, type ReactNode } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
+import { toast } from 'sonner'
+import { SessionTimeoutModal } from '@/components/session-timeout-modal'
+
+/** Duration of inactivity before showing the warning modal (25 minutes) */
+const WARNING_TIMEOUT_MS = 25 * 60 * 1000
+/** Duration of inactivity before auto sign-out (30 minutes) */
+const LOGOUT_TIMEOUT_MS = 30 * 60 * 1000
+/** Minimum interval between activity event processing (30 seconds) */
+const ACTIVITY_THROTTLE_MS = 30 * 1000
 
 interface AuthContextType {
   session: Session | null
@@ -9,10 +18,12 @@ interface AuthContextType {
   userRole: 'super_admin' | 'consultant' | 'business_user' | null
   businessId: string | null
   isLoading: boolean
+  isSessionExpiring: boolean
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>
   signInWithMagicLink: (email: string) => Promise<{ error: Error | null }>
   resetPassword: (email: string) => Promise<{ error: Error | null }>
   signOut: () => Promise<void>
+  extendSession: () => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -20,6 +31,12 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isSessionExpiring, setIsSessionExpiring] = useState(false)
+
+  // Refs for idle detection timers
+  const lastActivityRef = useRef<number>(Date.now())
+  const warningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const logoutTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     // Get initial session
@@ -92,6 +109,74 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut()
   }
 
+  /** Clear all idle detection timers */
+  const clearIdleTimers = useCallback(() => {
+    if (warningTimerRef.current) {
+      clearTimeout(warningTimerRef.current)
+      warningTimerRef.current = null
+    }
+    if (logoutTimerRef.current) {
+      clearTimeout(logoutTimerRef.current)
+      logoutTimerRef.current = null
+    }
+  }, [])
+
+  /** Start (or restart) the idle detection timers */
+  const startIdleTimers = useCallback(() => {
+    clearIdleTimers()
+    lastActivityRef.current = Date.now()
+    setIsSessionExpiring(false)
+
+    warningTimerRef.current = setTimeout(() => {
+      setIsSessionExpiring(true)
+    }, WARNING_TIMEOUT_MS)
+
+    logoutTimerRef.current = setTimeout(() => {
+      setIsSessionExpiring(false)
+      toast.info('Session expired due to inactivity')
+      supabase.auth.signOut()
+    }, LOGOUT_TIMEOUT_MS)
+  }, [clearIdleTimers])
+
+  /** Called when user clicks "Stay Logged In" on the timeout modal */
+  const extendSession = useCallback(() => {
+    startIdleTimers()
+  }, [startIdleTimers])
+
+  // Idle detection: track user activity and manage timers
+  useEffect(() => {
+    // Only run timers when user has an active session
+    if (!session) {
+      clearIdleTimers()
+      setIsSessionExpiring(false)
+      return
+    }
+
+    // Start timers on mount / session change
+    startIdleTimers()
+
+    /** Throttled activity handler - resets timers on user interaction */
+    const handleActivity = (): void => {
+      const now = Date.now()
+      if (now - lastActivityRef.current < ACTIVITY_THROTTLE_MS) {
+        return // Throttle: ignore events within 30s of last reset
+      }
+      startIdleTimers()
+    }
+
+    const events: Array<keyof WindowEventMap> = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart']
+    for (const event of events) {
+      window.addEventListener(event, handleActivity, { passive: true })
+    }
+
+    return () => {
+      for (const event of events) {
+        window.removeEventListener(event, handleActivity)
+      }
+      clearIdleTimers()
+    }
+  }, [session, startIdleTimers, clearIdleTimers])
+
   return (
     <AuthContext.Provider value={{
       session,
@@ -99,12 +184,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       userRole,
       businessId,
       isLoading,
+      isSessionExpiring,
       signIn,
       signInWithMagicLink,
       resetPassword,
       signOut,
+      extendSession,
     }}>
       {children}
+      <SessionTimeoutModal />
     </AuthContext.Provider>
   )
 }
