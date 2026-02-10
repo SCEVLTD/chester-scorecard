@@ -319,6 +319,7 @@ export interface Database {
           contact_name: string | null
           e_profile: EProfile | null
           is_test: boolean | null
+          organisation_id: string | null
           created_at: string
         }
         Insert: {
@@ -329,6 +330,7 @@ export interface Database {
           contact_name?: string | null
           e_profile?: EProfile | null
           is_test?: boolean | null
+          organisation_id?: string | null
           created_at?: string
         }
         Update: {
@@ -339,6 +341,7 @@ export interface Database {
           contact_name?: string | null
           e_profile?: EProfile | null
           is_test?: boolean | null
+          organisation_id?: string | null
           created_at?: string
         }
         Relationships: [
@@ -554,6 +557,16 @@ export type CompanyEmailInsert = Database['public']['Tables']['company_emails'][
 export type Meeting = Database['public']['Tables']['meetings']['Row']
 export type MeetingInsert = Database['public']['Tables']['meetings']['Insert']
 export type MeetingUpdate = Database['public']['Tables']['meetings']['Update']
+
+export interface Organisation {
+  id: string
+  name: string
+  slug: string
+  settings: Record<string, unknown>
+  branding: Record<string, unknown>
+  created_at: string
+  updated_at: string
+}
 
 export type AdminRole = 'super_admin' | 'consultant'
 export type UserRole = AdminRole | 'business_user' | null

@@ -13,6 +13,7 @@ import { useLatestScoresPerBusiness } from '@/hooks/use-scorecards'
 import { useSectors } from '@/hooks/use-sectors'
 import { SectorSelect } from '@/components/sector-select'
 import { useAuth } from '@/contexts/auth-context'
+import { useOrganisation } from '@/hooks/use-organisation'
 
 const ragColors: Record<string, string> = {
   green: 'bg-green-500 hover:bg-green-600',
@@ -28,6 +29,7 @@ export function HomePage() {
   const [editingBusiness, setEditingBusiness] = useState<Business | null>(null)
 
   const { signOut, userRole } = useAuth()
+  const { data: org } = useOrganisation()
   const { data: businesses, isLoading } = useBusinesses()
   const { data: sectors } = useSectors()
   const { data: latestScores } = useLatestScoresPerBusiness()
@@ -108,7 +110,9 @@ export function HomePage() {
             />
             <div>
               <h1 className="text-lg font-semibold text-foreground">Chester Business Scorecard</h1>
-              <p className="text-xs text-muted-foreground">Doing good by doing well</p>
+              <p className="text-xs text-muted-foreground">
+                {org ? org.name : 'Doing good by doing well'}
+              </p>
             </div>
           </div>
           <Button

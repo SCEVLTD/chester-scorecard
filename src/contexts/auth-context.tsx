@@ -17,6 +17,7 @@ interface AuthContextType {
   user: User | null
   userRole: 'super_admin' | 'consultant' | 'business_user' | null
   businessId: string | null
+  organisationId: string | null
   isLoading: boolean
   isSessionExpiring: boolean
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>
@@ -59,9 +60,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Extract custom claims from JWT
   // Custom access token hook adds claims to JWT payload, not app_metadata
   // Decode JWT to get the claims (access_token is a JWT: header.payload.signature)
-  const getJwtClaims = (accessToken: string | undefined): { user_role: 'super_admin' | 'consultant' | 'business_user' | null, business_id: string | null } => {
+  const getJwtClaims = (accessToken: string | undefined): { user_role: 'super_admin' | 'consultant' | 'business_user' | null, business_id: string | null, organisation_id: string | null } => {
     if (!accessToken) {
-      return { user_role: null, business_id: null }
+      return { user_role: null, business_id: null, organisation_id: null }
     }
     try {
       const payload = accessToken.split('.')[1]
@@ -71,17 +72,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const user_role = rawRole === 'admin' ? 'super_admin' : rawRole
       return {
         user_role,
-        business_id: decoded.business_id || null
+        business_id: decoded.business_id || null,
+        organisation_id: decoded.organisation_id || null,
       }
     } catch (e) {
       console.error('[Auth] JWT parse error:', e)
-      return { user_role: null, business_id: null }
+      return { user_role: null, business_id: null, organisation_id: null }
     }
   }
 
   const claims = getJwtClaims(session?.access_token)
   const userRole = claims.user_role
   const businessId = claims.business_id
+  const organisationId = claims.organisation_id
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
@@ -183,6 +186,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user: session?.user ?? null,
       userRole,
       businessId,
+      organisationId,
       isLoading,
       isSessionExpiring,
       signIn,
