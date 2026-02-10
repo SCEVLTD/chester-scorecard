@@ -1,10 +1,6 @@
 import Anthropic from 'npm:@anthropic-ai/sdk'
 import { createClient } from 'npm:@supabase/supabase-js@2'
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { getCorsHeaders } from '../_shared/cors.ts'
 
 interface PortfolioAggregate {
   totalBusinesses: number
@@ -212,10 +208,34 @@ function formatMeetingTitle(meetingDate: string, meetingType: string): string {
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: getCorsHeaders(req) })
   }
 
   try {
+    // Verify authentication
+    const authHeader = req.headers.get('authorization')
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Missing authorization header' }),
+        { status: 401, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
+      )
+    }
+
+    const token = authHeader.replace('Bearer ', '')
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    const supabaseAuth = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: { autoRefreshToken: false, persistSession: false }
+    })
+
+    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser(token)
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid or expired token' }),
+        { status: 401, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
+      )
+    }
+
     const body = await req.json() as RequestBody
     const { aggregatedData, persist, meetingDate, meetingType, title, isConsultant } = body
 
@@ -251,26 +271,8 @@ Deno.serve(async (req) => {
     let meetingId: string | null = null
 
     if (persist) {
-      // Get user email from JWT for created_by field
-      const authHeader = req.headers.get('authorization')
-      let userEmail = 'system'
-
-      if (authHeader) {
-        try {
-          const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-          const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-          const supabase = createClient(supabaseUrl, supabaseServiceKey)
-
-          // Decode the JWT to get user info
-          const token = authHeader.replace('Bearer ', '')
-          const { data: { user } } = await supabase.auth.getUser(token)
-          if (user?.email) {
-            userEmail = user.email
-          }
-        } catch (e) {
-          console.warn('Could not extract user email from token:', e)
-        }
-      }
+      // Use the already-verified user's email for created_by field
+      const userEmail = user.email || 'system'
 
       // Determine meeting date and type
       const effectiveDate = meetingDate || new Date().toISOString().split('T')[0]
@@ -278,8 +280,6 @@ Deno.serve(async (req) => {
       const effectiveTitle = title || formatMeetingTitle(effectiveDate, effectiveType)
 
       // Insert into meetings table
-      const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-      const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
       const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
       const { data: meeting, error: insertError } = await supabase
@@ -314,7 +314,7 @@ Deno.serve(async (req) => {
     }
 
     return new Response(JSON.stringify(result), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
     })
 
   } catch (error) {
@@ -323,11 +323,10 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         error: 'Failed to generate meeting summary',
-        details: error instanceof Error ? error.message : 'Unknown error'
       }),
       {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' }
       }
     )
   }

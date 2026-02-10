@@ -1,13 +1,9 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { getCorsHeaders } from '../_shared/cors.ts'
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: getCorsHeaders(req) })
   }
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')
@@ -16,7 +12,7 @@ Deno.serve(async (req) => {
   if (!supabaseUrl || !supabaseServiceRoleKey) {
     return new Response(
       JSON.stringify({ error: 'Server configuration error' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
     )
   }
 
@@ -33,7 +29,7 @@ Deno.serve(async (req) => {
       if (!token) {
         return new Response(
           JSON.stringify({ valid: false, error: 'Missing token' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 400, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
         )
       }
 
@@ -53,7 +49,7 @@ Deno.serve(async (req) => {
       if (error || !invitation) {
         return new Response(
           JSON.stringify({ valid: false, code: 'INVALID' }),
-          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 404, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
         )
       }
 
@@ -61,7 +57,7 @@ Deno.serve(async (req) => {
       if (invitation.status === 'accepted') {
         return new Response(
           JSON.stringify({ valid: false, code: 'ALREADY_USED' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 400, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
         )
       }
 
@@ -69,7 +65,7 @@ Deno.serve(async (req) => {
       if (new Date(invitation.expires_at) < new Date() || invitation.status === 'expired') {
         return new Response(
           JSON.stringify({ valid: false, code: 'EXPIRED' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 400, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
         )
       }
 
@@ -82,14 +78,14 @@ Deno.serve(async (req) => {
           role: invitation.role,
           roleDisplay,
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       )
 
     } catch (error) {
       console.error('Token validation error:', error)
       return new Response(
         JSON.stringify({ valid: false, error: 'Validation failed' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 500, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       )
     }
   }
@@ -102,14 +98,14 @@ Deno.serve(async (req) => {
       if (!token || !password) {
         return new Response(
           JSON.stringify({ error: 'Missing token or password' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 400, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
         )
       }
 
       if (password.length < 6) {
         return new Response(
           JSON.stringify({ error: 'Password must be at least 6 characters' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 400, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
         )
       }
 
@@ -130,7 +126,7 @@ Deno.serve(async (req) => {
       if (invError || !invitation) {
         return new Response(
           JSON.stringify({ error: 'Invalid or expired invitation' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 400, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
         )
       }
 
@@ -143,7 +139,7 @@ Deno.serve(async (req) => {
 
         return new Response(
           JSON.stringify({ error: 'Invitation has expired' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 400, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
         )
       }
 
@@ -168,8 +164,8 @@ Deno.serve(async (req) => {
         } else {
           console.error('Auth user creation error:', authError)
           return new Response(
-            JSON.stringify({ error: 'Failed to create account: ' + authError.message }),
-            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            JSON.stringify({ error: 'Failed to create account' }),
+            { status: 500, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
           )
         }
       }
@@ -186,7 +182,7 @@ Deno.serve(async (req) => {
         console.error('Admin insert error:', adminInsertError)
         return new Response(
           JSON.stringify({ error: 'Failed to add admin record' }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 500, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
         )
       }
 
@@ -210,7 +206,7 @@ Deno.serve(async (req) => {
             redirectToLogin: true,
             message: 'Account created. Please log in.',
           }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
         )
       }
 
@@ -219,20 +215,20 @@ Deno.serve(async (req) => {
           success: true,
           session: signInData.session,
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       )
 
     } catch (error) {
       console.error('Account setup error:', error)
       return new Response(
         JSON.stringify({ error: 'Failed to complete setup' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 500, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       )
     }
   }
 
   return new Response(
     JSON.stringify({ error: 'Method not allowed' }),
-    { status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    { status: 405, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
   )
 })

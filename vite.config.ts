@@ -10,5 +10,12 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  esbuild: {
+    drop: ['debugger'],
+    pure: ['console.log', 'console.warn'],
+  },
+  build: {
+    sourcemap: false,
+  },
 })
 // Build trigger 1769790900

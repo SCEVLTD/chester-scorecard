@@ -1,9 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { getCorsHeaders } from '../_shared/cors.ts'
 
 /**
  * Create a Supabase Auth account for a company email.
@@ -17,7 +13,7 @@ const corsHeaders = {
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: getCorsHeaders(req) })
   }
 
   try {
@@ -33,7 +29,7 @@ Deno.serve(async (req) => {
     if (!authHeader) {
       return new Response(
         JSON.stringify({ error: 'Missing authorization header' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 401, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       )
     }
 
@@ -51,7 +47,7 @@ Deno.serve(async (req) => {
       console.error('Auth error:', userError)
       return new Response(
         JSON.stringify({ error: 'Invalid authorization token' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 401, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       )
     }
 
@@ -66,7 +62,7 @@ Deno.serve(async (req) => {
       console.error('Admin check error:', adminError, 'User email:', user.email)
       return new Response(
         JSON.stringify({ error: 'Only admins can create company accounts' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 403, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       )
     }
 
@@ -76,14 +72,14 @@ Deno.serve(async (req) => {
     if (!email || !password || !business_id) {
       return new Response(
         JSON.stringify({ error: 'Missing required fields: email, password, business_id' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       )
     }
 
-    if (password.length < 6) {
+    if (password.length < 12) {
       return new Response(
-        JSON.stringify({ error: 'Password must be at least 6 characters' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Password must be at least 12 characters' }),
+        { status: 400, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       )
     }
 
@@ -98,7 +94,7 @@ Deno.serve(async (req) => {
     if (emailError || !emailRecord) {
       return new Response(
         JSON.stringify({ error: 'Email not found for this business' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       )
     }
 
@@ -116,8 +112,8 @@ Deno.serve(async (req) => {
       if (updateError) {
         console.error('Failed to update user password:', updateError)
         return new Response(
-          JSON.stringify({ error: `Failed to update password: ${updateError.message}` }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          JSON.stringify({ error: 'Failed to update password' }),
+          { status: 500, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
         )
       }
 
@@ -128,7 +124,7 @@ Deno.serve(async (req) => {
           user_id: existingUser.id,
           email: email.toLowerCase(),
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       )
     }
 
@@ -148,8 +144,8 @@ Deno.serve(async (req) => {
     if (createError) {
       console.error('Failed to create user:', createError)
       return new Response(
-        JSON.stringify({ error: `Failed to create account: ${createError.message}` }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Failed to create account' }),
+        { status: 500, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       )
     }
 
@@ -160,7 +156,7 @@ Deno.serve(async (req) => {
         user_id: newUser.user.id,
         email: email.toLowerCase(),
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
     )
 
   } catch (error) {
@@ -169,11 +165,10 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         error: 'Failed to create company account',
-        details: error instanceof Error ? error.message : 'Unknown error',
       }),
       {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
       }
     )
   }

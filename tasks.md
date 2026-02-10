@@ -1,9 +1,606 @@
-# Chester Business Scorecard - Amendment Tasks
+# Chester Business Scorecard - Tasks
 
-> Last updated: 2026-02-05
-> Status: Planning complete, ready for implementation
+> Last updated: 2026-02-10
+> Status: **SECURITY & ENTERPRISE HARDENING IN PROGRESS**
+> Audit: See `SECURITY_AUDIT_2026-02-10.md` for full findings
 
-## Overview
+## Current Priority: Security & Enterprise SaaS Readiness
+
+Following a comprehensive security audit on 2026-02-10, these phases take immediate priority over all feature work. The application has critical security vulnerabilities that must be fixed before further deployment.
+
+**Severity Legend:** CRITICAL = exploitable now, HIGH = significant risk, MEDIUM = should fix, LOW = best practice
+
+---
+
+## Phase 16: Critical Security Fixes (IMMEDIATE - Do First)
+
+> **Priority:** CRITICAL
+> **Estimated effort:** 4-5 hours
+> **Dependencies:** None - start immediately
+
+### Task 16.1: Add JWT Authentication to generate-analysis Edge Function
+- **Status:** ✅ COMPLETE
+- **Severity:** CRITICAL
+- **File:** `supabase/functions/generate-analysis/index.ts`
+- **Problem:** Zero authentication. Anyone with the Supabase URL can call this function and burn Anthropic API credits. No auth header check, no JWT verification, no role check.
+- **Changes required:**
+  - [ ] Extract and verify JWT from Authorization header via `supabase.auth.getUser(token)`
+  - [ ] Return 401 if no valid token
+  - [ ] Verify caller has admin or consultant role (not business_user)
+  - [ ] Log the caller's user ID for audit purposes
+
+### Task 16.2: Add JWT Authentication to generate-portfolio-analysis Edge Function
+- **Status:** ✅ COMPLETE
+- **Severity:** CRITICAL
+- **Depends on:** 16.1 (use same auth pattern)
+- **File:** `supabase/functions/generate-portfolio-analysis/index.ts`
+- **Problem:** Zero authentication. Same issue as 16.1.
+- **Changes required:**
+  - [ ] Add same auth verification pattern as 16.1
+  - [ ] Verify caller has admin or consultant role
+
+### Task 16.3: Fix Authentication in generate-meeting-summary Edge Function
+- **Status:** ✅ COMPLETE
+- **Severity:** CRITICAL
+- **Depends on:** 16.1 (use same auth pattern)
+- **File:** `supabase/functions/generate-meeting-summary/index.ts`
+- **Problem:** Auth check is OPTIONAL (line 258: `if (authHeader)` - still processes without auth).
+- **Changes required:**
+  - [ ] Make auth header MANDATORY (return 401 if missing)
+  - [ ] Verify JWT via `supabase.auth.getUser(token)`
+  - [ ] Verify caller has admin or consultant role
+
+### Task 16.4: Replace Wildcard CORS on All Edge Functions
+- **Status:** ✅ COMPLETE
+- **Severity:** HIGH
+- **Files:** ALL files in `supabase/functions/*/index.ts` (12 functions)
+- **Problem:** Every Edge Function uses `'Access-Control-Allow-Origin': '*'` allowing any website to make cross-origin requests.
+- **Changes required:**
+  - [ ] Create shared CORS config: `const ALLOWED_ORIGINS = [Deno.env.get('SITE_URL') || 'https://chester.benchiva.com', 'http://localhost:5173']`
+  - [ ] Replace `'*'` with origin check in all 12 functions:
+    - `generate-analysis`
+    - `generate-portfolio-analysis`
+    - `generate-meeting-summary`
+    - `send-company-invite`
+    - `send-admin-invite`
+    - `send-invitations`
+    - `send-reminders`
+    - `send-email`
+    - `create-company-account`
+    - `complete-account-setup`
+    - `complete-admin-setup`
+    - `update-meeting`
+  - [ ] Validate `Origin` header against allowed list
+  - [ ] Return 403 for unknown origins
+
+### Task 16.5: Add Security Headers to Vercel Configuration
+- **Status:** ✅ COMPLETE
+- **Severity:** HIGH
+- **File:** `vercel.json`
+- **Problem:** No security headers configured. Vulnerable to clickjacking, MIME-type attacks, no HSTS.
+- **Changes required:**
+  - [ ] Add `Content-Security-Policy` header
+  - [ ] Add `X-Content-Type-Options: nosniff`
+  - [ ] Add `X-Frame-Options: DENY`
+  - [ ] Add `Strict-Transport-Security: max-age=31536000; includeSubDomains`
+  - [ ] Add `Referrer-Policy: strict-origin-when-cross-origin`
+  - [ ] Add `Permissions-Policy: camera=(), microphone=(), geolocation=()`
+
+### Task 16.6: Remove Sensitive Console Logging from Production
+- **Status:** ✅ COMPLETE
+- **Severity:** MEDIUM
+- **Files:** `src/contexts/auth-context.tsx` (primary), 35 files total with 61 occurrences
+- **Problem:** JWT claims (user_role, business_id) logged to browser console on every page load. 61 console.* statements across codebase.
+- **Changes required:**
+  - [ ] Remove `console.log('[Auth] JWT decoded claims:...')` from `auth-context.tsx:53`
+  - [ ] Remove `console.log('[Auth] No access token')` from `auth-context.tsx:48`
+  - [ ] Add Vite terser config to strip ALL console.* from production builds:
+    ```
+    build: { minify: 'terser', terserOptions: { compress: { drop_console: true } } }
+    ```
+  - [ ] Update `vite.config.ts`
+
+### Task 16.7: Disable Source Maps and Remove DevTools from Production
+- **Status:** ✅ COMPLETE
+- **Severity:** MEDIUM
+- **Files:** `vite.config.ts`, `src/App.tsx`
+- **Problem:** Source maps expose full source code. ReactQueryDevtools available in production allows inspecting all cached queries including financial data.
+- **Changes required:**
+  - [ ] Add `build: { sourcemap: false }` to `vite.config.ts`
+  - [ ] Conditionally render ReactQueryDevtools only in development:
+    ```tsx
+    {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
+    ```
+
+---
+
+## Phase 17: Database Security Hardening
+
+> **Priority:** CRITICAL/HIGH
+> **Estimated effort:** 1-2 days
+> **Dependencies:** None - can run parallel with Phase 16
+
+### Task 17.1: Fix Consultant Financial Data Leakage at Database Level
+- **Status:** ✅ COMPLETE (migration created, needs applying)
+- **Severity:** CRITICAL
+- **Files:** New migration + RLS policy changes
+- **Problem:** Consultant users can query ALL financial data directly via Supabase JS client in browser console. The UI "hiding" is purely cosmetic. `is_admin()` returns true for consultants, giving them full SELECT access to `company_submissions` which contains revenue, EBITDA, gross profit, wages.
+- **Changes required:**
+  - [ ] Create a `consultant_company_submissions` database VIEW that excludes financial columns:
+    ```sql
+    CREATE VIEW consultant_company_submissions AS
+    SELECT id, data_request_id, submitted_at, submitted_by_name, submitted_by_email,
+           company_biggest_opportunity, company_biggest_risk, company_challenges, company_wins,
+           outbound_calls, first_orders
+    FROM company_submissions;
+    ```
+  - [ ] OR: Replace the single `is_admin()` approach with separate policies:
+    - `super_admin` gets full SELECT on company_submissions
+    - `consultant` gets SELECT only on non-financial columns via the view
+  - [ ] Update frontend hooks to use the view for consultant queries
+  - [ ] Verify: Log in as consultant, open DevTools console, attempt `supabase.from('company_submissions').select('revenue_actual')` - should return no data or error
+
+### Task 17.2: Convert SECURITY DEFINER Views to SECURITY INVOKER
+- **Status:** ✅ COMPLETE (migration created, needs applying)
+- **Severity:** HIGH
+- **File:** New migration
+- **Problem:** `city_monthly_aggregate`, `city_ytd_aggregate`, `eprofile_monthly_aggregate` views use SECURITY DEFINER (Supabase default), bypassing RLS. ANY authenticated user (including business_user) can query city-wide aggregate financial data.
+- **Changes required:**
+  - [ ] Recreate all three views with explicit `SECURITY INVOKER`:
+    ```sql
+    CREATE OR REPLACE VIEW public.city_monthly_aggregate
+    WITH (security_invoker = true) AS ...
+    ```
+  - [ ] Test that business_users can no longer query aggregate financials
+  - [ ] Test that admins/consultants can still access the views
+  - [ ] Consider: Should consultants see aggregate financial totals? If not, add role filtering.
+
+### Task 17.3: Set Explicit search_path on All Database Functions
+- **Status:** ✅ COMPLETE (migration created, needs applying)
+- **Severity:** MEDIUM
+- **File:** New migration
+- **Problem:** `is_admin()`, `get_my_business_id()`, `handle_new_user()`, `custom_access_token_hook()`, `calculate_e_profile()` all lack explicit `search_path`, making them vulnerable to search_path manipulation.
+- **Changes required:**
+  - [ ] Add `SET search_path = public` to every function:
+    ```sql
+    CREATE OR REPLACE FUNCTION public.is_admin()
+    RETURNS BOOLEAN AS $$
+      SELECT COALESCE(
+        current_setting('request.jwt.claims', true)::jsonb->>'user_role' IN ('admin', 'super_admin', 'consultant'),
+        false
+      )
+    $$ LANGUAGE sql STABLE SET search_path = public;
+    ```
+  - [ ] Apply same fix to: `get_my_business_id()`, `handle_new_user()`, `custom_access_token_hook()`, `calculate_e_profile()`
+
+### Task 17.4: Strengthen Password Policy
+- **Status:** ✅ COMPLETE (code updated, enable HaveIBeenPwned in Supabase Dashboard manually)
+- **Severity:** MEDIUM
+- **Depends on:** None
+- **Files:** `supabase/functions/create-company-account/index.ts`, Supabase Dashboard
+- **Problem:** Minimum password length is 6 characters. No complexity requirements. Leaked password protection disabled.
+- **Changes required:**
+  - [ ] Increase minimum password length to 12 characters in `create-company-account` Edge Function
+  - [ ] Add basic complexity check (must contain letter + number)
+  - [ ] Enable HaveIBeenPwned leaked password protection in Supabase Dashboard > Auth > Settings
+  - [ ] Update any client-side password validation to match
+
+### Task 17.5: Sanitise Error Messages in Edge Functions
+- **Status:** ✅ COMPLETE
+- **Severity:** MEDIUM
+- **Files:** All Edge Functions that return `error.message` or `error.details`
+- **Problem:** Error responses include raw error messages from Supabase/Anthropic SDKs which can leak internal details (schema names, API config, stack traces).
+- **Changes required:**
+  - [ ] Replace `details: error instanceof Error ? error.message : 'Unknown error'` with generic messages
+  - [ ] Keep detailed error logging server-side via `console.error` (Supabase logs)
+  - [ ] Return only: `{ error: 'Failed to [action]' }` to clients
+  - [ ] Apply to all 12 Edge Functions
+
+---
+
+## Phase 18: Rate Limiting & Abuse Prevention
+
+> **Priority:** HIGH
+> **Estimated effort:** 1-2 days
+> **Dependencies:** Phase 16 (auth must be in place first)
+
+### Task 18.1: Implement Rate Limiting for AI Generation Functions
+- **Status:** pending
+- **Severity:** HIGH
+- **Depends on:** 16.1, 16.2, 16.3
+- **Files:** `supabase/functions/generate-analysis/index.ts`, `generate-portfolio-analysis/index.ts`, `generate-meeting-summary/index.ts`
+- **Problem:** No rate limiting. Even after auth is added, a compromised account could generate unlimited AI requests burning API credits.
+- **Changes required:**
+  - [ ] Implement token-bucket or sliding-window rate limiting using Supabase database as store:
+    ```sql
+    CREATE TABLE rate_limits (
+      user_id uuid REFERENCES auth.users(id),
+      action text NOT NULL,
+      window_start timestamptz NOT NULL,
+      count integer DEFAULT 1,
+      PRIMARY KEY (user_id, action, window_start)
+    );
+    ```
+  - [ ] Limits: 10 AI generations per user per hour, 50 per day
+  - [ ] Return 429 Too Many Requests when exceeded
+  - [ ] Apply to all three AI functions
+
+### Task 18.2: Implement Rate Limiting for Invitation/Email Functions
+- **Status:** pending
+- **Severity:** MEDIUM
+- **Depends on:** 18.1 (use same rate limit infrastructure)
+- **Files:** `send-company-invite`, `send-admin-invite`, `send-reminders`, `send-email`
+- **Problem:** No rate limiting on email-sending functions. Could be abused for spam.
+- **Changes required:**
+  - [ ] Limits: 20 invitations per admin per day, 50 reminders per day
+  - [ ] Apply to all email-related Edge Functions
+
+### Task 18.3: Implement Rate Limiting for Account Creation
+- **Status:** pending
+- **Severity:** MEDIUM
+- **Depends on:** 18.1
+- **File:** `supabase/functions/create-company-account/index.ts`
+- **Problem:** No rate limiting on account creation. Could be used for brute-force.
+- **Changes required:**
+  - [ ] Limits: 10 account creations per admin per hour
+  - [ ] Add exponential backoff on failed auth attempts (Supabase may handle this)
+
+---
+
+## Phase 19: Enterprise Observability
+
+> **Priority:** HIGH
+> **Estimated effort:** 2-3 days
+> **Dependencies:** None - can start immediately
+
+### Task 19.1: Add Sentry Error Tracking
+- **Status:** pending
+- **Severity:** HIGH
+- **Files:** `package.json`, `src/main.tsx`, `src/components/error-boundary.tsx`
+- **Problem:** No error tracking. If the app crashes for a user, you have no visibility.
+- **Changes required:**
+  - [ ] Install `@sentry/react` package
+  - [ ] Initialise Sentry in `src/main.tsx` with DSN from env var
+  - [ ] Integrate with ErrorBoundary component
+  - [ ] Add Sentry to Edge Functions (optional, lower priority)
+  - [ ] Configure source map upload for meaningful stack traces
+
+### Task 19.2: Add Uptime Monitoring
+- **Status:** pending
+- **Severity:** MEDIUM
+- **Problem:** No uptime monitoring. You won't know if the app goes down until a user tells you.
+- **Changes required:**
+  - [ ] Set up BetterUptime, Checkly, or UptimeRobot (free tier is fine)
+  - [ ] Monitor: `https://chester.benchiva.com` (frontend)
+  - [ ] Monitor: Supabase project health endpoint
+  - [ ] Configure alerts to email/Slack
+
+### Task 19.3: Add Basic Audit Logging
+- **Status:** pending
+- **Severity:** HIGH (enterprise requirement)
+- **Files:** New migration + new Edge Function or database triggers
+- **Problem:** No record of who accessed what data, when. Required for SOC 2 and GDPR compliance.
+- **Changes required:**
+  - [ ] Create `audit_log` table:
+    ```sql
+    CREATE TABLE audit_log (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id uuid REFERENCES auth.users(id),
+      action text NOT NULL,
+      resource_type text NOT NULL,
+      resource_id uuid,
+      metadata jsonb,
+      ip_address inet,
+      created_at timestamptz DEFAULT now()
+    );
+    ```
+  - [ ] Enable RLS: only super_admin can SELECT
+  - [ ] Add audit triggers for: scorecard creation/update, AI generation, data export, admin actions
+  - [ ] Create admin UI to view audit logs (Phase 22)
+
+### Task 19.4: Add Anthropic API Cost Monitoring
+- **Status:** pending
+- **Severity:** MEDIUM
+- **Depends on:** 19.3
+- **Problem:** No visibility into AI API spend. Critical given the current lack of rate limiting.
+- **Changes required:**
+  - [ ] Log token usage from Anthropic API responses in audit_log
+  - [ ] Create a simple dashboard or weekly email report of usage
+  - [ ] Set up Anthropic usage alerts in their dashboard
+
+---
+
+## Phase 20: GDPR & Legal Compliance
+
+> **Priority:** HIGH (legal requirement for UK businesses)
+> **Estimated effort:** 3-5 days (technical) + legal review
+> **Dependencies:** 19.3 (audit logging needed first)
+
+### Task 20.1: Verify Supabase Data Residency
+- **Status:** pending
+- **Severity:** HIGH
+- **Problem:** Must confirm Supabase project is hosted in EU region for GDPR compliance.
+- **Changes required:**
+  - [ ] Check Supabase Dashboard > Settings > General for region
+  - [ ] If not EU: plan migration to EU region (requires Supabase support)
+  - [ ] Document the data residency in a compliance document
+
+### Task 20.2: Create Privacy Policy Page
+- **Status:** pending
+- **Severity:** HIGH
+- **Files:** New page `src/pages/privacy-policy.tsx`, route in `src/App.tsx`
+- **Changes required:**
+  - [ ] Create privacy policy covering: data collected, purpose, retention, rights
+  - [ ] Add route `/privacy` (public, no auth required)
+  - [ ] Link from login page footer
+  - [ ] Get legal review
+
+### Task 20.3: Create Terms of Service Page
+- **Status:** pending
+- **Severity:** HIGH
+- **Files:** New page `src/pages/terms.tsx`, route in `src/App.tsx`
+- **Changes required:**
+  - [ ] Create terms of service document
+  - [ ] Add route `/terms` (public, no auth required)
+  - [ ] Link from login page footer
+  - [ ] Get legal review
+
+### Task 20.4: Implement Data Export (Right to Portability)
+- **Status:** pending
+- **Severity:** HIGH
+- **Depends on:** None
+- **Files:** New Edge Function `supabase/functions/export-user-data/index.ts`
+- **Changes required:**
+  - [ ] Create Edge Function that exports all data for a given business_id as JSON/CSV
+  - [ ] Include: scorecards, submissions, targets, AI analyses
+  - [ ] Add "Export My Data" button in company dashboard
+  - [ ] Require auth + ownership check
+
+### Task 20.5: Implement Account Deletion (Right to Erasure)
+- **Status:** pending
+- **Severity:** HIGH
+- **Depends on:** 20.4
+- **Files:** New Edge Function `supabase/functions/delete-user-data/index.ts`
+- **Changes required:**
+  - [ ] Create Edge Function that deletes all data for a user/business
+  - [ ] Cascade: scorecards, submissions, targets, AI analyses, profile
+  - [ ] Delete auth.users entry
+  - [ ] Add "Delete My Account" option (with confirmation)
+  - [ ] Log deletion in audit_log (anonymised) for compliance record
+
+---
+
+## Phase 21: Session & Auth Hardening
+
+> **Priority:** MEDIUM
+> **Estimated effort:** 1-2 days
+> **Dependencies:** Phase 16 complete
+
+### Task 21.1: Add Session Timeout / Idle Detection
+- **Status:** pending
+- **Severity:** MEDIUM
+- **File:** `src/contexts/auth-context.tsx`
+- **Problem:** Sessions persist indefinitely via auto-refresh. No idle timeout for shared computer scenarios.
+- **Changes required:**
+  - [ ] Add idle detection (30 min inactivity = auto sign-out)
+  - [ ] Show warning modal at 25 minutes: "Your session will expire in 5 minutes"
+  - [ ] Clear session data on timeout
+
+### Task 21.2: Add Login Activity Logging
+- **Status:** pending
+- **Severity:** LOW
+- **Depends on:** 19.3 (audit log table)
+- **Changes required:**
+  - [ ] Log successful and failed login attempts
+  - [ ] Include: email, IP address, timestamp, success/failure
+  - [ ] Visible to super_admin in audit log
+
+---
+
+## Phase 22: Admin Security Dashboard
+
+> **Priority:** MEDIUM
+> **Estimated effort:** 2-3 days
+> **Dependencies:** 19.3 (audit log), 18.1 (rate limiting)
+
+### Task 22.1: Create Security Overview Page
+- **Status:** pending
+- **File:** New `src/pages/admin/security.tsx`
+- **Route:** `/admin/security`
+- **Changes required:**
+  - [ ] Show recent audit log entries
+  - [ ] Show rate limit status
+  - [ ] Show active sessions count
+  - [ ] Show recent failed login attempts
+  - [ ] Add to admin navigation
+
+### Task 22.2: Create API Usage Dashboard
+- **Status:** pending
+- **Depends on:** 19.4
+- **File:** New `src/pages/admin/api-usage.tsx`
+- **Changes required:**
+  - [ ] Show Anthropic API usage (token counts, costs)
+  - [ ] Show Edge Function invocation counts
+  - [ ] Daily/weekly/monthly views
+  - [ ] Cost alerts configuration
+
+---
+
+## Phase 23: Multi-Tenancy Foundation (SaaS Enablement)
+
+> **Priority:** HIGH (required before selling to other consulting firms)
+> **Estimated effort:** 2-3 weeks
+> **Dependencies:** Phases 16-20 complete (security must be solid first)
+
+### Task 23.1: Add Organisation Table and Schema
+- **Status:** pending
+- **Severity:** HIGH
+- **File:** New migration
+- **Problem:** Application is hardcoded for single organisation ("Chester"). No tenant isolation.
+- **Changes required:**
+  - [ ] Create `organisations` table (id, name, slug, settings jsonb, created_at)
+  - [ ] Add `organisation_id` foreign key to: `businesses`, `scorecards`, `data_requests`, `company_submissions`, `admins`, `invitations`, `meetings`, `audit_log`
+  - [ ] Create migration to backfill existing data with a "Chester" organisation
+  - [ ] Enable RLS on organisations table
+
+### Task 23.2: Update All RLS Policies for Multi-Tenancy
+- **Status:** pending
+- **Depends on:** 23.1
+- **File:** New migration
+- **Changes required:**
+  - [ ] Create `get_my_org_id()` helper function (from JWT claims)
+  - [ ] Update auth hook to include `organisation_id` in JWT claims
+  - [ ] Update ALL RLS policies to include `organisation_id` filtering
+  - [ ] Ensure business_users can only see data from their organisation
+  - [ ] Ensure admins can only manage their own organisation
+  - [ ] Create `platform_admin` role for cross-org management
+
+### Task 23.3: Update Frontend for Multi-Tenancy
+- **Status:** pending
+- **Depends on:** 23.2
+- **Files:** Multiple - all hooks and pages
+- **Changes required:**
+  - [ ] Add organisation context provider
+  - [ ] Update all Supabase queries to scope by organisation
+  - [ ] Add organisation branding support (logo, name, colours)
+  - [ ] Update navigation to show organisation name
+
+### Task 23.4: Add Organisation Onboarding Flow
+- **Status:** pending
+- **Depends on:** 23.3
+- **Files:** New pages and Edge Functions
+- **Changes required:**
+  - [ ] Create organisation registration page
+  - [ ] Create first-admin setup wizard
+  - [ ] Create business import for new organisations
+  - [ ] Add trial period management (14/30 day trial)
+
+---
+
+## Phase 24: Billing & Subscriptions
+
+> **Priority:** HIGH (required for SaaS revenue)
+> **Estimated effort:** 1-2 weeks
+> **Dependencies:** 23.1 (organisations must exist)
+
+### Task 24.1: Integrate Stripe
+- **Status:** pending
+- **Files:** New Edge Functions + new pages
+- **Changes required:**
+  - [ ] Create Stripe account and products
+  - [ ] Create `subscriptions` table
+  - [ ] Create Edge Function for Stripe webhook handling
+  - [ ] Create checkout flow for new organisations
+  - [ ] Handle subscription lifecycle (trial, active, past_due, cancelled)
+
+### Task 24.2: Implement Usage-Based Billing for AI Features
+- **Status:** pending
+- **Depends on:** 24.1, 19.4
+- **Changes required:**
+  - [ ] Track AI token usage per organisation
+  - [ ] Set included AI credits per plan tier
+  - [ ] Create overage billing via Stripe metered billing
+  - [ ] Show usage in admin dashboard
+
+### Task 24.3: Create Billing Management Page
+- **Status:** pending
+- **Depends on:** 24.1
+- **File:** New `src/pages/admin/billing.tsx`
+- **Changes required:**
+  - [ ] Show current plan and usage
+  - [ ] Manage payment method (Stripe Customer Portal)
+  - [ ] View invoice history
+  - [ ] Upgrade/downgrade plan
+
+---
+
+## Phase 25: Test Coverage
+
+> **Priority:** MEDIUM (enterprise requirement)
+> **Estimated effort:** 2-3 weeks
+> **Dependencies:** Phases 16-17 complete (test the secured version)
+
+### Task 25.1: Unit Tests for Auth & Security
+- **Status:** pending
+- **Files:** New test files in `src/__tests__/`
+- **Changes required:**
+  - [ ] Test ProtectedRoute role enforcement
+  - [ ] Test auth context JWT parsing
+  - [ ] Test consultant cannot access financial data
+  - [ ] Test business_user cannot access other businesses
+
+### Task 25.2: Integration Tests for Edge Functions
+- **Status:** pending
+- **Changes required:**
+  - [ ] Test auth rejection on unauthenticated requests
+  - [ ] Test CORS rejection for unknown origins
+  - [ ] Test rate limiting enforcement
+  - [ ] Test AI generation with valid auth
+
+### Task 25.3: E2E Tests for Critical Flows
+- **Status:** pending
+- **Changes required:**
+  - [ ] Test login flow for all three roles
+  - [ ] Test scorecard creation and viewing
+  - [ ] Test consultant view cannot see financial data
+  - [ ] Test magic link invitation flow
+  - [ ] Test data export
+
+---
+
+## Implementation Priority Order
+
+```
+WEEK 1 (IMMEDIATE):
+  Phase 16 (Critical Security Fixes) ─── 4-5 hours
+  Phase 17 (Database Hardening) ──────── 1-2 days
+  ↓
+WEEK 2:
+  Phase 18 (Rate Limiting) ───────────── 1-2 days
+  Phase 19 (Observability) ───────────── 2-3 days
+  ↓
+WEEK 3:
+  Phase 20 (GDPR Compliance) ─────────── 3-5 days
+  Phase 21 (Auth Hardening) ──────────── 1-2 days
+  ↓
+WEEK 4-5:
+  Phase 22 (Admin Dashboard) ─────────── 2-3 days
+  Phase 25 (Test Coverage) ───────────── ongoing
+  ↓
+WEEKS 6-8 (SaaS Enablement):
+  Phase 23 (Multi-Tenancy) ───────────── 2-3 weeks
+  Phase 24 (Billing) ─────────────────── 1-2 weeks
+```
+
+### Dependency Graph
+
+```
+Phase 16 (Critical Fixes)──┬──► Phase 18 (Rate Limiting)
+                           │
+Phase 17 (DB Hardening)────┤
+                           │
+                           ├──► Phase 21 (Auth Hardening)
+                           │
+Phase 19 (Observability)───┼──► Phase 22 (Admin Dashboard)
+         │                 │
+         └─► 19.3 ────────┼──► Phase 20 (GDPR)
+                           │
+                           └──► Phase 25 (Tests)
+
+Phase 16+17+18+19+20 ─────────► Phase 23 (Multi-Tenancy)
+                                      │
+                                      └──► Phase 24 (Billing)
+```
+
+---
+---
+
+# Previous Feature Work (Phases 1-15)
+
+> The following phases document the original feature development work.
+> Phases 11-15 are COMPLETE. Phases 1-10 are PENDING (feature work paused for security hardening).
+
+## Original Overview
 
 Six major amendments required to the Chester Business Scorecard system:
 
@@ -764,37 +1361,47 @@ Currently implemented in:
 
 ---
 
-# Security Status (2026-02-05)
+# Security Status (2026-02-10)
 
-## Consultant View Fixes: ✅ COMPLETE
+> **Full audit report:** `SECURITY_AUDIT_2026-02-10.md`
 
-All consultant view restrictions are now working:
-- Performance page: No £ values visible
+## Consultant View Fixes: ✅ COMPLETE (UI Layer Only)
+
+All consultant view UI restrictions are working:
+- Performance page: No £ values visible in UI
 - Charts page: Percentage scores visible (not financial)
 - AI Analysis: Consultant version without £ figures
 - Company Insights: Now visible (qualitative data)
 
-## Outstanding Security Advisories
+**WARNING:** Financial data filtering is CLIENT-SIDE ONLY. Consultants can still access raw financial data via browser DevTools / Supabase JS client. See Task 17.1 for the database-level fix.
 
-Run `supabase db lint` or check Supabase Dashboard > Advisors for latest status.
+## Critical Security Issues (from 2026-02-10 audit)
 
-### ERRORS (Should Fix)
-| Issue | Table/View | Description |
-|-------|------------|-------------|
-| RLS Disabled | `invitations` | RLS policies exist but RLS not enabled |
-| SECURITY DEFINER | `city_monthly_aggregate` | View uses SECURITY DEFINER |
-| SECURITY DEFINER | `city_ytd_aggregate` | View uses SECURITY DEFINER |
-| SECURITY DEFINER | `eprofile_monthly_aggregate` | View uses SECURITY DEFINER |
+| Severity | Issue | Task | Status |
+|----------|-------|------|--------|
+| CRITICAL | AI Edge Functions have no authentication | 16.1, 16.2, 16.3 | ✅ FIXED |
+| CRITICAL | Consultant can access financial data via DB queries | 17.1 | ✅ FIXED (apply migration) |
+| HIGH | Wildcard CORS on all Edge Functions | 16.4 | ✅ FIXED |
+| HIGH | No rate limiting on any endpoint | 18.1-18.3 | pending |
+| HIGH | SECURITY DEFINER views bypass RLS | 17.2 | ✅ FIXED (apply migration) |
+| HIGH | No security headers on frontend | 16.5 | ✅ FIXED |
+| MEDIUM | JWT claims logged to browser console | 16.6 | ✅ FIXED |
+| MEDIUM | Mutable search_path on DB functions | 17.3 | ✅ FIXED (apply migration) |
+| MEDIUM | Weak password policy (6 chars, no complexity) | 17.4 | ✅ FIXED (12 char minimum) |
+| MEDIUM | Error messages leak internal details | 17.5 | ✅ FIXED |
+| MEDIUM | ReactQueryDevtools in production | 16.7 | ✅ FIXED |
+| LOW | Source maps in production build | 16.7 | ✅ FIXED |
 
-### WARNINGS (Consider Fixing)
-| Issue | Entity | Description |
-|-------|--------|-------------|
-| search_path mutable | Multiple functions | `is_admin`, `get_my_business_id`, etc. |
-| Permissive RLS | `admins` | INSERT/DELETE policies use `true` |
-| Permissive RLS | `company_submissions` | INSERT/UPDATE policies use `true` |
-| Leaked password protection | Auth | Feature disabled |
+## Supabase Lint Advisories (Still Outstanding)
 
-**Note:** The permissive policies on `company_submissions` are intentional - magic link flow requires anonymous insert. Token validation happens at application layer.
+| Issue | Entity | Description | Task |
+|-------|--------|-------------|------|
+| SECURITY DEFINER | `city_monthly_aggregate` | View bypasses RLS | 17.2 |
+| SECURITY DEFINER | `city_ytd_aggregate` | View bypasses RLS | 17.2 |
+| SECURITY DEFINER | `eprofile_monthly_aggregate` | View bypasses RLS | 17.2 |
+| search_path mutable | Multiple functions | `is_admin`, `get_my_business_id`, etc. | 17.3 |
+| Permissive RLS | `company_submissions` | INSERT uses `true` (intentional for magic link) | N/A |
+| Leaked password protection | Auth | Feature disabled | 17.4 |
 
 ---
 

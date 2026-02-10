@@ -1,9 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { getCorsHeaders } from '../_shared/cors.ts'
 
 interface RequestBody {
   meetingId: string
@@ -16,7 +12,7 @@ interface RequestBody {
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: getCorsHeaders(req) })
   }
 
   try {
@@ -26,7 +22,7 @@ Deno.serve(async (req) => {
     if (!meetingId) {
       return new Response(
         JSON.stringify({ error: 'meetingId is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       )
     }
 
@@ -75,7 +71,7 @@ Deno.serve(async (req) => {
     if (Object.keys(updateData).length === 0) {
       return new Response(
         JSON.stringify({ error: 'No fields to update' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       )
     }
 
@@ -89,7 +85,7 @@ Deno.serve(async (req) => {
     if (fetchError || !existingMeeting) {
       return new Response(
         JSON.stringify({ error: 'Meeting not found' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 404, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       )
     }
 
@@ -97,7 +93,7 @@ Deno.serve(async (req) => {
     if (existingMeeting.status === 'finalized' && !finalize && (userNotes !== undefined || attendees !== undefined)) {
       return new Response(
         JSON.stringify({ error: 'Cannot update finalized meeting' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       )
     }
 
@@ -112,13 +108,13 @@ Deno.serve(async (req) => {
     if (updateError) {
       console.error('Failed to update meeting:', updateError)
       return new Response(
-        JSON.stringify({ error: 'Failed to update meeting', details: updateError.message }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Failed to update meeting' }),
+        { status: 500, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       )
     }
 
     return new Response(JSON.stringify(meeting), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
     })
 
   } catch (error) {
@@ -127,11 +123,10 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         error: 'Failed to update meeting',
-        details: error instanceof Error ? error.message : 'Unknown error'
       }),
       {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' }
       }
     )
   }

@@ -330,7 +330,7 @@ Deno.serve(async (req) => {
       JSON.stringify({
         error: {
           http_code: 401,
-          message: error instanceof Error ? error.message : 'Webhook verification failed',
+          message: 'Webhook verification failed',
         },
       }),
       { status: 401, headers: { 'Content-Type': 'application/json' } }

@@ -182,7 +182,7 @@ function App() {
               </Route>
             </Switch>
           </div>
-          <ReactQueryDevtools initialIsOpen={false} />
+          {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
         </QueryClientProvider>
       </AuthProvider>
     </ErrorBoundary>
