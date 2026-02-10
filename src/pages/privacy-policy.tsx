@@ -25,8 +25,8 @@ export function PrivacyPolicyPage() {
             <section>
               <h2 className="text-lg font-semibold mb-2">1. Introduction</h2>
               <p className="text-muted-foreground">
-                Chester Business Scorecard ("the Service") is operated by Velocity Benchmarking,
-                a division of SCEV Ltd trading as BrandedAI, registered in England & Wales.
+                Chester Business Scorecard ("the Service") is operated by Benchiva,
+                a product of SCEV Ltd trading as BrandedAI, registered in England & Wales.
                 We are committed to protecting your personal data and complying with the UK General
                 Data Protection Regulation (UK GDPR) and the Data Protection Act 2018.
               </p>
@@ -115,8 +115,8 @@ export function PrivacyPolicyPage() {
               </ul>
               <p className="text-muted-foreground mt-2">
                 To exercise any of these rights, please contact us at{' '}
-                <a href="mailto:info@brandedai.co.uk" className="text-primary hover:underline">
-                  info@brandedai.co.uk
+                <a href="mailto:info@brandedai.net" className="text-primary hover:underline">
+                  info@brandedai.net
                 </a>
                 . We will respond within 30 days.
               </p>
@@ -161,11 +161,11 @@ export function PrivacyPolicyPage() {
                 please contact:
               </p>
               <div className="text-muted-foreground mt-2">
-                <p>Velocity Benchmarking (SCEV Ltd trading as BrandedAI)</p>
+                <p>Benchiva (SCEV Ltd trading as BrandedAI)</p>
                 <p>
                   Email:{' '}
-                  <a href="mailto:info@brandedai.co.uk" className="text-primary hover:underline">
-                    info@brandedai.co.uk
+                  <a href="mailto:info@brandedai.net" className="text-primary hover:underline">
+                    info@brandedai.net
                   </a>
                 </p>
               </div>

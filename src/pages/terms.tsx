@@ -27,7 +27,7 @@ export function TermsPage() {
               <p className="text-muted-foreground">
                 Chester Business Scorecard ("the Service") is a business performance monitoring
                 platform operated by SCEV Ltd trading as BrandedAI ("the Company"), registered
-                in England & Wales. The Service is provided under the Velocity Benchmarking brand.
+                in England & Wales. The Service is provided under the Benchiva brand.
               </p>
               <p className="text-muted-foreground mt-2">
                 The Service enables consulting firms and their clients to track business health
@@ -103,7 +103,7 @@ export function TermsPage() {
                 use the Service as intended.
               </p>
               <p className="text-muted-foreground mt-2">
-                The Velocity Benchmarking and BrandedAI names, logos, and branding are trademarks
+                The Benchiva and BrandedAI names, logos, and branding are trademarks
                 of SCEV Ltd and may not be used without prior written consent.
               </p>
             </section>
@@ -184,8 +184,8 @@ export function TermsPage() {
                 <p>SCEV Ltd trading as BrandedAI</p>
                 <p>
                   Email:{' '}
-                  <a href="mailto:info@brandedai.co.uk" className="text-primary hover:underline">
-                    info@brandedai.co.uk
+                  <a href="mailto:info@brandedai.net" className="text-primary hover:underline">
+                    info@brandedai.net
                   </a>
                 </p>
               </div>
