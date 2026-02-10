@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { FileText, TrendingUp, LogOut, ClipboardList, Building2, BarChart3 } from 'lucide-react'
 import { format } from 'date-fns'
 import type { Business, Scorecard } from '@/types/database.types'
+import { DataPrivacySection } from '@/components/data-privacy-section'
 
 const ragColors: Record<string, string> = {
   green: 'bg-green-500',
@@ -191,6 +192,11 @@ export function CompanyDashboardPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Data & Privacy (GDPR) */}
+        <div className="mt-6">
+          <DataPrivacySection />
+        </div>
       </div>
     </div>
   )
