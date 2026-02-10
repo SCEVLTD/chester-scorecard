@@ -94,25 +94,25 @@ describe('calculateFinancialSubtotal', () => {
   it('sums all four financial scores correctly - all excellent', () => {
     // Revenue +15% (10) + GP +15% (10) + Overheads -15% (10) + Net +15% (10) = 40
     const result = calculateFinancialSubtotal(15, 15, -15, 15)
-    expect(result).toBe(40)
+    expect(result).toEqual({ score: 40, maxScore: 40 })
   })
 
   it('calculates mixed performance correctly', () => {
     // Revenue +10% (10) + GP 0% (6) + Overheads +5% (3) + Net -10% (0) = 19
     const result = calculateFinancialSubtotal(10, 0, 5, -10)
-    expect(result).toBe(19)
+    expect(result).toEqual({ score: 19, maxScore: 40 })
   })
 
   it('returns 0 for all poor performance', () => {
     // Revenue -15% (0) + GP -15% (0) + Overheads +15% (0) + Net -15% (0) = 0
     const result = calculateFinancialSubtotal(-15, -15, 15, -15)
-    expect(result).toBe(0)
+    expect(result).toEqual({ score: 0, maxScore: 40 })
   })
 
   it('returns 24 for all on-target (neutral) performance', () => {
     // All 0% variance: 6+6+6+6 = 24
     const result = calculateFinancialSubtotal(0, 0, 0, 0)
-    expect(result).toBe(24)
+    expect(result).toEqual({ score: 24, maxScore: 40 })
   })
 })
 
@@ -305,11 +305,12 @@ describe('calculateTotalScore', () => {
       netProfitVariance: 0,
     }
 
-    // Financial: 6+6+6+6 = 24
-    // Productivity: benchmark 0, actual 0 -> variance 0 -> scoreProductivity(0) = 6
-    // Everything else = 0
-    // Total = 30
-    expect(calculateTotalScore(data)).toBe(30)
+    // Financial: 6+6+6+6 = 24 out of 40
+    // Productivity: skipped (no benchmark/actual provided)
+    // Leadership/Market/Product/Suppliers/Sales: 0 out of 57.5
+    // Total: 24 out of 97.5 = 24.6% => rounds to 25
+    // Actually: maxScore=90 (no productivity), score=24, pct=26.67 => 27
+    expect(calculateTotalScore(data)).toBe(27)
   })
 
   it('returns 0 for all minimum scores', () => {
@@ -341,9 +342,10 @@ describe('calculateTotalScore', () => {
       marketDemand: 'invalid_value',
     }
 
-    // Financial: 24, Productivity: 6 (variance 0 = on target), invalid qualitative = 0
-    // Total = 30
-    expect(calculateTotalScore(data)).toBe(30)
+    // Financial: 24 out of 40, Productivity: skipped (no benchmark/actual)
+    // Invalid qualitative values score 0 but still count toward maxScore
+    // Total: score=24, maxScore=90, pct=26.67 => 27
+    expect(calculateTotalScore(data)).toBe(27)
   })
 
   it('calculates mid-range score correctly', () => {
