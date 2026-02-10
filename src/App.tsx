@@ -23,6 +23,7 @@ import { ImportBusinessesPage } from '@/pages/admin/import-businesses'
 import { AdminsPage } from '@/pages/admin/admins'
 import { SecurityPage } from '@/pages/admin/security'
 import { ApiUsagePage } from '@/pages/admin/api-usage'
+import { SubmissionsPage } from '@/pages/admin/submissions'
 import { BusinessPage } from '@/pages/business'
 // CompanyLoginPage removed - unified login at /login
 import { CompanyVerifyPage } from '@/pages/company/verify'
@@ -146,6 +147,11 @@ function App() {
               <Route path="/admin/api-usage">
                 <ProtectedRoute requiredRole="admin">
                   <ApiUsagePage />
+                </ProtectedRoute>
+              </Route>
+              <Route path="/admin/submissions">
+                <ProtectedRoute requiredRole="admin">
+                  <SubmissionsPage />
                 </ProtectedRoute>
               </Route>
 

@@ -319,6 +319,7 @@ export interface Database {
           contact_name: string | null
           e_profile: EProfile | null
           is_test: boolean | null
+          exclude_from_reporting: boolean
           organisation_id: string | null
           created_at: string
         }
@@ -330,6 +331,7 @@ export interface Database {
           contact_name?: string | null
           e_profile?: EProfile | null
           is_test?: boolean | null
+          exclude_from_reporting?: boolean
           organisation_id?: string | null
           created_at?: string
         }
@@ -341,6 +343,7 @@ export interface Database {
           contact_name?: string | null
           e_profile?: EProfile | null
           is_test?: boolean | null
+          exclude_from_reporting?: boolean
           organisation_id?: string | null
           created_at?: string
         }

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Pencil, LayoutGrid, Upload, Link2, Mail, Trash2, LogOut, Shield, Building2, Layers, Activity } from 'lucide-react'
+import { Plus, Pencil, LayoutGrid, Upload, Link2, Mail, Trash2, LogOut, Shield, Building2, Layers, Activity, FileText } from 'lucide-react'
 import { useBusinesses, useCreateBusiness, useDeleteBusiness } from '@/hooks/use-businesses'
 import { CompanyEditDialog } from '@/components/admin/company-edit-dialog'
 import type { Business } from '@/types/database.types'
@@ -192,6 +192,15 @@ export function HomePage() {
             >
               <Activity className="mr-1 h-3 w-3" />
               API Usage
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/admin/submissions')}
+              className="text-xs text-muted-foreground"
+            >
+              <FileText className="mr-1 h-3 w-3" />
+              Submissions
             </Button>
           </div>
         )}

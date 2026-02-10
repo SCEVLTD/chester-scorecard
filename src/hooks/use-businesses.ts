@@ -9,6 +9,7 @@ export function useBusinesses() {
       const { data, error } = await supabase
         .from('businesses')
         .select('*')
+        .eq('exclude_from_reporting', false)
         .order('name')
       if (error) throw error
       return data as Business[]
