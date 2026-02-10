@@ -302,10 +302,18 @@ export function LoginForm() {
           </form>
         </CardContent>
       </Card>
-      <div className="mt-4 text-center text-sm text-muted-foreground">
-        <a href="/privacy" className="hover:underline">Privacy Policy</a>
-        {' \u00b7 '}
-        <a href="/terms" className="hover:underline">Terms of Service</a>
+      <div className="mt-4 text-center text-sm text-muted-foreground space-y-2">
+        <p>
+          Don&apos;t have an account?{' '}
+          <a href="/register" className="font-medium text-primary hover:underline">
+            Create an organisation
+          </a>
+        </p>
+        <p>
+          <a href="/privacy" className="hover:underline">Privacy Policy</a>
+          {' \u00b7 '}
+          <a href="/terms" className="hover:underline">Terms of Service</a>
+        </p>
       </div>
     </>
   )

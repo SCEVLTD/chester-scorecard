@@ -421,47 +421,74 @@ Following a comprehensive security audit on 2026-02-10, these phases take immedi
 > **Dependencies:** Phases 16-20 complete (security must be solid first)
 
 ### Task 23.1: Add Organisation Table and Schema
-- **Status:** 🔄 IN PROGRESS
+- **Status:** ✅ COMPLETE
 - **Severity:** HIGH
 - **File:** `supabase/migrations/20260210_multi_tenancy_organisations.sql`
-- **Problem:** Application is hardcoded for single organisation ("Chester"). No tenant isolation.
-- **Changes required:**
-  - [ ] Create `organisations` table (id, name, slug, settings jsonb, created_at)
-  - [ ] Add `organisation_id` foreign key to: `businesses`, `scorecards`, `data_requests`, `company_submissions`, `admins`, `invitations`, `meetings`, `audit_log`
-  - [ ] Create migration to backfill existing data with a "Chester" organisation
-  - [ ] Enable RLS on organisations table
+- **Implementation:**
+  - Created `organisations` table (id, name, slug, settings jsonb, branding jsonb, created_at, updated_at)
+  - Added `organisation_id` FK to: businesses, admins, invitations, meetings, audit_log
+  - Created default Chester org with well-known UUID `a0000000-0000-0000-0000-000000000001`
+  - Backfilled all existing data to Chester org, made org_id NOT NULL where applicable
+  - Created `get_my_org_id()` helper function
+  - RLS enabled: admins see their org, super_admin can update
+  - Applied to Supabase
 
 ### Task 23.2: Update All RLS Policies for Multi-Tenancy
-- **Status:** pending
+- **Status:** ✅ COMPLETE
 - **Depends on:** 23.1
-- **File:** New migration
-- **Changes required:**
-  - [ ] Create `get_my_org_id()` helper function (from JWT claims)
-  - [ ] Update auth hook to include `organisation_id` in JWT claims
-  - [ ] Update ALL RLS policies to include `organisation_id` filtering
-  - [ ] Ensure business_users can only see data from their organisation
-  - [ ] Ensure admins can only manage their own organisation
-  - [ ] Create `platform_admin` role for cross-org management
+- **File:** `supabase/migrations/20260210_multi_tenancy_rls.sql`
+- **Implementation:**
+  - Updated `custom_access_token_hook` to inject `organisation_id` into JWT claims
+  - Updated RLS on 10 tables: businesses, admins, meetings, invitations, audit_log, scorecards, data_requests, company_submissions, actions, company_emails
+  - NULL fallback pattern: `(get_my_org_id() IS NULL OR org_id = get_my_org_id())` for backward compatibility
+  - Scorecards/data_requests/submissions/actions/emails scoped via business_id subquery to businesses.organisation_id
+  - Added `supabase_auth_admin` SELECT policy on admins for JWT hook access
+  - Applied to Supabase
 
 ### Task 23.3: Update Frontend for Multi-Tenancy
-- **Status:** pending
+- **Status:** ✅ COMPLETE
 - **Depends on:** 23.2
-- **Files:** Multiple - all hooks and pages
-- **Changes required:**
-  - [ ] Add organisation context provider
-  - [ ] Update all Supabase queries to scope by organisation
-  - [ ] Add organisation branding support (logo, name, colours)
-  - [ ] Update navigation to show organisation name
+- **Implementation:**
+  - Added `organisationId` to auth context (extracted from JWT claims)
+  - Created `use-organisation.ts` hook (TanStack Query, 10min stale time)
+  - Added `Organisation` type to database.types.ts
+  - Added `organisation_id` to Business type
+  - Home page displays org name as subtitle
 
 ### Task 23.4: Add Organisation Onboarding Flow
-- **Status:** pending
+- **Status:** COMPLETE
 - **Depends on:** 23.3
-- **Files:** New pages and Edge Functions
-- **Changes required:**
-  - [ ] Create organisation registration page
-  - [ ] Create first-admin setup wizard
-  - [ ] Create business import for new organisations
-  - [ ] Add trial period management (14/30 day trial)
+- **Implementation:**
+  - [x] Created `create-organisation` Edge Function (`supabase/functions/create-organisation/index.ts`)
+    - Public endpoint (no auth required) for self-service registration
+    - Creates organisation in `organisations` table with slug, 14-day trial settings
+    - Creates auth user via Supabase Admin API with `super_admin` role
+    - Creates admin record linked to new organisation
+    - Full rollback on partial failure (deletes org/user if later steps fail)
+    - Input validation: org name length, email format, password strength (12+ chars, letter+number)
+    - Duplicate detection for org name/slug and email
+    - Audit logging on successful creation
+    - Uses shared CORS and audit modules
+  - [x] Created registration page (`src/pages/register.tsx`)
+    - Public page at `/register` (redirects to home if already authenticated)
+    - Form fields: Organisation name, admin name, email, password, confirm password
+    - Zod schema validation with react-hook-form
+    - Password visibility toggles
+    - Loading state with spinner during submission
+    - Error/success toast notifications
+    - Links to login, privacy policy, and terms of service
+  - [x] Created `useTrialStatus()` hook (`src/hooks/use-trial-status.ts`)
+    - Reads `trial_ends_at` from `org.settings` JSONB
+    - Returns `{ isTrialActive, daysRemaining, trialEndsAt, isLoading }`
+    - Memoised calculation to avoid unnecessary rerenders
+  - [x] Created trial banner component (`src/components/trial-banner.tsx`)
+    - Amber background when trial active with > 3 days remaining
+    - Red background when <= 3 days remaining
+    - Shows days remaining and expiry date (en-GB format)
+    - Hidden when trial not active or no trial set
+  - [x] Added `/register` route to `src/App.tsx` (public, no auth)
+  - [x] Added trial banner to home page (`src/pages/home.tsx`)
+  - [x] Added "Create an organisation" link to login form (`src/components/auth/login-form.tsx`)
 
 ---
 
@@ -509,22 +536,33 @@ Following a comprehensive security audit on 2026-02-10, these phases take immedi
 > **Dependencies:** Phases 16-17 complete (test the secured version)
 
 ### Task 25.1: Unit Tests for Auth & Security
-- **Status:** 🔄 IN PROGRESS
+- **Status:** ✅ COMPLETE
 - **Files:** `src/contexts/auth-context.test.tsx`, `src/components/auth/protected-route.test.tsx`, `src/components/submitted-financials-display.test.tsx`, `src/lib/auth-helpers.test.ts`
-- **Tests being created:**
-  - [ ] Auth context JWT parsing (role extraction, legacy role mapping)
-  - [ ] ProtectedRoute role enforcement (admin, super_admin, business_user, consultant)
-  - [ ] ProtectedRoute business scoping (allowedBusinessId)
-  - [ ] Consultant financial data restrictions
-  - [ ] Role hierarchy helper functions
+- **Implementation:**
+  - Auth context: 9 tests (JWT parsing, role extraction, legacy 'admin' mapping, null/malformed JWT)
+  - ProtectedRoute: 17 tests (loading spinner, login redirect, role-based access, business scoping)
+  - Submitted financials: 10 tests (consultant returns null, super_admin/business_user see data, KPIs, edit callback)
+  - Auth helpers: 32 tests (role hierarchy, canSeeFinancials AUTH-08, edge cases, case sensitivity)
+  - Total: 114 tests passing
 
 ### Task 25.2: Integration Tests for Edge Functions
-- **Status:** pending
-- **Changes required:**
-  - [ ] Test auth rejection on unauthenticated requests
-  - [ ] Test CORS rejection for unknown origins
-  - [ ] Test rate limiting enforcement
-  - [ ] Test AI generation with valid auth
+- **Status:** COMPLETE
+- **Files:** `src/lib/edge-function-security.test.ts`, `src/lib/cors-helpers.ts`, `src/lib/cors-helpers.test.ts`
+- **Implementation:**
+  - [x] Created `src/lib/cors-helpers.ts` - Reusable CORS validation helpers mirroring `supabase/functions/_shared/cors.ts`
+  - [x] Created `src/lib/cors-helpers.test.ts` - 27 tests for origin validation and header generation
+  - [x] Created `src/lib/edge-function-security.test.ts` - 49 tests covering:
+    - CORS origin validation (allowed/rejected origins, preflight headers)
+    - JWT auth verification (missing header, malformed header, invalid token, valid token)
+    - Role-based access (super_admin/consultant allowed, business_user rejected for AI functions)
+    - Rate limiting (within limit, exceeding limit, window reset, per-user/per-action isolation)
+    - Error response sanitisation (no internal details leaked)
+    - Full request simulation (correct security check ordering: CORS -> Auth -> Role -> Rate Limit)
+  - [x] Test auth rejection on unauthenticated requests
+  - [x] Test CORS rejection for unknown origins
+  - [x] Test rate limiting enforcement
+  - [x] Test AI generation with valid auth
+  - Total new tests: 76 (190 total passing)
 
 ### Task 25.3: E2E Tests for Critical Flows
 - **Status:** pending

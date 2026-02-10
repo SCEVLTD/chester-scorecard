@@ -36,6 +36,7 @@ import { CompanyPerformancePage } from '@/pages/company-performance'
 import { EProfileReportPage } from '@/pages/eprofile-report'
 import { PrivacyPolicyPage } from '@/pages/privacy-policy'
 import { TermsPage } from '@/pages/terms'
+import { RegisterPage } from '@/pages/register'
 
 function App() {
   return (
@@ -63,6 +64,7 @@ function App() {
             <Switch>
               {/* Public routes */}
               <Route path="/login" component={LoginPage} />
+              <Route path="/register" component={RegisterPage} />
               {/* Redirect old /company/login to unified /login */}
               <Route path="/company/login">
                 {() => { window.location.replace('/login'); return null; }}

@@ -14,6 +14,7 @@ import { useSectors } from '@/hooks/use-sectors'
 import { SectorSelect } from '@/components/sector-select'
 import { useAuth } from '@/contexts/auth-context'
 import { useOrganisation } from '@/hooks/use-organisation'
+import { TrialBanner } from '@/components/trial-banner'
 
 const ragColors: Record<string, string> = {
   green: 'bg-green-500 hover:bg-green-600',
@@ -98,7 +99,9 @@ export function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8">
+    <div className="min-h-screen bg-background">
+      <TrialBanner />
+      <div className="p-4 md:p-8">
       <div className="mx-auto max-w-2xl space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -361,6 +364,7 @@ export function HomePage() {
           }}
         />
       )}
+      </div>
     </div>
   )
 }
