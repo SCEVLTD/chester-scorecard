@@ -100,11 +100,12 @@ Deno.serve(async (req) => {
 
     const { data: business } = await supabaseAdmin
       .from('businesses')
-      .select('name')
+      .select('name, organisation_id')
       .eq('id', business_id)
       .single()
 
     const businessName = business?.name || 'Your Company'
+    const organisationId = business?.organisation_id
 
     const tokenBytes = new Uint8Array(32)
     crypto.getRandomValues(tokenBytes)
@@ -132,6 +133,7 @@ Deno.serve(async (req) => {
         token_hash: tokenHash,
         invited_by: user.id,
         expires_at: expiresAt,
+        organisation_id: organisationId,
       })
 
     if (insertError) {

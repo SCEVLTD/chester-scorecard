@@ -193,16 +193,16 @@ export function CompanyEmailsManager({ businessId, businessName }: CompanyEmails
             key={email.id}
             className="flex items-center gap-2 p-2 border rounded-md bg-muted/50"
           >
-            <div className="flex-1 flex items-center gap-2">
+            <div className="flex-1 flex items-center gap-2 min-w-0">
               {email.is_primary && (
-                <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                <Star className="h-4 w-4 shrink-0 text-yellow-500 fill-yellow-500" />
               )}
-              <span className="text-sm">{email.email}</span>
+              <span className="text-sm truncate">{email.email}</span>
               {email.is_primary && (
-                <span className="text-xs text-muted-foreground">(Primary)</span>
+                <span className="text-xs shrink-0 text-muted-foreground">(Primary)</span>
               )}
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 shrink-0">
               <Button
                 type="button"
                 size="sm"
