@@ -40,6 +40,9 @@ export function initSentry(): void {
       'Network request failed',
       'Failed to fetch',
       'Load failed',
+      // Abort errors from cancelled fetch requests (TanStack Query unmount)
+      'AbortError',
+      /signal is aborted/,
       // Auth session expired (expected behaviour)
       'Invalid Refresh Token',
       'JWT expired',
